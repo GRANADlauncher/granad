@@ -17,3 +17,4 @@ To build locally, run
 cd docs && make html && firefox _build/html/index.html
 ```
 # granad
+# granad
