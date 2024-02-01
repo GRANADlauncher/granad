@@ -1,0 +1,13 @@
+__pycache__
+.pytest_cache
+*html
+*pdf
+
+# distribution
+granad.egg-info/
+dist
+build
+
+# docs
+docs/_build/
+docs/generated
