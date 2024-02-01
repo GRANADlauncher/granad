@@ -496,24 +496,6 @@ given in <a class="reference external" href="https://pubs.acs.org/doi/abs/10.102
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="granad.dos">
-<span class="sig-prename descclassname"><span class="pre">granad.</span></span><span class="sig-name descname"><span class="pre">dos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadening</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#granad.dos" title="Link to this definition">¶</a></dt>
-<dd><p>IP-DOS of a nanomaterial stack.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>stack</strong> (<a class="reference internal" href="#granad.Stack" title="granad.Stack"><em>Stack</em></a>) – a stack object</p></li>
-<li><p><strong>omega</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – frequency</p></li>
-<li><p><strong>broadening</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – numerical brodening parameter to replace Dirac Deltas with</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="granad.electric_field">
 <span class="sig-prename descclassname"><span class="pre">granad.</span></span><span class="sig-name descname"><span class="pre">electric_field</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">amplitudes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positions</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0.0,</span> <span class="pre">0.0,</span> <span class="pre">1.0]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#granad.electric_field" title="Link to this definition">¶</a></dt>
 <dd><p>Function for computing time-harmonic electric fields.</p>
@@ -702,43 +684,6 @@ given in <a class="reference external" href="https://pubs.acs.org/doi/abs/10.102
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="granad.ldos">
-<span class="sig-prename descclassname"><span class="pre">granad.</span></span><span class="sig-name descname"><span class="pre">ldos</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">omega</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site_index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">broadening</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#granad.ldos" title="Link to this definition">¶</a></dt>
-<dd><p>IP-LDOS of a nanomaterial stack.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>stack</strong> (<a class="reference internal" href="#granad.Stack" title="granad.Stack"><em>Stack</em></a>) – a stack object</p></li>
-<li><p><strong>omega</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – frequency</p></li>
-<li><p><strong>site_index</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.12)"><em>int</em></a>) – the site index to evaluate the LDOS at</p></li>
-<li><p><strong>broadening</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.12)"><em>float</em></a>) – numerical brodening parameter to replace Dirac Deltas with</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://jax.readthedocs.io/en/latest/_autosummary/jax.Array.html#jax.Array" title="(in JAX)"><em>Array</em></a></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="granad.lindblad">
-<span class="sig-prename descclassname"><span class="pre">granad.</span></span><span class="sig-name descname"><span class="pre">lindblad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">stack</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturation=&lt;function</span> <span class="pre">_default_functional&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#granad.lindblad" title="Link to this definition">¶</a></dt>
-<dd><p>Function for modelling dissipation according to the saturated lindblad equation. TODO: ref paper</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>stack</strong> – object representing the state of the system</p></li>
-<li><p><strong>gamma</strong> – symmetric (or lower triangular) NxN matrix. The element gamma[i,j] corresponds to the transition rate from state i to state j</p></li>
-<li><p><strong>saturation</strong> – a saturation functional to apply, defaults to a sharp turn-off</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>JIT-compiled closure that is needed for computing the dissipative part of the lindblad equation</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1027,7 +972,6 @@ Optionally, orbitals can be annotated with a number corresponding to the hilbert
 <li><a class="reference internal" href="#granad.absorption"><code class="docutils literal notranslate"><span class="pre">absorption()</span></code></a></li>
 <li><a class="reference internal" href="#granad.absorption_brute_force"><code class="docutils literal notranslate"><span class="pre">absorption_brute_force()</span></code></a></li>
 <li><a class="reference internal" href="#granad.dipole_transitions"><code class="docutils literal notranslate"><span class="pre">dipole_transitions()</span></code></a></li>
-<li><a class="reference internal" href="#granad.dos"><code class="docutils literal notranslate"><span class="pre">dos()</span></code></a></li>
 <li><a class="reference internal" href="#granad.electric_field"><code class="docutils literal notranslate"><span class="pre">electric_field()</span></code></a></li>
 <li><a class="reference internal" href="#granad.electric_field_pulse"><code class="docutils literal notranslate"><span class="pre">electric_field_pulse()</span></code></a></li>
 <li><a class="reference internal" href="#granad.electric_field_with_ramp_up"><code class="docutils literal notranslate"><span class="pre">electric_field_with_ramp_up()</span></code></a></li>
@@ -1037,8 +981,6 @@ Optionally, orbitals can be annotated with a number corresponding to the hilbert
 <li><a class="reference internal" href="#granad.indices"><code class="docutils literal notranslate"><span class="pre">indices()</span></code></a></li>
 <li><a class="reference internal" href="#granad.induced_dipole_moment"><code class="docutils literal notranslate"><span class="pre">induced_dipole_moment()</span></code></a></li>
 <li><a class="reference internal" href="#granad.induced_field"><code class="docutils literal notranslate"><span class="pre">induced_field()</span></code></a></li>
-<li><a class="reference internal" href="#granad.ldos"><code class="docutils literal notranslate"><span class="pre">ldos()</span></code></a></li>
-<li><a class="reference internal" href="#granad.lindblad"><code class="docutils literal notranslate"><span class="pre">lindblad()</span></code></a></li>
 <li><a class="reference internal" href="#granad.relaxation"><code class="docutils literal notranslate"><span class="pre">relaxation()</span></code></a></li>
 <li><a class="reference internal" href="#granad.show_charge_distribution2D"><code class="docutils literal notranslate"><span class="pre">show_charge_distribution2D()</span></code></a></li>
 <li><a class="reference internal" href="#granad.show_charge_distribution3D"><code class="docutils literal notranslate"><span class="pre">show_charge_distribution3D()</span></code></a></li>
