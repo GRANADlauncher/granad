@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "granad"
+version = "0.0.1"
+authors = [
+  { name="David Dams", email="david.dams@kit.edu" },
+]
+description = "granad"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+  'jax',
+  'numpy',
+  'flax',
+  'pyfftw',
+  'numba==0.55.1',
+  'sphinx',
+  'matplotlib'
+]
