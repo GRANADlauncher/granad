@@ -1101,7 +1101,7 @@ def _default_functional(rho_element):
     return jnp.heaviside(2.0 - rho_element.real, 0)
 
 
-def lindblad(stack, gamma, saturation=_default_functional):
+def _lindblad(stack, gamma, saturation=_default_functional):
     """Function for modelling dissipation according to the saturated lindblad equation. TODO: ref paper
 
     :param stack: object representing the state of the system
@@ -1292,7 +1292,7 @@ def electric_field_pulse(
     )
 
 
-def dos(stack: Stack, omega: float, broadening: float = 0.1) -> Array:
+def _dos(stack: Stack, omega: float, broadening: float = 0.1) -> Array:
     """IP-DOS of a nanomaterial stack.
 
     :param stack: a stack object
@@ -1306,7 +1306,7 @@ def dos(stack: Stack, omega: float, broadening: float = 0.1) -> Array:
     return prefactor * jnp.sum(gaussians)
 
 
-def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -> Array:
+def _ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -> Array:
     """IP-LDOS of a nanomaterial stack.
 
     :param stack: a stack object
