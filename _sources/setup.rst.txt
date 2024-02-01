@@ -10,7 +10,7 @@ Installation
 
 To install the package, type::
   
-   pip install git+github.com:GRANADlauncher/GRANAD-1.0.git
+   pip install git+github.com:GRANADlauncher/granad.git
 
 Usage
 =====
