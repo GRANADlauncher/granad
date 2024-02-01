@@ -11,3 +11,5 @@ build
 # docs
 docs/_build/
 docs/generated
+
+tutorials/.ipynb_checkpoints
