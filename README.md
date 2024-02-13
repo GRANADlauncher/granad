@@ -1,6 +1,6 @@
 # GRANAD - GRAphene Nanoantennas with ADatoms toolbox
 
-GRANAD is a quantum optics simulation utility for the time evolution of stacked nanomaterials under external illumination.
+GRANAD is a quantum optics simulation utility for the time evolution of stacked nanomaterials under external illumination.This is dev branch.
 
 ## Installation
 Clone repo and run
