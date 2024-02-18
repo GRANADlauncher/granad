@@ -1709,6 +1709,14 @@ def to_site_basis(stack: Stack, matrix: Array) -> Array:
     """
     return stack.eigenvectors @ matrix @ stack.eigenvectors.conj().T
 
+def to_energy_basis(stack: Stack, matrix: Array) -> Array:
+    """Transforms an arbitrary matrix from site to energy basis.
+
+    :param stack: stack object
+    :param matrix: square array in energy basis
+    :returns: square array in site basis
+    """
+    return stack.eigenvectors.conj().T @ matrix @ stack.eigenvectors
 
 ## plotting
 def _plot_wrapper(plot_func):
