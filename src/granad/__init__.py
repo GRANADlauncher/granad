@@ -1714,7 +1714,7 @@ def to_energy_basis(stack: Stack, matrix: Array) -> Array:
 
     :param stack: stack object
     :param matrix: square array in energy basis
-    :returns: square array in site basis
+    :returns: square array in energy basis
     """
     return stack.eigenvectors.conj().T @ matrix @ stack.eigenvectors
 
