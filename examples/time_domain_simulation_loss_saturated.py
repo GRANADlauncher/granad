@@ -10,10 +10,10 @@ sb = granad.StackBuilder()
 
 # add graphene
 graphene = granad.Lattice(
-    shape=granad.Chain(6),
+    shape=granad.Chain(16),
     lattice_type=granad.LatticeType.CHAIN,
     lattice_edge=granad.LatticeEdge.NONE,
-    lattice_constant=1,
+    lattice_constant=1.42,
 )
 sb.add("pz", graphene)
 

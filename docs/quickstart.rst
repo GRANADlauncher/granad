@@ -133,10 +133,10 @@ we have no need for the :code:`StackBuilder` anymore.
 The central numerical class in GRANAD is :class:`granad.Stack`.
 A :code:`Stack` object is just a container. It holds arrays that correspond to the numerical description of the nanomaterial we have just specified.
 
-.. note:: The state of a stack corresponds to its 1RDM density matrix and is thus a complex array.
+.. note:: The state of a stack corresponds to its single-particle reduced density matrix and is thus a complex array.
 
 We obtain it using the method :py:meth:`granad.StackBuilder.get_stack`.
-This method allows us to set the initial IP state of the stack. By default, it
+This method allows us to set the initial single-particle state of the stack. By default, it
 produces the ground state, but we could also decide to use, e.g. the first excited state.
 Additionally, we can control the number of doping electrons in the stack,
 add a diagonal term to the Hamiltonian corresponding to the influence
@@ -152,7 +152,7 @@ stack in the ground state, without any additional terms. This means we just call
 .. note:: Internally, a stack is just used to store data and has no mutable state. So, any changes to coupling parameters must happen at the level of the :code:`StackBuilder`, not the :code:`Stack`!
 
 
-Visualizing IP physical quantities is now easy:
+Visualizing single-particle physical quantities is now easy:
 
 .. literalinclude:: ../examples/energies_layer.py
    :language: python
@@ -200,17 +200,17 @@ We now get to the actual simulation. First, we need to do a necessary import
 
 .. literalinclude:: ../examples/time_domain_simulation_loss.py
    :language: python
-   :lines: 4
+   :lines: 1-4
 
 
-This just imports JAX's version of numpy. You can mostly use the same functions here as you would in regular numpy, just replacing :code:`np`, which :code:`jnp`.
+This just imports JAX's version of numpy. You can mostly use the same functions here as you would in regular numpy, just replacing :code:`jnp`, which :code:`np`.
 
 For example, this is how we define the simulation duration (GRANAD's units
 are explained in :doc:`units`.)
 
 .. literalinclude:: ../examples/time_domain_simulation_loss.py
    :language: python
-   :lines: 62
+   :lines: 61-63
 
 The actual simulation is performed using the function :py:func:`granad.evolution`. We must supply this function with the following arguments
 
@@ -227,30 +227,30 @@ For the calculation of the absorption spectrum, we only need the diagonal elemen
 
 Only the diagonal elements are needed, so our postprocessing function should be :code:`jnp.diag`, resulting in an array of shape :math:`N \times T`, drastically reducing memory consumption.
 
-For the damping function, we just chose :py:func:`granad.evolution` with a damping rate of 0.1. Ultimately, this results in 
+For the damping function, we just chose :py:func:`granad.evolution` with a relaxation time of tau=10 . Ultimately, this results in 
 
 .. literalinclude:: ../examples/time_domain_simulation_loss.py
    :language: python
-   :lines: 64-70
+   :lines: 65-71
 
 After letting the simulation run for a while, we can calculate the induced dipole moment in real space
 
 .. literalinclude:: ../examples/time_domain_simulation_loss.py
    :language: python
-   :lines: 73
+   :lines: 74
 
 We then perform a Fourier transform (note that you have to supply a custom implementation of this function as of now)	   
 
 .. literalinclude:: ../examples/time_domain_simulation_loss.py
    :language: python
-   :lines: 76
+   :lines: 77-78
 
 After Fourier transforming the x-component of the electric field as well, we can
 compute the absorption cross section, and plot the result
 
 .. literalinclude:: ../examples/time_domain_simulation_loss.py
    :language: python
-   :lines: 85-93
+   :lines: 87-95
 
 This results in	   
 
@@ -292,12 +292,12 @@ This happens very analogously to the lattice coupling. The only difference is th
 
 We want the two adatom levels to couple as follows:
 
-#. :code:`"A"` should have an energy of :code:`0`.
-#. :code:`"B"` should have an energy of :code:`2`.
-#. :code:`"A"` and :code:`"B"` should have a coupling energy of :code:`1`.
-#. :code:`"A"` should have an onsite coulomb repulsion of :code:`1`.
-#. :code:`"B"` should have an onsite coulomb repulsion of :code:`1`.
-#. :code:`"A"` and :code:`"B"` should have an onsite coulomb repulsion of :code:`1`.
+#. :code:`"A"` should have an energy of :code:`-1`.
+#. :code:`"B"` should have an energy of :code:`1`.
+#. :code:`"A"` and :code:`"B"` should have a coupling energy of :code:`0`.
+#. :code:`"A"` should have an onsite coulomb repulsion of :code:`16.522`.
+#. :code:`"B"` should have an onsite coulomb repulsion of :code:`16.522`.
+#. :code:`"A"` and :code:`"B"` should have an onsite coulomb repulsion of :code:`16.522`.
 
 The corresponding use of the :code:`SpotCoupling` class to achieve this is as follows:   
    
@@ -341,7 +341,7 @@ Now, we need to specify the couplings. For the isolated flake and TLS, this proc
 We want to couple the :code:`"A"` orbital of the TLS to the benzene ring as follows:
 
 #. The hopping between :code:`"A"` and :code:`"pz"` should be :code:`1` for nearest neighbours, :code:`0.5` for next-to-nearest neighbors and :code:`0` beyond.
-#. The coulomb interaction between :code:`"A"` and :code:`"pz"` should be :code:`2` for nearest neighbours and the classical relation :math:`c(r) = \frac{1}{r}` beyond. For sake of simplicity, we assume identical coupling strengths for :code:`"B"`.
+#. The coulomb interaction between :code:`"A"` and :code:`"pz"` should be :code:`8.64` for nearest neighbours and the classical relation :math:`c(r) = \frac{14.399}{r}` beyond. For sake of simplicity, we assume identical coupling strengths for :code:`"B"`.
 
 The way to do this with :class:`granad.LatticeSpotCoupling` is thus 
 
