@@ -13,13 +13,6 @@ import jax as jax
 from jax import Array, lax
 import jax.numpy as jnp
 
-## imports for frequency-domain simulations
-import numba
-import pyfftw
-from numba import njit
-
-pyfftw.interfaces.cache.enable()
-
 ## complex precision
 from jax.config import config
 
@@ -583,16 +576,16 @@ class StackBuilder:
                 lambda d: coupling.coupling + 0j
             )
         elif isinstance(coupling, LatticeCoupling):
-            coupling_dict[
-                (coupling.orbital_id1, coupling.orbital_id2)
-            ] = self._lattice_coupling(coupling)
+            coupling_dict[(coupling.orbital_id1, coupling.orbital_id2)] = (
+                self._lattice_coupling(coupling)
+            )
         elif isinstance(coupling, LatticeSpotCoupling):
             lattice_pos = self.get_positions(coupling.lattice_id)
             spot_pos = self.get_positions(coupling.spot_id)
-            coupling_dict[
-                (coupling.lattice_id, coupling.spot_id)
-            ] = self._lattice_spot_coupling(
-                coupling, lattice_pos=lattice_pos, spot_pos=spot_pos
+            coupling_dict[(coupling.lattice_id, coupling.spot_id)] = (
+                self._lattice_spot_coupling(
+                    coupling, lattice_pos=lattice_pos, spot_pos=spot_pos
+                )
             )
         else:
             raise TypeError(f"Incorrect coupling type {coupling}!")
@@ -1019,7 +1012,6 @@ def dipole_transitions(
     def inner(charge, H, E):
         def element(i, j):
             return lax.cond(
-
                 # check if position index combination corresponds to an adatom orbital
                 jnp.any(jnp.all(indices == jnp.array([i, j]), axis=2)),
                 lambda x: lax.switch(
@@ -1042,7 +1034,9 @@ def dipole_transitions(
         # array of shape orbitals x 3, such that induced_E[i, :] corresponds to the induced field at the position of the adatom associated with the i-th transition
         induced_E = (
             14.39
-            * jnp.tensordot(r_point_charge, charge.real, axes=[0, 0]) # computes \sum_i r_i/|r_i|^3 * Q_i
+            * jnp.tensordot(
+                r_point_charge, charge.real, axes=[0, 0]
+            )  # computes \sum_i r_i/|r_i|^3 * Q_i
             * add_induced
         )
         return jax.vmap(jax.vmap(jax.jit(element), (0, None), 0), (None, 0), 0)(
@@ -1073,7 +1067,7 @@ def dipole_transitions(
 
     # array of shape positions x orbitals x 3, with entries vec_r[i, o, :] = r_i - r_o
     vec_r = (
-        jnp.repeat(stack.positions[:, jnp.newaxis, :], 2*len(transitions), axis=1)
+        jnp.repeat(stack.positions[:, jnp.newaxis, :], 2 * len(transitions), axis=1)
         - stack.positions[indices[:, 0, :].flatten(), :]
     )
 
@@ -1085,6 +1079,7 @@ def dipole_transitions(
     )
 
     return jax.jit(inner)
+
 
 ## DISSIPATION
 def relaxation(tau: float) -> Callable:
@@ -1437,207 +1432,117 @@ def epi(stack: Stack, rho: Array, omega: float, epsilon: float = None) -> float:
     rho_normalized = rho_without_diagonal / jnp.linalg.norm(rho_without_diagonal)
     te = transition_energies(stack)
     excitonic_transitions = (
-        rho_normalized / ( te * (te > stack.eps) - omega + 1j * epsilon) ** 2
+        rho_normalized / (te * (te > stack.eps) - omega + 1j * epsilon) ** 2
     )
     return 1 - jnp.sum(jnp.abs(excitonic_transitions * rho_normalized)) / (
         jnp.linalg.norm(rho_normalized) * jnp.linalg.norm(excitonic_transitions)
     )
 
 
-def absorption_brute_force(
-    stack: Stack, rho: Array, omega: float, tau: float, component: int
-) -> tuple[Array, Array]:
-    """Calculates polarizability and absorption cross section via brute force. Uses SC equations based on non-interacting susceptibility
-    given in https://pubs.acs.org/doi/abs/10.1021/nn204780e.
-
-    :param stack: stack object
-    :param rho: (equilibrium state) density matrix for which the field is to be computed
-    :param omega: frequency at which the quantities should be computed
-    :param tau: intrinsic relaxation time
-    :param component: component of the electric field to take (0,1,2) => (x,y,z)
-    :returns: tuple of (polarizability, absorption cross section)
-    """
-
-    @jax.jit
-    def inner(l1, l2):
-        return jnp.sum(
-            occ
-            * stack.eigenvectors[l1, :][:, None]
-            * stack.eigenvectors[l2, :].conj()
-            * stack.eigenvectors[l1, :].conj()[:, None]
-            * stack.eigenvectors[l2, :]
-        )
-
-    occ = (
-        stack.electrons
-        / 2
-        * (jnp.diag(rho)[:, None] - jnp.diag(rho))
-        / (omega + stack.energies[:, None] - stack.energies + 1j / (2.0 * tau))
-    )
-
-    pos = stack.positions[:, component]
-    sus = jax.vmap(jax.vmap(jax.jit(inner), (0, None), 0), (None, 0), 0)(
-        jnp.arange(stack.energies.size), jnp.arange(stack.energies.size)
-    )
-    # the underyling equations we assume
-    # p_e = -E * x
-    # p = p_e + CXp => p = (1-CX)^(-1)p_e
-    # r = Xp = X(1-CX)^(-1)Ex
-    # a = (1/E) (x,r) = (x,X(1-CX)^(-1)(-x))
-    alpha = pos @ (
-        sus
-        @ (jnp.linalg.inv(jnp.eye(stack.energies.size) - stack.coulomb @ sus) @ -pos)
-    )
-    return alpha, 4 * jnp.pi * omega * jnp.imag(alpha)
-
-
-def absorption(
-    stack: Stack,
-    polarization: int,
-    maximum_omega: float,
-    tau: float,
-    coulomb_strength: float = 1.0,
-    minimum_omega: float = 0.0,
-    discretization: int = 200,
-) -> tuple[Array, Array]:
-    """Calculates polarizability and absorption cross section in frequency domain. Uses SC equations based on non-interacting susceptibility
-    via the method given in https://pubs.acs.org/doi/abs/10.1021/nn204780e.
-
-    :param stack: stack object
-    :param polarization:  component of the electric field to take (0,1,2) => (x,y,z)
-    :param maximum_omega: maximum frequency
-    :param tau: intrinsic relaxation time
-    :param coulomb_strength: coulomb strength scaling
-    :param minimum_omega: minimum frequency
-    :param discretization: number of points in frequency grid
-    :returns: tuple with first element being polarizability, second being absorption cross section
-    """
-
-    stack = stack.replace(
-        energies=np.array(stack.energies),
-        coulomb=np.array(stack.coulomb),
-        eigenvectors=np.array(stack.eigenvectors),
-        hamiltonian=np.array(stack.hamiltonian),
-    )
-
-    freq_number = 2**12
-
-    omega_max = np.real(max(stack.energies[-1], -stack.energies[0])) + 0.1
-    omega_grid = np.linspace(-omega_max, omega_max, freq_number)
-    omega_dummy = np.linspace(-2 * omega_max, 2 * omega_max, 2 * freq_number)
-    omega_3 = omega_dummy[1:-1]
-    omega_grid_extended = np.insert(omega_3, int(len(omega_dummy) / 2 - 1), 0)
-
-    omegas = np.linspace(minimum_omega, maximum_omega, discretization)
-    omega_step = omegas[1] - omegas[0]
-
-    sigmas = np.full_like(omegas, 0)
-
-    coord = [stack.positions[i][polarization] for i in range(stack.electrons)]
-    phi_ext = -np.array(coord)
-    coulomb_interaction_matrix = stack.coulomb * coulomb_strength
-    occupation = np.diag(stack.rho_0) * stack.electrons / 2
-
-    for omega in range(len(omegas)):
-        xi_k = _susceptibility(
-            stack.hamiltonian,
-            stack.energies,
-            stack.eigenvectors,
-            occupation,
-            omegas[omega],
-            stack.electrons,
-            tau,
-            omega_grid,
-            omega_grid_extended,
-        )
-        phi = np.dot(
-            np.linalg.inv(
-                np.identity(stack.electrons)
-                - np.matmul(coulomb_interaction_matrix, xi_k)
-            ),
-            phi_ext,
-        )
-        ro = np.dot(xi_k, phi)
-
-        alpha = np.dot(coord, ro)
-        sigma = 4 * np.pi * omegas[omega] * np.imag(alpha)
-        sigmas[omega] = sigma
-        if np.mod(omega, 10) == 0:
-            print("{0}  /  {1}".format(omega, len(omegas)))
-
-    return omegas, sigmas
-
-
-@njit
-def _susceptibility(
-    hamiltonian,
-    energies,
-    eigenvectors,
-    occupation,
-    omega,
-    number_of_electrons,
-    tau,
-    omega_grid,
-    omega_grid_extended,
+def get_polarizability_function(
+    stack, tau, polarization, coulomb_strength, hungry=True
 ):
-    omega_up = np.array(
-        [omega_grid[omega_grid > energies[j]][0] for j in range(len(energies))]
-    )  # for each energy state j determines the upper frequency
-    omega_low = np.array(
-        [omega_grid[omega_grid < energies[j]][-1] for j in range(len(energies))]
-    )  # for each energy state j determines the lower frequency
-    omega_index = np.array(
-        [np.where(omega_grid <= energies[j])[0][-1] for j in range(len(energies))]
-    )  # in a frequency grid, which index had that lower frequency
-    delta_omega = omega_up[0] - omega_low[0]
+    def _polarizability(omega):
+        x = sus(omega)
+        ro = x @ jnp.linalg.inv(one - c @ x) @ phi_ext
+        return -pos @ ro
 
-    susceptibility = np.zeros((len(energies), len(energies)), dtype="complex128")
+    one = jnp.identity(stack.electrons)
+    pos = stack.positions[:, polarization]
+    phi_ext = pos
+    c = stack.coulomb * coulomb_strength
+    sus = get_susceptibility_function(stack, tau, hungry)
+    return _polarizability
 
-    for l_1 in range(len(energies)):
-        for l_2 in range(len(energies)):
-            ffn = np.zeros(len(omega_grid), "double")
-            ggn = np.zeros(len(omega_grid), "double")
-            for j in range(len(energies)):
-                ffn[omega_index[j]] += (
-                    eigenvectors[l_1, j].real
-                    * np.conj(eigenvectors[l_2, j].real)
-                    * (1 - occupation[j].real)
-                    * (energies[j].real - omega_low[j])
-                    / delta_omega
-                )
-                ffn[omega_index[j] + 1] += (
-                    eigenvectors[l_1, j].real
-                    * np.conj(eigenvectors[l_2, j].real)
-                    * (1 - occupation[j].real)
-                    * (-energies[j].real + omega_up[j])
-                    / delta_omega
-                )
-                ggn[omega_index[j]] += (
-                    eigenvectors[l_1, j].real
-                    * np.conj(eigenvectors[l_2, j].real)
-                    * occupation[j].real
-                    * (energies[j].real - omega_low[j])
-                    / delta_omega
-                )
-                ggn[omega_index[j] + 1] += (
-                    eigenvectors[l_1, j].real
-                    * np.conj(eigenvectors[l_2, j].real)
-                    * occupation[j].real
-                    * (-energies[j].real + omega_up[j])
-                    / delta_omega
-                )
-            with numba.objmode(Sf1="float64[:]"):
-                b = pyfftw.interfaces.numpy_fft.ihfft(
-                    ffn, n=2 * len(ffn), norm="ortho"
-                ) * pyfftw.interfaces.numpy_fft.ihfft(
-                    ggn[::-1], n=2 * len(ffn), norm="ortho"
-                )
-                Sf1 = pyfftw.interfaces.numpy_fft.hfft(b)[:-1]
+
+def get_susceptibility_function(stack, tau, hungry=True):
+
+    def _sum_subarrays(arr):
+        """Sums subarrays in 1-dim array arr. Subarrays are defined by n x 2 array indices as [ [start1, end1], [start2, end2], ... ]"""
+        arr = jnp.r_[0, arr.cumsum()][indices]
+        return arr[:, 1] - arr[:, 0]
+
+    def _susceptibility(omega):
+
+        def susceptibility_element(site_1, site_2):
+
+            # calculate per-energy contributions
+            prefac = eigenvectors[site_1, :] * eigenvectors[site_2, :] / delta_omega
+            f_lower = prefac * (energies - omega_low) * occupation
+            g_lower = prefac * (energies - omega_low) * (1 - occupation)
+            f_upper = prefac * (-energies + omega_up) * occupation
+            g_upper = prefac * (-energies + omega_up) * (1 - occupation)
+
+            # TODO: this is retarded, change this
+            f = jnp.r_[
+                0,
+                jnp.ravel(
+                    jnp.column_stack((_sum_subarrays(f_lower), _sum_subarrays(f_upper)))
+                ),
+            ][mask]
+            g = jnp.r_[
+                0,
+                jnp.ravel(
+                    jnp.column_stack((_sum_subarrays(g_lower), _sum_subarrays(g_upper)))
+                ),
+            ][mask]
+
+            b = jnp.fft.ihfft(f, n=2 * f.size, norm="ortho") * jnp.fft.ihfft(
+                g[::-1], n=2 * f.size, norm="ortho"
+            )
+            Sf1 = jnp.fft.hfft(b)[:-1]
             Sf = -Sf1[::-1] + Sf1
             eq = 2.0 * Sf / (omega - omega_grid_extended + 1j / (2.0 * tau))
-            susceptibility[l_1, l_2] = np.sum(eq)
+            return -jnp.sum(eq)
 
-    return susceptibility
+        if hungry:
+            return jax.vmap(
+                jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0
+            )(sites, sites)
+        return lax.map(
+            lambda i: lax.map(lambda j: susceptibility_element(i, j), sites), sites
+        )
+
+    # unpacking
+    energies = stack.energies.real
+    eigenvectors = stack.eigenvectors.real
+    occupation = jnp.diag(stack.rho_0).real * stack.electrons / 2
+    sites = jnp.arange(energies.size)
+    freq_number = 2**12
+    omega_max = jnp.real(max(stack.energies[-1], -stack.energies[0])) + 0.1
+    omega_grid = jnp.linspace(-omega_max, omega_max, freq_number)
+
+    # build two arrays sandwiching the energy values: omega_low contains all frequencies bounding energies below, omega_up bounds above
+    upper_indices = jnp.argmax(omega_grid > energies[:, None], axis=1)
+    omega_low = omega_grid[upper_indices - 1]
+    omega_up = omega_grid[upper_indices]
+    delta_omega = omega_up[0] - omega_low[0]
+
+    omega_dummy = jnp.linspace(-2 * omega_grid[-1], 2 * omega_grid[-1], 2 * freq_number)
+    omega_3 = omega_dummy[1:-1]
+    omega_grid_extended = jnp.insert(omega_3, int(len(omega_dummy) / 2 - 1), 0)
+
+    # indices for grouping energies into contributions to frequency points.
+    # e.g. energies like [1,1,2,3] on a frequency grid [0.5, 1.5, 2.5, 3.5]
+    # the contribution array will look like [ f(1, eigenvector), f(1, eigenvector'), f(2, eigenvector_2), f(3, eigenvector_3) ]
+    # we will have to sum the first two elements
+    # we do this by building an array "indices" of the form: [ [0, 2], [2,3], [3, 4] ]
+    omega_low_unique, indices = jnp.unique(omega_low, return_index=True)
+    indices = jnp.r_[jnp.repeat(indices, 2)[1:], indices[-1] + 1].reshape(
+        omega_low_unique.size, 2
+    )
+
+    # TODO: this is retarded, change this
+    # mask for inflating the contribution array to the full size given by omega_grid.
+    comparison_matrix = (
+        omega_grid[:, None]
+        == jnp.ravel(jnp.column_stack((jnp.unique(omega_low), jnp.unique(omega_up))))[
+            None, :
+        ]
+    )
+    mask = (jnp.argmax(comparison_matrix, axis=1) + 1) * comparison_matrix.any(axis=1)
+
+    return _susceptibility
 
 
 ## POSTPROCESSING
@@ -1709,6 +1614,7 @@ def to_site_basis(stack: Stack, matrix: Array) -> Array:
     """
     return stack.eigenvectors @ matrix @ stack.eigenvectors.conj().T
 
+
 def to_energy_basis(stack: Stack, matrix: Array) -> Array:
     """Transforms an arbitrary matrix from site to energy basis.
 
@@ -1717,6 +1623,7 @@ def to_energy_basis(stack: Stack, matrix: Array) -> Array:
     :returns: square array in energy basis
     """
     return stack.eigenvectors.conj().T @ matrix @ stack.eigenvectors
+
 
 ## plotting
 def _plot_wrapper(plot_func):
@@ -1882,9 +1789,11 @@ def show_eigenstate3D(
         ax.scatter(
             *zip(*stack.positions[idxs, :2]),
             zs=stack.positions[idxs, 2],
-            s=6000 * jnp.abs(stack.eigenvectors[idxs, show_state])
-            if indicate_size
-            else 40,
+            s=(
+                6000 * jnp.abs(stack.eigenvectors[idxs, show_state])
+                if indicate_size
+                else 40
+            ),
             c=stack.sublattice_ids[idxs] if not color_orbitals else None,
             label=orb,
         )
@@ -1924,9 +1833,11 @@ def show_eigenstate2D(
         idxs = jnp.nonzero(stack.ids == stack.unique_ids.index(orb))[0]
         ax.scatter(
             *zip(*stack.positions[idxs, :][:, indices[plane]]),
-            s=6000 * jnp.abs(stack.eigenvectors[idxs, show_state])
-            if indicate_size
-            else 40,
+            s=(
+                6000 * jnp.abs(stack.eigenvectors[idxs, show_state])
+                if indicate_size
+                else 40
+            ),
             c=stack.sublattice_ids[idxs] if not color_orbitals else None,
             label=orb,
         )
