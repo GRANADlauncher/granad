@@ -12,6 +12,7 @@ from flax import struct
 import jax as jax
 from jax import Array, lax
 import jax.numpy as jnp
+import diffrax
 
 ## complex precision
 from jax import config
@@ -1318,7 +1319,43 @@ def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -
 
 
 ## TIME PROPAGATION
-def evolution(
+def evolution( 
+    stack: Stack,
+    time: Array,
+    field: FieldFunc,
+    dissipation: DissipationFunc = None,
+    coulomb_strength: float = 1.0,
+    transition: Callable = lambda c, h, e: h,    
+    saveat = None, 
+    solver = diffrax.Dopri5(), 
+    rtol = 1e-8, 
+    atol = 1e-8 ):    
+
+    def rhs(time, rho, args):
+        e_field, delta_rho = field(time), rho - rho_stat
+        charge = -jnp.diag(delta_rho) * stack.electrons
+        p_ext = jnp.sum(stack.positions * e_field.real.T, axis=1)
+        p_ind = coulomb @ charge
+        h_total = transition(charge, stack.hamiltonian, e_field) + jnp.diag(
+            p_ext - p_ind
+        )
+        return -1j * (h_total @ rho - rho @ h_total) + dissipation(rho, rho_stat)
+
+    coulomb = stack.coulomb * coulomb_strength
+    rho_stat = stack.eigenvectors @ stack.rho_stat @ stack.eigenvectors.conj().T
+
+    term = diffrax.ODETerm(rhs)
+    rho_init = stack.eigenvectors @ stack.rho_0 @ stack.eigenvectors.conj().T
+    saveat = diffrax.SaveAt( ts = time if saveat is None else saveat )
+    stepsize_controller = diffrax.PIDController(rtol=rtol, atol=atol)    
+    sol = diffrax.diffeqsolve(term, solver, t0=time[0], t1=time[-1], dt0=time[1] - time[0], y0=rho_init, saveat=saveat,
+                    stepsize_controller=stepsize_controller)
+    return (
+        stack.replace(rho_0=stack.eigenvectors.conj().T @ sol.ys[-1] @ stack.eigenvectors),
+        sol
+    )
+
+def evolution_old(
     stack: Stack,
     time: Array,
     field: FieldFunc,
