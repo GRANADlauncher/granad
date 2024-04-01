@@ -85,6 +85,7 @@ class Stack:
     from_state: int
     to_state: int
     beta: float
+    spin_degenerate: bool
 
 
 class LatticeType(Enum):
@@ -712,6 +713,7 @@ class StackBuilder:
         doping: int = 0,
         beta: float = jnp.inf,
         eps: float = 1e-5,
+        spin_degenerate: bool = True,
     ) -> Stack:
         """Get stack object for numerical simulations.
 
@@ -737,6 +739,7 @@ class StackBuilder:
             beta,
             jnp.array(self.sublattice_ids),
             eps,
+            spin_degenerate,
         )
 
     @staticmethod
@@ -845,6 +848,10 @@ def _hamiltonian_coulomb(pos, ids, func):
     return jax.vmap(jax.vmap(inner, (0, None), 0), (None, 0), 0)
 
 
+def fermi(e, beta, mu):
+    return 1 / (jnp.exp(beta * (e - mu)) + 1)
+
+
 def _density_matrix(
     energies: Array,
     total_electrons: int,
@@ -853,7 +860,8 @@ def _density_matrix(
     beta: float,
     eps: float,
 ) -> tuple[Array, int]:
-    """Calculates the normalized spin-traced 1RDM according to the aufbau principle.
+    """Calculates the normalized spin-traced 1RDM. For zero temperature, accordning to the Aufbau principle.
+    At finite temperature, the chemical potential is determined for the thermal density matrix.
 
     :param energies: IP energies of the nanoflake
     :param total_electrons: electron number
@@ -863,6 +871,53 @@ def _density_matrix(
     :param eps:
     """
 
+    if beta == jnp.inf:
+        return _density_aufbau(energies, total_electrons, from_state, to_state, eps)
+    else:
+        # TODO: warning: may be weird with degeneracies
+        return _density_thermo(energies, total_electrons, beta, eps)
+
+
+def _density_thermo(
+    energies, total_electrons, beta, eps, learning_rate=0.1, max_iter=10
+):
+
+    def loss(mu):
+        return (2 * fermi(energies, beta, mu).sum() - total_electrons) ** 2
+
+    # Compute the gradient of the loss function
+    grad_loss = jax.grad(loss)
+
+    # Define the gradient descent update step
+    def update_step(mu):
+        gradient = grad_loss(mu)
+        new_mu = mu - learning_rate * gradient
+        return new_mu
+
+    # Define the condition for the while loop to continue
+    # Here we simply run for a fixed number of iterations
+    def cond_fun(val):
+        mu, i = val
+        return jnp.logical_or(loss(mu) > 1e-6, i < max_iter)
+
+    # Define the body of the while loop
+    def body_fun(val):
+        mu, i = val
+        new_mu = update_step(mu)
+        return new_mu, i + 1
+
+    # Initialize mu and iteration counter
+    mu_init = 0.0  # initial value
+    i_init = 0  # initial iteration
+
+    # Run the gradient descent
+    final_mu, final_iter = jax.lax.while_loop(cond_fun, body_fun, (mu_init, i_init))
+
+    return jnp.diag(2 * fermi(energies, beta, final_mu)), jnp.nan
+
+
+# TODO: lift spin degeneracy
+def _density_aufbau(energies, total_electrons, from_state, to_state, eps):
     # index array
     idxs = jnp.arange(energies.size)
 
@@ -948,6 +1003,7 @@ def _stack(
     beta: float,
     sublattice_ids: Array,
     eps: float,
+    spin_degenerate: bool,
 ) -> Stack:
     """Takes a list of orbitals and two dictionaries specifying the hopping rates and coulomb interactions and produces a stack that holds the state of the system before it is propagated in time (e.g. the eigenenergies and density matrix).
 
@@ -981,6 +1037,8 @@ def _stack(
         coulomb,
         rho_0,
         rho_stat,
+        # 2 * rho_0 if spin_degenerate else rho_0,
+        # 2 * rho_stat if spin_degenerate else rho_stat,
         energies,
         eigenvectors,
         pos,
@@ -993,6 +1051,7 @@ def _stack(
         from_state,
         to_state,
         beta,
+        spin_degenerate,
     )
 
 
@@ -1092,12 +1151,7 @@ def relaxation(tau: float) -> Callable:
     return jax.jit(lambda r, rs: -(r - rs) / (2 * tau))
 
 
-# TODO: check equation
-def _default_functional(rho_element):
-    return jnp.heaviside(2.0 - rho_element.real, 0)
-
-
-def lindblad(stack, gamma, saturation=_default_functional):
+def lindblad(stack, gamma, saturation):
     """Function for modelling dissipation according to the saturated lindblad equation. TODO: ref paper
 
     :param stack: object representing the state of the system
@@ -1166,10 +1220,10 @@ def get_self_consistent(
         delta_phi = np.linalg.norm(phi_ind - phi_ind_old)
         if delta_phi < accuracy:
             ham_final = jnp.array(h_sc)
-            rho_stat_final, homo = granad._density_matrix(
+            rho_stat_final, homo = _density_matrix(
                 energies, stack.electrons, 0, 0, stack.beta, stack.eps
             )
-            rho_0_final, homo = granad._density_matrix(
+            rho_0_final, homo = _density_matrix(
                 energies,
                 stack.electrons,
                 stack.from_state,
@@ -1192,7 +1246,7 @@ def get_self_consistent(
         energies, eigenvectors = jnp.linalg.eigh(h_sc)
 
         # new density matrix
-        rho_energy, _ = granad._density_matrix(
+        rho_energy, _ = _density_matrix(
             energies, stack.electrons, 0, 0, stack.beta, stack.eps
         )
         rho = _to_site_basis(eigenvectors, rho_energy)
@@ -1225,7 +1279,7 @@ def electric_field(
     :returns: JIT-compiled closure that computes the electric field as a functon of time
     """
     static_part = jnp.expand_dims(jnp.array(amplitudes), 1) * jnp.exp(
-        -1j * np.pi / 2 + 1j * positions @ jnp.array(k_vector)
+        -1j * jnp.pi / 2 + 1j * positions @ jnp.array(k_vector)
     )
     return jax.jit(lambda t: jnp.exp(1j * frequency * t) * static_part)
 
@@ -1283,7 +1337,7 @@ def electric_field_pulse(
     sigma = fwhm / (2.0 * jnp.sqrt(jnp.log(2)))
     return jax.jit(
         lambda t: static_part
-        * jnp.exp(-1j * np.pi / 2 + 1j * frequency * (t - peak))
+        * jnp.exp(-1j * jnp.pi / 2 + 1j * frequency * (t - peak))
         * jnp.exp(-((t - peak) ** 2) / sigma**2)
     )
 
@@ -1319,17 +1373,18 @@ def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -
 
 
 ## TIME PROPAGATION
-def evolution( 
+def evolution(
     stack: Stack,
     time: Array,
     field: FieldFunc,
     dissipation: DissipationFunc = None,
     coulomb_strength: float = 1.0,
-    transition: Callable = lambda c, h, e: h,    
-    saveat = None, 
-    solver = diffrax.Dopri5(), 
-    rtol = 1e-8, 
-    atol = 1e-8 ):    
+    transition: Callable = lambda c, h, e: h,
+    saveat=None,
+    solver=diffrax.Dopri5(),
+    rtol=1e-8,
+    atol=1e-8,
+):
 
     def rhs(time, rho, args):
         e_field, delta_rho = field(time), rho - rho_stat
@@ -1346,14 +1401,25 @@ def evolution(
 
     term = diffrax.ODETerm(rhs)
     rho_init = stack.eigenvectors @ stack.rho_0 @ stack.eigenvectors.conj().T
-    saveat = diffrax.SaveAt( ts = time if saveat is None else saveat )
-    stepsize_controller = diffrax.PIDController(rtol=rtol, atol=atol)    
-    sol = diffrax.diffeqsolve(term, solver, t0=time[0], t1=time[-1], dt0=time[1] - time[0], y0=rho_init, saveat=saveat,
-                    stepsize_controller=stepsize_controller)
-    return (
-        stack.replace(rho_0=stack.eigenvectors.conj().T @ sol.ys[-1] @ stack.eigenvectors),
-        sol
+    saveat = diffrax.SaveAt(ts=time if saveat is None else saveat)
+    stepsize_controller = diffrax.PIDController(rtol=rtol, atol=atol)
+    sol = diffrax.diffeqsolve(
+        term,
+        solver,
+        t0=time[0],
+        t1=time[-1],
+        dt0=time[1] - time[0],
+        y0=rho_init,
+        saveat=saveat,
+        stepsize_controller=stepsize_controller,
     )
+    return (
+        stack.replace(
+            rho_0=stack.eigenvectors.conj().T @ sol.ys[-1] @ stack.eigenvectors
+        ),
+        sol,
+    )
+
 
 def evolution_old(
     stack: Stack,
@@ -1432,7 +1498,7 @@ def wigner_weisskopf(stack: Stack, component: int = 0) -> Array:
     eps_0 = 8.85 * 1e-12
     hbar = 1.0545718 * 1e-34
     c = 3e8  # 137 (a.u.)
-    factor = 1.6e-29 * charge / (3 * np.pi * eps_0 * hbar**2 * c**3)
+    factor = 1.6e-29 * charge / (3 * jnp.pi * eps_0 * hbar**2 * c**3)
     te = transition_energies(stack)
     return (
         (te * (te > stack.eps)) ** 3
