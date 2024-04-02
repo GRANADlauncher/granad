@@ -61,12 +61,12 @@ if __name__ == '__main__':
 
     # create the stack object
     stack = sb.get_stack()
-    print(stack.rho_0.diagonal(), stack.homo)
+    print(stack.rho_0.diagonal() * stack.electrons, stack.homo)
 
     # create the stack object
-    stack = sb.get_stack( from_state = [2], to_state = [1], excited_electrons = [2], doping = 0 )
-    print(stack.rho_0.diagonal(), stack.homo)
+    stack = sb.get_stack( from_state = [1], to_state = [2], excited_electrons = [2], doping = 0 )
+    print(stack.rho_0.diagonal() * stack.electrons, stack.homo)
 
     # create the stack object
-    stack = sb.get_stack( from_state = [2,1], to_state = [1,0], excited_electrons = [2,1], doping = 0 )
-    print(stack.rho_0.diagonal(), stack.homo)
+    stack = sb.get_stack( from_state = [1,0], to_state = [2,4], excited_electrons = [2,1], doping = 0 )
+    print(stack.rho_0.diagonal() * stack.electrons, stack.homo)

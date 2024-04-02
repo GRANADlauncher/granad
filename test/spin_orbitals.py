@@ -61,4 +61,4 @@ if __name__ == '__main__':
 
     # create the stack object
     stack = sb.get_stack( from_state = 0, to_state = 0,  doping = 0, spin_degenerate = False )
-    print(stack.rho_0.diagonal(), stack.homo)
+    print(stack.rho_0.diagonal() * stack.electrons, stack.homo, stack.rho_0.diagonal().sum() * stack.electrons)
