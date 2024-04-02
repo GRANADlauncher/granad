@@ -84,6 +84,7 @@ class Stack:
     electrons: int
     from_state: int
     to_state: int
+    excited_electrons: int
     beta: float
     spin_degeneracy: int
 
@@ -855,47 +856,41 @@ def fermi(e, beta, mu):
 
 
 def _density_matrix(
-    energies: Array,
-    total_electrons: int,
-    from_state: int,
-    to_state: int,
-    excited_electrons: int,
-    beta: float,
-    eps: float,
-    spin_degeneracy: int,
+    energies,
+    electrons,
+    spin_degeneracy,
+    eps,
+    from_state,
+    to_state,
+    excited_electrons,
+    beta,
 ) -> tuple[Array, int]:
     """Calculates the normalized spin-traced 1RDM. For zero temperature, accordning to the Aufbau principle.
     At finite temperature, the chemical potential is determined for the thermal density matrix.
 
     :param energies: IP energies of the nanoflake
-    :param total_electrons: electron number
-    :param from_state:
-    :param to_state:
-    :param beta:
-    :param eps:
     """
 
     if beta == jnp.inf:
         return _density_aufbau(
             energies,
-            total_electrons,
+            electrons,
+            spin_degeneracy,
+            eps,
             from_state,
             to_state,
             excited_electrons,
-            eps,
-            spin_degeneracy,
         )
-    return _density_thermo(energies, total_electrons, beta, spin_degeneracy)
+    return _density_thermo(energies, electrons, spin_degeneracy, eps, beta)
 
 
+# TODO: notify if gradient descent does not converge
 def _density_thermo(
-    energies, total_electrons, beta, spin_degeneracy, learning_rate=0.1, max_iter=10
+    energies, electrons, spin_degeneracy, eps, beta, learning_rate=0.1, max_iter=10
 ):
 
     def loss(mu):
-        return (
-            spin_degeneracy * fermi(energies, beta, mu).sum() - total_electrons
-        ) ** 2
+        return (spin_degeneracy * fermi(energies, beta, mu).sum() - electrons) ** 2
 
     # Compute the gradient of the loss function
     grad_loss = jax.grad(loss)
@@ -926,19 +921,13 @@ def _density_thermo(
     final_mu, final_iter = jax.lax.while_loop(cond_fun, body_fun, (mu_init, i_init))
 
     return (
-        jnp.diag(spin_degeneracy * fermi(energies, beta, final_mu)) / total_electrons,
+        jnp.diag(spin_degeneracy * fermi(energies, beta, final_mu)) / electrons,
         jnp.nan,
     )
 
 
 def _density_aufbau(
-    energies,
-    total_electrons,
-    from_state,
-    to_state,
-    excited_electrons,
-    eps,
-    spin_degeneracy,
+    energies, electrons, spin_degeneracy, eps, from_state, to_state, excited_electrons
 ):
 
     def _occupation(flags, spin_degeneracy, fraction):
@@ -993,20 +982,19 @@ def _density_aufbau(
             occupation,
         )
 
-    homo = jnp.array(jnp.ceil(total_electrons / spin_degeneracy), int) - 1
+    homo = jnp.array(jnp.ceil(electrons / spin_degeneracy), int) - 1
     # determine where and how often this energy occurs
     flags, degeneracy = _flags(homo)
-    # determine lowest state with this energy
-    homo = jnp.nonzero(flags, size=1)[0]
     # compute electrons at the fermi level
     below = (energies < energies[homo] - eps).sum()
-    remaining_electrons = total_electrons - spin_degeneracy * below
+    homo = jnp.nonzero(flags, size=1)[0]
+    remaining_electrons = electrons - spin_degeneracy * below
     # compute ground state occupations by distributing the remaining electrons across all degenerate levels
     occupation = _occupation(flags, spin_degeneracy, remaining_electrons / degeneracy)
     # excited states
     occupation = lax.fori_loop(0, to_state.size, _body_fun, occupation)
 
-    return jnp.diag(occupation) / total_electrons, homo
+    return jnp.diag(occupation) / electrons, homo
 
 
 def _stack(
@@ -1041,43 +1029,30 @@ def _stack(
 
     hamiltonian, coulomb = _hamiltonian_coulomb(pos, ids, func)(idxs, idxs)
 
-    total_electrons = sum(x.occupation for x in orbs) + doping
+    electrons = sum(x.occupation for x in orbs) + doping
 
     eigenvectors, energies = lax.linalg.eigh(hamiltonian + field_func(pos))
 
-    from_state = (
-        jnp.array([from_state])
-        if isinstance(from_state, int)
-        else jnp.array(from_state)
-    )
-    to_state = (
-        jnp.array([to_state]) if isinstance(to_state, int) else jnp.array(to_state)
-    )
-    excited_electrons = (
-        jnp.array([excited_electrons])
-        if isinstance(excited_electrons, int)
-        else jnp.array(excited_electrons)
+    # TODO check same length
+    from_state = jnp.array([from_state] if isinstance(from_state, int) else from_state)
+    to_state = jnp.array([to_state] if isinstance(to_state, int) else to_state)
+    excited_electrons = jnp.array(
+        [excited_electrons] if isinstance(excited_electrons, int) else excited_electrons
     )
 
+    eq_arr = jnp.array([0])
     rho_0, homo = _density_matrix(
         energies,
-        total_electrons,
+        electrons,
+        spin_degeneracy,
+        eps,
         from_state,
         to_state,
         excited_electrons,
         beta,
-        eps,
-        spin_degeneracy,
     )
     rho_stat, _ = _density_matrix(
-        energies,
-        total_electrons,
-        jnp.array([0]),
-        jnp.array([0]),
-        jnp.array([0]),
-        beta,
-        eps,
-        spin_degeneracy,
+        energies, electrons, spin_degeneracy, eps, eq_arr, eq_arr, eq_arr, beta
     )
 
     return Stack(
@@ -1085,8 +1060,6 @@ def _stack(
         coulomb,
         rho_0,
         rho_stat,
-        # 2 * rho_0 if spin_degenerate else rho_0,
-        # 2 * rho_stat if spin_degenerate else rho_stat,
         energies,
         eigenvectors,
         pos,
@@ -1095,9 +1068,10 @@ def _stack(
         sublattice_ids,
         eps,
         homo,
-        total_electrons,
+        electrons,
         from_state,
         to_state,
+        excited_electrons,
         beta,
         spin_degeneracy,
     )
@@ -1234,7 +1208,7 @@ def lindblad(stack, gamma, saturation):
 
 ## self-consistency
 def get_self_consistent(
-    stack: Stack, iterations: int = 500, mix: float = 0.05, accuracy: float = 1e-6
+    stack: Stack, iterations: int = 50, mix: float = 0.05, accuracy: float = 1e-6
 ) -> Stack:
     """Get a stack with a self-consistent IP Hamiltonian.
 
@@ -1248,64 +1222,73 @@ def get_self_consistent(
     def _to_site_basis(ev, mat):
         return ev @ mat @ ev.conj().T
 
-    system_dim = stack.energies.size
-    rho_uniform = jnp.eye(system_dim) / system_dim
-    rho_0 = np.array(stack.rho_stat)
-    h0 = np.array(stack.hamiltonian)
-    coulomb = np.array(stack.coulomb)
+    def _phi(rho):
+        return stack.coulomb @ jnp.diag(rho - rho_uniform)
 
-    # first induced potential
-    rho = np.array(_to_site_basis(stack.eigenvectors, stack.rho_0))
-    phi_ind = coulomb @ np.diag(rho - rho_uniform)
-    phi_ind_old = np.zeros_like(phi_ind)
+    def _stop(args):
+        return jnp.logical_and(
+            jnp.linalg.norm(_phi(args[0]) - _phi(args[1])) > accuracy,
+            args[2] < iterations,
+        )
 
-    # initial values
-    h_sc = h0
-    energies, eigenvectors = stack.energies, stack.eigenvectors
-
-    for nn in range(2, iterations):
-        # check convergence
-        delta_phi = np.linalg.norm(phi_ind - phi_ind_old)
-        if delta_phi < accuracy:
-            ham_final = jnp.array(h_sc)
-            rho_stat_final, homo = _density_matrix(
-                energies, stack.electrons, 0, 0, stack.beta, stack.eps
-            )
-            rho_0_final, homo = _density_matrix(
-                energies,
-                stack.electrons,
-                stack.from_state,
-                stack.to_state,
-                stack.beta,
-                stack.eps,
-            )
-            break
-
-        if nn == iterations - 1:
-            raise Exception("Self-consistent procedure did not converge!!")
-
-        # new hamiltonian
-        h_sc = h0 + phi_ind * mix + phi_ind_old * (1 - mix)
-
-        # update old density matrix
-        phi_ind_old = phi_ind
+    def _loop(args):
+        rho, rho_old, idx = args
+        ham_new = stack.hamiltonian + _phi(rho) * mix + _phi(rho_old) * (1 - mix)
 
         # diagonalize
-        energies, eigenvectors = jnp.linalg.eigh(h_sc)
+        energies, eigenvectors = jnp.linalg.eigh(ham_new)
 
         # new density matrix
         rho_energy, _ = _density_matrix(
-            energies, stack.electrons, 0, 0, stack.beta, stack.eps
+            energies,
+            stack.electrons,
+            stack.spin_degeneracy,
+            stack.eps,
+            eq_arr,
+            eq_arr,
+            eq_arr,
+            stack.beta,
         )
-        rho = _to_site_basis(eigenvectors, rho_energy)
 
-        # induced potential
-        phi_ind = coulomb @ np.diag(rho - rho_uniform)
+        return _to_site_basis(eigenvectors, rho_energy), rho, idx + 1
+
+    # construct a uniform density matrix in real space
+    _, arr, counts = jnp.unique(
+        jnp.round(stack.positions, 8), return_inverse=True, return_counts=True, axis=0
+    )
+    normalization = 2.0 if int(stack.spin_degeneracy) == 1 else 1.0
+    rho_uniform = jnp.diag((1 / counts)[arr[:, 0]]) / (
+        stack.energies.size * normalization
+    )
+    eq_arr = jnp.array([0])
+
+    # first induced potential
+    rho_old = jnp.zeros_like(stack.hamiltonian)
+    rho = _to_site_basis(stack.eigenvectors, stack.rho_stat)
+
+    # sc loop
+    rho, rho_old, idx = lax.while_loop(_stop, _loop, (rho, rho_old, 0))
+    if idx == iterations - 1:
+        raise Exception("Self-consistent procedure did not converge!!")
+
+    # new hamiltonian and initial state
+    ham_new = stack.hamiltonian + _phi(rho) * mix + _phi(rho_old) * (1 - mix)
+    energies, eigenvectors = jnp.linalg.eigh(ham_new)
+    rho_0, homo = _density_matrix(
+        energies,
+        stack.electrons,
+        stack.spin_degeneracy,
+        stack.eps,
+        stack.from_state,
+        stack.to_state,
+        stack.excited_electrons,
+        stack.beta,
+    )
 
     return stack.replace(
-        hamiltonian=ham_final,
-        rho_0=rho_0_final,
-        rho_stat=rho_stat_final,
+        hamiltonian=ham_new,
+        rho_0=rho_0,
+        rho_stat=eigenvectors.conj().T @ rho @ eigenvectors,
         energies=energies,
         eigenvectors=eigenvectors,
         homo=homo,
