@@ -62,7 +62,7 @@ class Stack:
     :param unique_ids: Collection of unique strings. Each string identifies an orbital type occuring in the stack. Typically something like "pz_graphene".
     :param ids: The integer at the n-th position corresponds to the type of the n-th orbital via its index in unique_ids. For example, for unique_ids = ["A", "B"], one has unique_ids[0] = "A". Additionally, if ids[10] = 0, then the orbital at 10 is of type "A". This is useful if you want to identify quantities corresponding to orbitals. So, say unique_ids = ["adatom_level1", "adatom_level2", "carbon"] and you want to know the position of the adatom. Then you can just perform the ugly lookup stack.positions[ jnp.argwhere(ids == stack.unique_ids.index("adatom_level1")), :]. This is what the function convenience-position function does.
     :param eps: numerical precision threshold for identifiying degeneracies in the eigenenergies.
-    :param homo: index of the homo, such that stack.energies[homo] is the energy of the homo.
+    :param homo: index of the homo, such that stack.energies[homo] is the energy of the ground state homo.
     :param electrons: total number of electrons in the system.
     :param from_state: the state from which electrons have been taken for the initial excited transition, the state translates to HOMO - from_state
     :param to_state: the state into which electrons haven been put for the initial excited transition, the state translates to HOMO + from_state
@@ -85,7 +85,7 @@ class Stack:
     from_state: int
     to_state: int
     beta: float
-    spin_degenerate: bool
+    spin_degeneracy: int
 
 
 class LatticeType(Enum):
@@ -710,6 +710,7 @@ class StackBuilder:
         field_func: Callable[[float], Array] = lambda x: 0j,
         from_state: int = 0,
         to_state: int = 0,
+        excited_electrons : int = 1,
         doping: int = 0,
         beta: float = jnp.inf,
         eps: float = 1e-5,
@@ -735,11 +736,12 @@ class StackBuilder:
             field_func,
             from_state,
             to_state,
+            excited_electrons,
             doping,
             beta,
             jnp.array(self.sublattice_ids),
             eps,
-            spin_degenerate,
+            2.0 if spin_degenerate else 1.0,
         )
 
     @staticmethod
@@ -853,12 +855,14 @@ def fermi(e, beta, mu):
 
 
 def _density_matrix(
-    energies: Array,
-    total_electrons: int,
-    from_state: int,
-    to_state: int,
-    beta: float,
-    eps: float,
+        energies: Array,
+        total_electrons: int,
+        from_state: int,
+        to_state: int,
+        excited_electrons : int,
+        beta: float,
+        eps: float,
+        spin_degeneracy : int
 ) -> tuple[Array, int]:
     """Calculates the normalized spin-traced 1RDM. For zero temperature, accordning to the Aufbau principle.
     At finite temperature, the chemical potential is determined for the thermal density matrix.
@@ -872,18 +876,15 @@ def _density_matrix(
     """
 
     if beta == jnp.inf:
-        return _density_aufbau(energies, total_electrons, from_state, to_state, eps)
-    else:
-        # TODO: warning: may be weird with degeneracies
-        return _density_thermo(energies, total_electrons, beta, eps)
-
+        return _density_aufbau(energies, total_electrons, from_state, to_state, excited_electrons, eps, spin_degeneracy)
+    return _density_thermo(energies, total_electrons, beta, spin_degeneracy )
 
 def _density_thermo(
-    energies, total_electrons, beta, eps, learning_rate=0.1, max_iter=10
+        energies, total_electrons, beta, spin_degeneracy, learning_rate=0.1, max_iter=10
 ):
 
     def loss(mu):
-        return (2 * fermi(energies, beta, mu).sum() - total_electrons) ** 2
+        return (spin_degeneracy * fermi(energies, beta, mu).sum() - total_electrons) ** 2
 
     # Compute the gradient of the loss function
     grad_loss = jax.grad(loss)
@@ -913,84 +914,52 @@ def _density_thermo(
     # Run the gradient descent
     final_mu, final_iter = jax.lax.while_loop(cond_fun, body_fun, (mu_init, i_init))
 
-    return jnp.diag(2 * fermi(energies, beta, final_mu)), jnp.nan
+    return jnp.diag(spin_degeneracy * fermi(energies, beta, final_mu)), jnp.nan
 
+def _density_aufbau(energies, total_electrons, from_state, to_state, excited_electrons, eps, spin_degeneracy):
 
-# TODO: lift spin degeneracy
-def _density_aufbau(energies, total_electrons, from_state, to_state, eps):
-    # index array
-    idxs = jnp.arange(energies.size)
+    def _occupation( flags, spin_degeneracy, fraction ):
+        return jax.vmap( lambda flag : lax.switch( flag, [lambda x : spin_degeneracy, lambda x : fraction, lambda x : 0.0], flag ))(flags)
 
-    # boolean array indicating which energies are equal to the fermi energy within a tolerance given by eps
-    # the fermi energy is the energy up to which all orbitals are filled with one electron
-    is_fermi = jnp.abs(energies[int(total_electrons / 2)] - energies) < eps
+    def _flags( index ):
+        """ 
+        returns a tuple
+        first element : array, labels all energies relative to a level given by energies[index] with
+        0 => is_below_level, 1 => is_level, 2 => is_above_level        
+        second element : degeneracy of level, identified by the number of energies e fullfilling |e - level| < eps
+        """
+        is_level = jnp.abs(energies[index] - energies) < eps
+        is_larger = energies - energies[index] > eps
+        degeneracy = is_level.sum()
+        return is_level + 2 * is_larger, degeneracy
 
-    # get the minimum and maximum fermi index, such that all indices
-    # with energies equal to the fermi energy are contained in the interval [min_fermi_index, max_fermi_index]
-    selection = jnp.array(
-        [0, -1]
-    )  # this picks out the first and last entry of an array
-    min_fermi_index, max_fermi_index = jnp.nonzero(is_fermi)[0][selection]
+    def _excitation( take_from, put_to, number ):
+        flags_from, deg_from = _flags( take_from)
+        flags_to, deg_to = _flags( put_to )
 
-    # we are considering spin degeneracy, i.e. each level gets filled with 2 electrons up to the fermi level
-    # if there are electrons left at the fermi-level, we have to split them and distribute them among all states with an energy equal to the fermi level
-    # if the number of electrons is below min_fermi_index, we fill all levels up to min_fermi_index - 1 with 2 electrons
-    # if not, we have to distribute the electrons equally among the states between min_fermi_index and max_fermi_index
+        # transform to flag array, where 0 => else, 1 => from, 2 => to
+        flags = (flags_from == 1) + (flags_to == 1) * 2
+        return jax.vmap( lambda flag : lax.switch( flag, [lambda x : 0.0, lambda x : -number/deg_from, lambda x : number/deg_to], flag )) (flags)
+    
+    def _body_fun( index, occupation ):
+        take_from, put_to, number = homo_lower - from_state[index], homo_upper + to_state[index], excited_electrons[index]
+        return lax.cond( take_from == put_to, lambda x : x, lambda x : x + _excitation( take_from, put_to, number ), occupation )        
+        
+    # for a non-degenerate system, this is exactly the lumo
+    fermi_index = jnp.array(total_electrons / spin_degeneracy, int)
+    # calculate the number of electrons that don't fit below the fermi level and distribute them across the
+    # possibly degenerate energie states at the fermi level
+    flags, degeneracy = _flags( fermi_index )
+    below = (energies < energies[fermi_index] - eps).sum()
+    remaining_electrons = total_electrons - spin_degeneracy * below 
+    homo_upper = lax.cond( remaining_electrons == 0, lambda x : fermi_index - 1, lambda x : fermi_index - 1 + degeneracy, fermi_index )
+    homo_lower = fermi_index - 1
+    occupation = _occupation(flags, spin_degeneracy, remaining_electrons / degeneracy )
 
-    # determine the homo
-    homo = (
-        max_fermi_index
-        if (total_electrons - 2 * min_fermi_index) != 0
-        else min_fermi_index - 1
-    )
+    # excited states
+    occupation = lax.fori_loop( 0, to_state.size, _body_fun, occupation )
 
-    # the number of electrons left after all levels below the fermi energy have been filled, distributed among all levels
-    remaining_electrons_per_level = (total_electrons - 2 * min_fermi_index) / (
-        max_fermi_index - min_fermi_index + 1
-    )
-
-    # boolean array picking out all states below the fermi energy
-    is_below_fermi = idxs < min_fermi_index
-
-    # jnp.piecewise forces some weird integer cast, so we multiply the boolean arrays with the designated values and add them to obtain the diagonal entries of the density matrix
-    full = 2.0 * is_below_fermi
-    fermi = remaining_electrons_per_level * is_fermi
-    diag_density_matrix = (full + fermi).astype(complex)
-
-    # if an excited state is desired
-    if -from_state != to_state:
-        # get the energy index interval for the donator state
-        is_donating_state = jnp.abs(energies[homo - from_state] - energies) < eps
-        f1, f2 = jnp.nonzero(is_donating_state)[0][selection]
-        total_donating_states = f2 - f1 + 1
-
-        # get the energy index interval for the acceptor state
-        is_accepting_state = jnp.abs(energies[homo + to_state] - energies) < eps
-        t1, t2 = jnp.nonzero(is_accepting_state)[0][selection]
-        total_accepting_states = t2 - t1 + 1
-
-        # list of conditions
-        conditions = [is_donating_state, is_accepting_state]
-
-        # list of functions to apply
-        # i.e. for conditions[i], functions[i] is applied
-        # a single electron is to be lifted from a set of states to another set of states, i.e. we do 1/number_of_states and add this number to every state
-        functions = [
-            lambda x: x - 1 / total_donating_states,
-            lambda x: x + 1 / total_accepting_states,
-            lambda x: x,
-        ]
-
-        diag_density_matrix = jnp.piecewise(diag_density_matrix, conditions, functions)
-
-    # if no excited state is desired, just put the diagonal into square matrix form
-    density_matrix = (
-        jnp.diag(diag_density_matrix)  # * 1 / (jnp.exp(beta * energies) + 1))
-        / total_electrons
-    )
-
-    return density_matrix, homo
-
+    return jnp.diag(occupation), homo_upper
 
 def _stack(
     orbs: list[Orbital],
@@ -999,11 +968,12 @@ def _stack(
     field_func: Callable[[float], Array],
     from_state: int,
     to_state: int,
+        excited_electrons : int,
     doping: int,
     beta: float,
     sublattice_ids: Array,
     eps: float,
-    spin_degenerate: bool,
+    spin_degeneracy: int,
 ) -> Stack:
     """Takes a list of orbitals and two dictionaries specifying the hopping rates and coulomb interactions and produces a stack that holds the state of the system before it is propagated in time (e.g. the eigenenergies and density matrix).
 
@@ -1026,11 +996,15 @@ def _stack(
     total_electrons = sum(x.occupation for x in orbs) + doping
 
     eigenvectors, energies = lax.linalg.eigh(hamiltonian + field_func(pos))
-
+    
+    from_state = jnp.array( [from_state] ) if isinstance(from_state, int) else jnp.array(from_state)
+    to_state = jnp.array( [to_state] ) if isinstance(to_state, int) else jnp.array(to_state)
+    excited_electrons = jnp.array( [excited_electrons] ) if isinstance(excited_electrons, int) else jnp.array(excited_electrons)
+    
     rho_0, homo = _density_matrix(
-        energies, total_electrons, from_state, to_state, beta, eps
+        energies, total_electrons, from_state, to_state, excited_electrons, beta, eps, spin_degeneracy
     )
-    rho_stat, _ = _density_matrix(energies, total_electrons, 0, 0, beta, eps)
+    rho_stat, _ = _density_matrix(energies, total_electrons, jnp.array([0]), jnp.array([0]), jnp.array([0]), beta, eps, spin_degeneracy)
 
     return Stack(
         hamiltonian + field_func(pos),
@@ -1051,7 +1025,7 @@ def _stack(
         from_state,
         to_state,
         beta,
-        spin_degenerate,
+        spin_degeneracy,
     )
 
 
