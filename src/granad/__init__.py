@@ -47,7 +47,7 @@ class Orbital:
     occupation: int = 1
     sublattice_id: int = 0
 
-
+# TODO: make transitions attribute of stack
 @struct.dataclass
 class Stack:
     """A stack of orbitals.
@@ -1409,13 +1409,27 @@ def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -
 
 
 ## TIME PROPAGATION
+def position_operator( stack, transitions ):
+    N = stack.positions.shape[0] 
+    pos = jnp.zeros( (N, N, 3) )
+    for i in range(3):
+        pos = pos.at[:, :, i].set(jnp.diag(stack.positions[:, i]/2))
+    for key, value in transitions.items():
+        value = jnp.array( value )
+        i, j = indices( stack, key[0] ), indices( stack, key[1] )
+        k = value.nonzero()[0]
+        pos = pos.at[i, j, k].set( value[k] )
+    return pos + jnp.transpose( pos, (1,0,2) )
 
-
-def velocity_operator(stack):
-    x_times_h = jnp.einsum("ij,ir->ijr", stack.hamiltonian, stack.positions)
-    h_times_x = jnp.einsum("ij,jr->ijr", stack.hamiltonian, stack.positions)
+def velocity_operator(stack, transitions):
+    if transitions is None:
+        x_times_h = jnp.einsum("ij,ir->ijr", stack.hamiltonian, stack.positions)
+        h_times_x = jnp.einsum("ij,jr->ijr", stack.hamiltonian, stack.positions)
+    else:
+        positions = position_operator( stack, transitions )
+        x_times_h = jnp.einsum("kj,ikr->ijr", stack.hamiltonian, positions)
+        h_times_x = jnp.einsum("ik,kjr->ijr", stack.hamiltonian, positions)        
     return -1j * (x_times_h - h_times_x)
-
 
 # TODO: units
 def evolution(
@@ -1430,6 +1444,7 @@ def evolution(
     rtol=1e-8,
     atol=1e-8,
     spatial=False,
+    transitions = None
 ):
 
     def rhs_uniform(time, rho, args):
@@ -1461,7 +1476,7 @@ def evolution(
     if spatial:
         q = 1
         m = 1
-        v = velocity_operator(stack)
+        v = velocity_operator(stack, transitions)
         rhs = rhs_spatial
     else:
         rhs = rhs_uniform
@@ -1573,7 +1588,7 @@ def wigner_weisskopf(stack: Stack, component: int = 0) -> Array:
         * factor
     )
 
-
+# TODO: this should be changed in accordance with the newly defined position operator
 def transition_dipole_moments(stack: Stack) -> Array:
     r"""Compute transition dipole moments for all states :math:`i,j` as :math:`\braket{i | \hat{r} | j}`.
 
