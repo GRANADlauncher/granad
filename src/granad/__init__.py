@@ -716,6 +716,7 @@ class StackBuilder:
         beta: float = jnp.inf,
         eps: float = 1e-5,
         spin_degenerate: bool = True,
+        pingback: bool = True,
     ) -> Stack:
         """Get stack object for numerical simulations.
 
@@ -730,7 +731,7 @@ class StackBuilder:
 
         self._ensure_combinations()
 
-        return _stack(
+        stack = _stack(
             self.orbitals,
             self.hopping,
             self.coulomb,
@@ -744,6 +745,10 @@ class StackBuilder:
             eps,
             2.0 if spin_degenerate else 1.0,
         )
+        if pingback:
+            print(f"Built stack with {stack.electrons} electrons")
+
+        return stack
 
     @staticmethod
     def _lattice_spot_coupling(
@@ -1404,20 +1409,30 @@ def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -
 
 
 ## TIME PROPAGATION
+
+
+def velocity_operator(stack):
+    x_times_h = jnp.einsum("ij,ir->ijr", stack.hamiltonian, stack.positions)
+    h_times_x = jnp.einsum("ij,jr->ijr", stack.hamiltonian, stack.positions)
+    return -1j * (x_times_h - h_times_x)
+
+
+# TODO: units
 def evolution(
     stack: Stack,
     time: Array,
     field: FieldFunc,
-    dissipation: DissipationFunc = None,
+    dissipation: DissipationFunc = lambda x, y: 0.0,
     coulomb_strength: float = 1.0,
     transition: Callable = lambda c, h, e: h,
     saveat=None,
     solver=diffrax.Dopri5(),
     rtol=1e-8,
     atol=1e-8,
+    spatial=False,
 ):
 
-    def rhs(time, rho, args):
+    def rhs_uniform(time, rho, args):
         e_field, delta_rho = field(time), rho - rho_stat
         charge = -jnp.diag(delta_rho) * stack.electrons
         p_ext = jnp.sum(stack.positions * e_field.real.T, axis=1)
@@ -1427,8 +1442,29 @@ def evolution(
         )
         return -1j * (h_total @ rho - rho @ h_total) + dissipation(rho, rho_stat)
 
+    def rhs_spatial(time, rho, args):
+        vector_potential, delta_rho = field(time), rho - rho_stat
+        charge = -jnp.diag(delta_rho) * stack.electrons
+        p_ind = coulomb @ charge
+
+        # we need to go from velocity to momentum under minimal coupling, i.e. p -> p - qA; H -> H - q A v + q^2/(2m) A^2
+        h_total = (
+            stack.hamiltonian
+            - q * jnp.einsum("ijr, ir -> ij", v, vector_potential)
+            + jnp.diag(q**2 / m * 0.5 * jnp.sum(vector_potential**2, axis=1) - p_ind)
+        )
+        return -1j * (h_total @ rho - rho @ h_total) + dissipation(rho, rho_stat)
+
     coulomb = stack.coulomb * coulomb_strength
     rho_stat = stack.eigenvectors @ stack.rho_stat @ stack.eigenvectors.conj().T
+
+    if spatial:
+        q = 1
+        m = 1
+        v = velocity_operator(stack)
+        rhs = rhs_spatial
+    else:
+        rhs = rhs_uniform
 
     term = diffrax.ODETerm(rhs)
     rho_init = stack.eigenvectors @ stack.rho_0 @ stack.eigenvectors.conj().T
@@ -1553,7 +1589,7 @@ def transition_dipole_moments(stack: Stack) -> Array:
 
 ## INTERACTION
 def epi(stack: Stack, rho: Array, omega: float, epsilon: float = None) -> float:
-    """Calculates the EPI (Energy-based plasmonicity index) of a mode at :math:`\hbar\omega` in the absorption spectrum of a structure.
+    r"""Calculates the EPI (Energy-based plasmonicity index) of a mode at :math:`\hbar\omega` in the absorption spectrum of a structure.
 
     :param stack: stack object
     :param rho: density matrix
@@ -1812,7 +1848,7 @@ def show_energy_occupations(
         jnp.abs(jnp.amax(occ, axis=0) - jnp.amin(occ, axis=0)) > thresh
     )[0]:
         ax.plot(time, occ[:, idx], label=f"{float(stack.energies[idx]):2.2f} eV")
-    ax.set_xlabel("time [$\hbar$/eV]")
+    ax.set_xlabel(r"time [$\hbar$/eV]")
     ax.set_ylabel("occupation of eigenstate")
     plt.legend()
 
@@ -1891,7 +1927,7 @@ def show_electric_field_time(time: Array, field: Array, flag: int = 0):
     ]
     labels = ["Re(E)", "Im(E)", "|E|"]
     ax.plot(time, funcs[flag](jnp.array([jnp.squeeze(field(t)) for t in time])))
-    ax.set_xlabel("time [$\hbar$/eV]")
+    ax.set_xlabel(r"time [$\hbar$/eV]")
     ax.set_ylabel(labels[flag])
 
 
