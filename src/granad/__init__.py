@@ -47,6 +47,7 @@ class Orbital:
     occupation: int = 1
     sublattice_id: int = 0
 
+
 # TODO: make transitions attribute of stack
 @struct.dataclass
 class Stack:
@@ -1409,29 +1410,31 @@ def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -
 
 
 ## TIME PROPAGATION
-def position_operator( stack, transitions ):
-    N = stack.positions.shape[0] 
-    pos = jnp.zeros( (N, N, 3) )
+def position_operator(stack, transitions):
+    N = stack.positions.shape[0]
+    pos = jnp.zeros((N, N, 3))
     for i in range(3):
-        pos = pos.at[:, :, i].set(jnp.diag(stack.positions[:, i]/2))
+        pos = pos.at[:, :, i].set(jnp.diag(stack.positions[:, i] / 2))
     for key, value in transitions.items():
-        value = jnp.array( value )
-        i, j = indices( stack, key[0] ), indices( stack, key[1] )
+        value = jnp.array(value)
+        i, j = indices(stack, key[0]), indices(stack, key[1])
         k = value.nonzero()[0]
-        pos = pos.at[i, j, k].set( value[k] )
-    return pos + jnp.transpose( pos, (1,0,2) )
+        pos = pos.at[i, j, k].set(value[k])
+    return pos + jnp.transpose(pos, (1, 0, 2))
+
 
 def velocity_operator(stack, transitions):
     if transitions is None:
         x_times_h = jnp.einsum("ij,ir->ijr", stack.hamiltonian, stack.positions)
         h_times_x = jnp.einsum("ij,jr->ijr", stack.hamiltonian, stack.positions)
     else:
-        positions = position_operator( stack, transitions )
+        positions = position_operator(stack, transitions)
         x_times_h = jnp.einsum("kj,ikr->ijr", stack.hamiltonian, positions)
-        h_times_x = jnp.einsum("ik,kjr->ijr", stack.hamiltonian, positions)        
+        h_times_x = jnp.einsum("ik,kjr->ijr", stack.hamiltonian, positions)
     return -1j * (x_times_h - h_times_x)
 
-# TODO: units
+
+# TODO: units, reliably identify steady-states
 def evolution(
     stack: Stack,
     time: Array,
@@ -1441,10 +1444,9 @@ def evolution(
     transition: Callable = lambda c, h, e: h,
     saveat=None,
     solver=diffrax.Dopri5(),
-    rtol=1e-8,
-    atol=1e-8,
+    stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-8),
     spatial=False,
-    transitions = None
+    transitions=None,
 ):
 
     def rhs_uniform(time, rho, args):
@@ -1484,7 +1486,6 @@ def evolution(
     term = diffrax.ODETerm(rhs)
     rho_init = stack.eigenvectors @ stack.rho_0 @ stack.eigenvectors.conj().T
     saveat = diffrax.SaveAt(ts=time if saveat is None else saveat)
-    stepsize_controller = diffrax.PIDController(rtol=rtol, atol=atol)
     sol = diffrax.diffeqsolve(
         term,
         solver,
@@ -1588,6 +1589,7 @@ def wigner_weisskopf(stack: Stack, component: int = 0) -> Array:
         * factor
     )
 
+
 # TODO: this should be changed in accordance with the newly defined position operator
 def transition_dipole_moments(stack: Stack) -> Array:
     r"""Compute transition dipole moments for all states :math:`i,j` as :math:`\braket{i | \hat{r} | j}`.
@@ -1624,6 +1626,7 @@ def epi(stack: Stack, rho: Array, omega: float, epsilon: float = None) -> float:
     )
 
 
+# TODO: check carefully for larger systems, get t-matrix in some way, spatial variation
 def get_polarizability_function(
     stack, tau, polarization, coulomb_strength, hungry=True
 ):
@@ -1691,7 +1694,7 @@ def get_susceptibility_function(stack, tau, hungry=True):
     # unpacking
     energies = stack.energies.real
     eigenvectors = stack.eigenvectors.real
-    occupation = jnp.diag(stack.rho_0).real * stack.electrons / 2
+    occupation = jnp.diag(stack.rho_0).real * stack.electrons / stack.spin_degeneracy
     sites = jnp.arange(energies.size)
     freq_number = 2**12
     omega_max = jnp.real(max(stack.energies[-1], -stack.energies[0])) + 0.1
@@ -1743,6 +1746,7 @@ def indices(stack: Stack, orbital_id: str) -> Array:
     return jnp.nonzero(stack.ids == stack.unique_ids.index(orbital_id))[0]
 
 
+# TODO: this should be changed in accordance with the newly defined position operator
 def induced_dipole_moment(stack: Stack, rhos_diag: Array) -> Array:
     """
     Calculates the induced dipole moment for a collection of density matrices.
