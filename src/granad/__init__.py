@@ -1627,7 +1627,7 @@ def epi(stack: Stack, rho: Array, omega: float, epsilon: float = None) -> float:
 
 
 # TODO: check carefully for larger systems, get t-matrix in some way, spatial variation
-def get_polarizability_function(
+def rpa_polarizability_function(
     stack, tau, polarization, coulomb_strength, hungry=True
 ):
     def _polarizability(omega):
@@ -1639,11 +1639,11 @@ def get_polarizability_function(
     pos = stack.positions[:, polarization]
     phi_ext = pos
     c = stack.coulomb * coulomb_strength
-    sus = get_susceptibility_function(stack, tau, hungry)
+    sus = rpa_susceptibility_function(stack, tau, hungry)
     return _polarizability
 
 
-def get_susceptibility_function(stack, tau, hungry=True):
+def rpa_susceptibility_function(stack, tau, hungry=True):
 
     def _sum_subarrays(arr):
         """Sums subarrays in 1-dim array arr. Subarrays are defined by n x 2 array indices as [ [start1, end1], [start2, end2], ... ]"""
