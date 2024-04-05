@@ -1653,28 +1653,20 @@ def get_susceptibility_function(stack, tau, hungry=True):
     def _susceptibility(omega):
 
         def susceptibility_element(site_1, site_2):
-
             # calculate per-energy contributions
             prefac = eigenvectors[site_1, :] * eigenvectors[site_2, :] / delta_omega
             f_lower = prefac * (energies - omega_low) * occupation
             g_lower = prefac * (energies - omega_low) * (1 - occupation)
             f_upper = prefac * (-energies + omega_up) * occupation
             g_upper = prefac * (-energies + omega_up) * (1 - occupation)
-
-            # TODO: this is retarded, change this
-            f = jnp.r_[
-                0,
-                jnp.ravel(
-                    jnp.column_stack((_sum_subarrays(f_lower), _sum_subarrays(f_upper)))
-                ),
-            ][mask]
-            g = jnp.r_[
-                0,
-                jnp.ravel(
-                    jnp.column_stack((_sum_subarrays(g_lower), _sum_subarrays(g_upper)))
-                ),
-            ][mask]
-
+            f = (
+                jnp.r_[0, _sum_subarrays(f_lower)][mask]
+                + jnp.r_[0, _sum_subarrays(f_upper)][mask2]
+            )
+            g = (
+                jnp.r_[0, _sum_subarrays(g_lower)][mask]
+                + jnp.r_[0, _sum_subarrays(g_upper)][mask2]
+            )
             b = jnp.fft.ihfft(f, n=2 * f.size, norm="ortho") * jnp.fft.ihfft(
                 g[::-1], n=2 * f.size, norm="ortho"
             )
@@ -1720,16 +1712,11 @@ def get_susceptibility_function(stack, tau, hungry=True):
         omega_low_unique.size, 2
     )
 
-    # TODO: this is retarded, change this
     # mask for inflating the contribution array to the full size given by omega_grid.
-    comparison_matrix = (
-        omega_grid[:, None]
-        == jnp.ravel(jnp.column_stack((jnp.unique(omega_low), jnp.unique(omega_up))))[
-            None, :
-        ]
-    )
+    comparison_matrix = omega_grid[:, None] == omega_low_unique[None, :]
     mask = (jnp.argmax(comparison_matrix, axis=1) + 1) * comparison_matrix.any(axis=1)
-
+    comparison_matrix = omega_grid[:, None] == jnp.unique(omega_up)[None, :]
+    mask2 = (jnp.argmax(comparison_matrix, axis=1) + 1) * comparison_matrix.any(axis=1)
     return _susceptibility
 
 
