@@ -57,8 +57,6 @@ sb.set_coulomb(coulomb_graphene)
 stack = sb.get_stack()
 # -
 
-
-
 # We now compute the RPA absorption for an x-polarized uniform electric field. We do so by first computing the polarizability and then aking its imaginary part. Similar to the previous function, we have to tell GRANAD some parameters: a phenomennological broadening, coulomb strength scaling factor. In addition, we make it fast, but take a lot of memory with hungry = True. 
 
 # +
@@ -70,4 +68,4 @@ alpha = granad.rpa_polarizability_function( stack = stack, tau = tau, polarizati
 absorption = jax.lax.map( alpha, omegas ).imag * 4 * jnp.pi * omegas
 plt.plot( omegas, absorption )
 plt.show()
-#-
+# -
