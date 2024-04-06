@@ -712,6 +712,7 @@ class StackBuilder:
     def sublattice_ids(self):
         return [orb.sublattice_id for orb in self.orbitals]
 
+    # TODO: does the field_func make sense?
     def get_stack(
         self,
         field_func: Callable[[float], Array] = lambda x: 0j,
@@ -1192,7 +1193,7 @@ def relaxation(tau: float) -> Callable:
 
 
 def lindblad(stack, gamma, saturation):
-    """Function for modelling dissipation according to the saturated lindblad equation. TODO: ref paper
+    """Function for modelling dissipation according to the saturated lindblad equation as detailed in https://link.aps.org/doi/10.1103/PhysRevA.109.022237.
 
     :param stack: object representing the state of the system
     :param gamma: symmetric (or lower triangular) NxN matrix. The element gamma[i,j] corresponds to the transition rate from state i to state j
@@ -1440,7 +1441,7 @@ def electric_multipole_operator(stack, n: int = 1):
 
     alphabet = [chr(i) for i in range(ord("a"), ord("z") + 1)]
     exp = build_expression(n - 1, [])
-    dip = granad.position_operator(stack)
+    dip = position_operator(stack)
     return compute_expression(n - 1, dip)
 
 
