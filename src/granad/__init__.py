@@ -1423,27 +1423,12 @@ def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -
 
 
 ## TIME PROPAGATION
-def electric_multipole_operator(stack, n: int = 1):
-    """Returns n-th electric multipole operator starting with n = 1 => dipole."""
-
-    def compute_expression(i, carry):
-        if i <= 0:
-            return carry
-        return compute_expression(i - 1, jnp.einsum(exp[i - 1], dip, carry))
-
-    def build_expression(i, carry):
-        if i <= 0:
-            return carry
-        sequence = "".join(alphabet[: (i + 1)])
-        sequence_in = sequence[:1] + "1" + sequence[1:]
-        sequence_out = sequence[:1] + "23" + sequence[1:]
-        return build_expression(i - 1, carry + [f"123,{sequence_in}->{sequence_out}"])
-
-    alphabet = [chr(i) for i in range(ord("a"), ord("z") + 1)]
-    exp = build_expression(n - 1, [])
-    dip = position_operator(stack)
-    return compute_expression(n - 1, dip)
-
+def quadrupole_operator(stack):
+    dip = position_operator( stack )
+    term = jnp.einsum( 'ijk,jlm->ilkm', dip, dip  )
+    diag = jnp.einsum( 'ijk,jlk->il', dip, dip  )
+    diag = jnp.einsum( 'ij,kl->ijkl', diag, jnp.eye(term.shape[-1]) )
+    return 3 * term - diag
 
 def position_operator(stack):
     N = stack.positions.shape[0]
