@@ -29,6 +29,9 @@ from functools import wraps
 FieldFunc = Callable[[float], Array]
 DissipationFunc = Callable[[Array], Array]
 InputDict = NewType("InputDict", dict[str, Callable[[float], complex]])
+TransitionsDict = NewType(
+    "TransitionsDict", Union[None, dict[tuple[str, str], list[float]]]
+)
 
 
 ## CLASSES
@@ -48,7 +51,6 @@ class Orbital:
     sublattice_id: int = 0
 
 
-# TODO: make transitions attribute of stack
 @struct.dataclass
 class Stack:
     """A stack of orbitals.
@@ -88,6 +90,7 @@ class Stack:
     excited_electrons: int
     beta: float
     spin_degeneracy: int
+    transitions: TransitionsDict
 
 
 class LatticeType(Enum):
@@ -103,6 +106,7 @@ class LatticeEdge(Enum):
 
 
 ## GEOMETRY
+# TODO: this is somewhat broken
 @struct.dataclass
 class Chain:
     """A chain.
@@ -362,6 +366,7 @@ class Lattice:
             self.scale,
         )
 
+        # TODO: fix sublattice_id
         def add_orbitals(position: Array):
             return [
                 Orbital(
@@ -717,6 +722,7 @@ class StackBuilder:
         beta: float = jnp.inf,
         eps: float = 1e-5,
         spin_degenerate: bool = True,
+        transitions: TransitionsDict = None,
         pingback: bool = True,
     ) -> Stack:
         """Get stack object for numerical simulations.
@@ -745,6 +751,7 @@ class StackBuilder:
             jnp.array(self.sublattice_ids),
             eps,
             2.0 if spin_degenerate else 1.0,
+            transitions,
         )
         if pingback:
             print(f"Built stack with {stack.electrons} electrons")
@@ -1016,6 +1023,7 @@ def _stack(
     sublattice_ids: Array,
     eps: float,
     spin_degeneracy: int,
+    transitions: TransitionsDict,
 ) -> Stack:
     """Takes a list of orbitals and two dictionaries specifying the hopping rates and coulomb interactions and produces a stack that holds the state of the system before it is propagated in time (e.g. the eigenenergies and density matrix).
 
@@ -1080,18 +1088,17 @@ def _stack(
         excited_electrons,
         beta,
         spin_degeneracy,
+        transitions,
     )
 
 
 ## DIPOLE TRANSITIONS
 def dipole_transitions(
-    transitions: dict[tuple[str, str], list[float]],
     stack: Stack,
     add_induced: bool = False,
 ) -> Callable:
     """Takes into account dipole transitions.
 
-    :param transitions: dictionary mapping tuples containing two orbital strings to associated dipole transition, e.g. if there is a transition between "A" and "B" with a moment in z-direction, this would look like :code:`{("A", ""B) : [0, 0, 1.0]}`
     :param stack:
     :param add_induced: add induced field to the field acting on the dipole
     :returns: transition function as additional input for evolution function
@@ -1131,12 +1138,15 @@ def dipole_transitions(
             idxs, idxs
         )
 
+    if stack.transitions is None:
+        return jax.jit(lambda c, h, e: h)
+
     # map position index to transition index
     ind = jax.jit(lambda i: jnp.argmin(jnp.abs(i - indices[:, 0, :])))
     idxs = jnp.arange(stack.positions.shape[0])
 
     indices, moments = [], []
-    for (orb1, orb2), moment in transitions.items():
+    for (orb1, orb2), moment in stack.transitions.items():
         i1, i2 = (
             jnp.where(stack.ids == stack.unique_ids.index(orb1))[0],
             jnp.where(stack.ids == stack.unique_ids.index(orb2))[0],
@@ -1155,7 +1165,9 @@ def dipole_transitions(
 
     # array of shape positions x orbitals x 3, with entries vec_r[i, o, :] = r_i - r_o
     vec_r = (
-        jnp.repeat(stack.positions[:, jnp.newaxis, :], 2 * len(transitions), axis=1)
+        jnp.repeat(
+            stack.positions[:, jnp.newaxis, :], 2 * len(stack.transitions), axis=1
+        )
         - stack.positions[indices[:, 0, :].flatten(), :]
     )
 
@@ -1410,25 +1422,48 @@ def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -
 
 
 ## TIME PROPAGATION
-def position_operator(stack, transitions):
+def electric_multipole_operator(stack, n: int = 1):
+    """Returns n-th electric multipole operator starting with n = 1 => dipole."""
+
+    def compute_expression(i, carry):
+        if i <= 0:
+            return carry
+        return compute_expression(i - 1, jnp.einsum(exp[i - 1], dip, carry))
+
+    def build_expression(i, carry):
+        if i <= 0:
+            return carry
+        sequence = "".join(alphabet[: (i + 1)])
+        sequence_in = sequence[:1] + "1" + sequence[1:]
+        sequence_out = sequence[:1] + "23" + sequence[1:]
+        return build_expression(i - 1, carry + [f"123,{sequence_in}->{sequence_out}"])
+
+    alphabet = [chr(i) for i in range(ord("a"), ord("z") + 1)]
+    exp = build_expression(n - 1, [])
+    dip = granad.position_operator(stack)
+    return compute_expression(n - 1, dip)
+
+
+def position_operator(stack):
     N = stack.positions.shape[0]
     pos = jnp.zeros((N, N, 3))
     for i in range(3):
         pos = pos.at[:, :, i].set(jnp.diag(stack.positions[:, i] / 2))
-    for key, value in transitions.items():
-        value = jnp.array(value)
-        i, j = indices(stack, key[0]), indices(stack, key[1])
-        k = value.nonzero()[0]
-        pos = pos.at[i, j, k].set(value[k])
+    if not stack.transitions is None:
+        for key, value in stack.transitions.items():
+            value = jnp.array(value)
+            i, j = indices(stack, key[0]), indices(stack, key[1])
+            k = value.nonzero()[0]
+            pos = pos.at[i, j, k].set(value[k])
     return pos + jnp.transpose(pos, (1, 0, 2))
 
 
-def velocity_operator(stack, transitions):
-    if transitions is None:
+def velocity_operator(stack):
+    if stack.transitions is None:
         x_times_h = jnp.einsum("ij,ir->ijr", stack.hamiltonian, stack.positions)
         h_times_x = jnp.einsum("ij,jr->ijr", stack.hamiltonian, stack.positions)
     else:
-        positions = position_operator(stack, transitions)
+        positions = position_operator(stack)
         x_times_h = jnp.einsum("kj,ikr->ijr", stack.hamiltonian, positions)
         h_times_x = jnp.einsum("ik,kjr->ijr", stack.hamiltonian, positions)
     return -1j * (x_times_h - h_times_x)
@@ -1441,12 +1476,11 @@ def evolution(
     field: FieldFunc,
     dissipation: DissipationFunc = lambda x, y: 0.0,
     coulomb_strength: float = 1.0,
-    transition: Callable = lambda c, h, e: h,
     saveat=None,
     solver=diffrax.Dopri5(),
     stepsize_controller=diffrax.PIDController(rtol=1e-8, atol=1e-8),
     spatial=False,
-    transitions=None,
+    add_induced=False,
 ):
 
     def rhs_uniform(time, rho, args):
@@ -1478,10 +1512,11 @@ def evolution(
     if spatial:
         q = 1
         m = 1
-        v = velocity_operator(stack, transitions)
+        v = velocity_operator(stack)
         rhs = rhs_spatial
     else:
         rhs = rhs_uniform
+        transition = dipole_transitions(stack, add_induced)
 
     term = diffrax.ODETerm(rhs)
     rho_init = stack.eigenvectors @ stack.rho_0 @ stack.eigenvectors.conj().T
@@ -1510,8 +1545,8 @@ def evolution_old(
     field: FieldFunc,
     dissipation: DissipationFunc = None,
     coulomb_strength: float = 1.0,
-    transition: Callable = lambda c, h, e: h,
     postprocess: Callable[[Array], Array] = None,
+    add_induced=False,
 ) -> tuple[Stack, Array]:
     """Propagate a stack forward in time.
 
@@ -1549,6 +1584,7 @@ def evolution_old(
     dt = time[1] - time[0]
     coulomb = stack.coulomb * coulomb_strength
     rho_stat = stack.eigenvectors @ stack.rho_stat @ stack.eigenvectors.conj().T
+    transition = dipole_transitions(stack, add_induced=add_induced)
     rho, rhos = jax.lax.scan(
         integrate, stack.eigenvectors @ stack.rho_0 @ stack.eigenvectors.conj().T, time
     )
@@ -1626,9 +1662,9 @@ def epi(stack: Stack, rho: Array, omega: float, epsilon: float = None) -> float:
     )
 
 
-# TODO: check carefully for larger systems, get t-matrix in some way, spatial variation
+# TODO: get t-matrix in some way
 def rpa_polarizability_function(
-    stack, tau, polarization, coulomb_strength, hungry=True
+        stack, tau, polarization, coulomb_strength, phi_ext = None, hungry=True
 ):
     def _polarizability(omega):
         x = sus(omega)
@@ -1637,13 +1673,13 @@ def rpa_polarizability_function(
 
     one = jnp.identity(stack.electrons)
     pos = stack.positions[:, polarization]
-    phi_ext = pos
+    phi_ext = pos if phi_ext is None else phi_ext
     c = stack.coulomb * coulomb_strength
-    sus = rpa_susceptibility_function(stack, tau, hungry)
+    sus = bare_susceptibility_function(stack, tau, hungry)
     return _polarizability
 
 
-def rpa_susceptibility_function(stack, tau, hungry=True):
+def bare_susceptibility_function(stack, tau, hungry=True):
 
     def _sum_subarrays(arr):
         """Sums subarrays in 1-dim array arr. Subarrays are defined by n x 2 array indices as [ [start1, end1], [start2, end2], ... ]"""
