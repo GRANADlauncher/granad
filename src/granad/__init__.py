@@ -1,6 +1,3 @@
-"""GRANAD: GRAphene Nanoantennas with ADatoms 
-"""
-
 ## imports for main computations
 import numpy as np
 import matplotlib.pyplot as plt

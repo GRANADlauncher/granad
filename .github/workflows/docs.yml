@@ -19,7 +19,7 @@ jobs:
       run: python -m pip install -e .
     - name: Build html
       run: |
-        mkdocs build
+        jupytext --to md tutorials/*ipynb; mv tutorials/*md site/tutorials; mkdocs build
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
