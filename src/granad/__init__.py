@@ -1424,11 +1424,12 @@ def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -
 
 ## TIME PROPAGATION
 def quadrupole_operator(stack):
-    dip = position_operator( stack )
-    term = jnp.einsum( 'ijk,jlm->ilkm', dip, dip  )
-    diag = jnp.einsum( 'ijk,jlk->il', dip, dip  )
-    diag = jnp.einsum( 'ij,kl->ijkl', diag, jnp.eye(term.shape[-1]) )
+    dip = position_operator(stack)
+    term = jnp.einsum("ijk,jlm->ilkm", dip, dip)
+    diag = jnp.einsum("ijk,jlk->il", dip, dip)
+    diag = jnp.einsum("ij,kl->ijkl", diag, jnp.eye(term.shape[-1]))
     return 3 * term - diag
+
 
 def position_operator(stack):
     N = stack.positions.shape[0]
