@@ -23,5 +23,6 @@ dependencies = [
   'diffrax',
   'mkdocs',
   'mkdocstrings',
+  'jupytext',
   'matplotlib'  
 ]

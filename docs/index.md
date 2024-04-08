@@ -13,7 +13,7 @@ GRANAD (GRAphene Nanoflakes with ADatoms) is a tight-binding simulation utility 
 Clone github repo and run
 
 ```
-pip install -e .
+bash install.sh
 ```
 
 ## Getting started
