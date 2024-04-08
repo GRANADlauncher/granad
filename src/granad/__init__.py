@@ -1659,11 +1659,11 @@ def rpa_polarizability_function(
 
     pos = stack.positions[:, polarization]
     phi_ext = pos if phi_ext is None else phi_ext
-    sus = rpa_susceptibility_function(stack, tau, hungry)
+    sus = rpa_susceptibility_function(stack, tau, coulomb_strength, hungry)
     return _polarizability
 
 
-def rpa_susceptibility_function(stack, tau, hungry=True):
+def rpa_susceptibility_function(stack, tau, coulomb_strength, hungry=True):
     def _rpa_susceptiblity(omega):
         return x @ jnp.linalg.inv(one - c @ x)
 
