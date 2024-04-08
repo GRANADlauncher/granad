@@ -1663,7 +1663,7 @@ def rpa_polarizability_function(
     return _polarizability
 
 
-def rpa_susceptiblity_function(stack, tau, hungry=True):
+def rpa_susceptibility_function(stack, tau, hungry=True):
     def _rpa_susceptiblity(omega):
         return x @ jnp.linalg.inv(one - c @ x)
 
