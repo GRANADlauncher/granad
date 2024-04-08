@@ -1648,21 +1648,29 @@ def epi(stack: Stack, rho: Array, omega: float, epsilon: float = None) -> float:
     )
 
 
-# TODO: get t-matrix in some way
+# TODO: get t-matrix in some way, degeneracy identification inconsistent with user-defined eps
 def rpa_polarizability_function(
-        stack, tau, polarization, coulomb_strength, phi_ext = None, hungry=True
+    stack, tau, polarization, coulomb_strength, phi_ext=None, hungry=True
 ):
     def _polarizability(omega):
-        x = sus(omega)
-        ro = x @ jnp.linalg.inv(one - c @ x) @ phi_ext
+        ro = sus(omega) @ phi_ext
         return -pos @ ro
 
-    one = jnp.identity(stack.electrons)
     pos = stack.positions[:, polarization]
     phi_ext = pos if phi_ext is None else phi_ext
-    c = stack.coulomb * coulomb_strength
-    sus = bare_susceptibility_function(stack, tau, hungry)
+    sus = rpa_susceptibility_function(stack, tau, hungry)
     return _polarizability
+
+
+def rpa_susceptiblity_function(stack, tau, hungry=True):
+    def _rpa_susceptiblity(omega):
+        return x @ jnp.linalg.inv(one - c @ x)
+
+    sus = bare_susceptibility_function(stack, tau, hungry)
+    c = stack.coulomb * coulomb_strength
+    one = jnp.identity(stack.hamiltonian.shape[0])
+
+    return _rpa_susceptibility
 
 
 def bare_susceptibility_function(stack, tau, hungry=True):
