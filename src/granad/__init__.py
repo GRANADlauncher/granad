@@ -1665,7 +1665,8 @@ def rpa_polarizability_function(
 
 def rpa_susceptibility_function(stack, tau, coulomb_strength, hungry=True):
     def _rpa_susceptibility(omega):
-        return x @ jnp.linalg.inv(one - c @ x)
+        x = sus( omega )
+        return x @ jnp.linalg.inv(one - c @ x)    
 
     sus = bare_susceptibility_function(stack, tau, hungry)
     c = stack.coulomb * coulomb_strength
