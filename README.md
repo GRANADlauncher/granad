@@ -16,6 +16,12 @@ Clone github repo and run
 bash install.sh
 ```
 
+to install the package and build the Jupyter Notebook tutorials. If you want to only install the package, run
+
+```
+pip install -e .
+```
+
 ## Getting started
 
 After that, you can get started by exploring the tutorials.
