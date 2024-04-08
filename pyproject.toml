@@ -21,6 +21,7 @@ dependencies = [
   'numpy',
   'flax',
   'diffrax',
-  'sphinx',
+  'mkdocs',
+  'mkdocstrings',
   'matplotlib'  
 ]
