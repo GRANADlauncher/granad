@@ -1,7 +1,7 @@
 site_name: "GRANAD"
 
 theme:
-  name: "material"
+  name: "readthedocs"
   features:
     - content.code.copy
 
