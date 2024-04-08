@@ -40,9 +40,9 @@ class Orbital:
     """An orbital.
     It is only used briefly during stack construction and immediately discarded after.
 
-    :param orbital_id: Orbital ID, e.g. "pz_graphene".
-    :param position: Orbital position like :math:`(x,y,z)`, in Ångström.
-    :param occupation: number of electrons in the non-interacting orbital (:code:`1` or :code:`0`)
+     - `orbital_id`: Orbital ID, e.g. "pz_graphene".
+     - `position`: Orbital position like $(x,y,z)$, in Ångström.
+     - `occupation`: number of electrons in the non-interacting orbital (`1` or `0`)
     """
 
     orbital_id: str
@@ -55,21 +55,21 @@ class Orbital:
 class Stack:
     """A stack of orbitals.
 
-    :param hamiltonian: TB-Hamiltonian of the system.
-    :param coulomb: Coulomb matrix of the system.
-    :param rho_0: Density matrix corresponding to the initial state. If a simulation is interrupted at time t, then it can be resumed using the density matrix at time t as rho_0.
-    :param rho_stat: Density matrix corresponding to the final state.
-    :param energies: Independent particle energies as given by the eigenvalues of the TB-hamiltonian.
-    :param eigenvectors: Eigenvectors of the TB-Hamiltonian. These are used to transform between *site* and *energy* basis.
-    :param positions: Positions of the orbitals, :math:`N \\times 3`-dimensional.
-    :param unique_ids: Collection of unique strings. Each string identifies an orbital type occuring in the stack. Typically something like "pz_graphene".
-    :param ids: The integer at the n-th position corresponds to the type of the n-th orbital via its index in unique_ids. For example, for unique_ids = ["A", "B"], one has unique_ids[0] = "A". Additionally, if ids[10] = 0, then the orbital at 10 is of type "A". This is useful if you want to identify quantities corresponding to orbitals. So, say unique_ids = ["adatom_level1", "adatom_level2", "carbon"] and you want to know the position of the adatom. Then you can just perform the ugly lookup stack.positions[ jnp.argwhere(ids == stack.unique_ids.index("adatom_level1")), :]. This is what the function convenience-position function does.
-    :param eps: numerical precision threshold for identifiying degeneracies in the eigenenergies.
-    :param homo: index of the homo, such that stack.energies[homo] is the energy of the ground state homo.
-    :param electrons: total number of electrons in the system.
-    :param from_state: the state from which electrons have been taken for the initial excited transition, the state translates to HOMO - from_state
-    :param to_state: the state into which electrons haven been put for the initial excited transition, the state translates to HOMO + from_state
-    :param beta: corresponds to :math:`\\frac{1}{k_B T}`
+    - `hamiltonian`: TB-Hamiltonian of the system.
+    - `coulomb`: Coulomb matrix of the system.
+    - `rho_0`: Density matrix corresponding to the initial state. If a simulation is interrupted at time t, then it can be resumed using the density matrix at time t as rho_0.
+    - `rho_stat`: Density matrix corresponding to the final state.
+    - `energies`: Independent particle energies as given by the eigenvalues of the TB-hamiltonian.
+    - `eigenvectors`: Eigenvectors of the TB-Hamiltonian. These are used to transform between *site* and *energy* basis.
+    - `positions`: Positions of the orbitals, $N \\times 3$ - dimensional.
+    - `unique_ids`: Collection of unique strings. Each string identifies an orbital type occuring in the stack. Typically something like `"pz_graphene"`.
+    - `ids`: The integer at the n-th position corresponds to the type of the n-th orbital via its index in `unique_ids`.
+    - `eps`: numerical precision threshold for identifiying degeneracies in the eigenenergies.
+    - `homo`: index of the homo, such that stack.energies[homo] is the energy of the ground state homo.
+    - `electrons`: total number of electrons in the system.
+    - `from_state`: the state from which electrons have been taken for the initial excited transition, the state translates to HOMO - from_state
+    - `to_state`: the state into which electrons haven been put for the initial excited transition, the state translates to HOMO + from_state
+    - `beta`: corresponds to $(k_B T)^{-1}$
     """
 
     hamiltonian: Array
@@ -111,7 +111,7 @@ class LatticeEdge(Enum):
 class Chain:
     """A chain.
 
-    :param length: length of the chain
+    - `length`: length of the chain
     """
 
     length: float
@@ -125,7 +125,7 @@ class Chain:
 class Triangle:
     """An equilateral triangle.
 
-    :param base: Base length of the triangle
+    - `base`: Base length of the triangle
     """
 
     base: float
@@ -145,7 +145,7 @@ class Triangle:
 class Hexagon:
     """A hexagon.
 
-    :param side_length: Side length of the hexagon
+    - `side_length`: Side length of the hexagon
     """
 
     side_length: float
@@ -168,8 +168,8 @@ class Hexagon:
 class Rhomboid:
     """A rhomboid.
 
-    :param x: side length in x-diretion
-    :param y: side length in y-diretion
+    - `x`: side length in x-diretion
+    - `y`: side length in y-diretion
     """
 
     x: float
@@ -188,8 +188,8 @@ class Rhomboid:
 class Rectangle:
     """A rectangle.
 
-    :param x: side length in x-diretion
-    :param y: side length in y-diretion
+    - `x`: side length in x-diretion
+    - `y`: side length in y-diretion
     """
 
     x: float
@@ -211,20 +211,19 @@ class Lattice:
 
     A triangular graphene lattice cut would be described as follows:
 
-    .. code-block:: python
-
+    ``` py
         graphene = granad.Lattice(
                    shape=triangle,
                    lattice_edge=granad.LatticeEdge.ARMCHAIR,
                    lattice_type=granad.LatticeType.HONEYCOMB,
                    lattice_constant=2.46,
                   )
-
-    :param shape: a boolean array indicating the shape of the structure
-    :param lattice_type: lattice type
-    :param lattice_edge: edge type
-    :param lattice_constant: lattice constant of the infinite lattice
-    :param shift: spacial shift to apply to all coordinates
+    ```
+    - `shape`: a boolean array indicating the shape of the structure
+    - `lattice_type`: lattice type
+    - `lattice_edge`: edge type
+    - `lattice_constant`: lattice constant of the infinite lattice
+    - `shift`: spacial shift to apply to all coordinates
     """
 
     ## entries in this dict follow the scheme:
@@ -398,7 +397,7 @@ class Lattice:
 class Spot:
     """Single point in 3D space. Can represent isolated adatoms.
 
-    :param position: point, e.g. :code:`[0.0, 1.0, 2.0]`
+    - `position`: point, e.g. `[0.0, 1.0, 2.0]`
     """
 
     position: list[float]
@@ -408,22 +407,21 @@ class Spot:
 class DistanceCoupling:
     """Distance-dependent coupling.
 
-    For example, a model direct channel repulsion of :math:`\\frac{1}{r}` between
-    two orbitals identified by the strings :code:`"X"` and :code:`"Y"` can be modelled
+    For example, a model direct channel repulsion of $\\frac{1}{r}$ between
+    two orbitals identified by the strings `"X"` and `"Y"` can be modelled
     as follows:
 
-    .. code-block:: python
+    ``` py
+    coulomb_repulsion = SpotCoupling(
+                        orbital_id1 = "X", # this id must match the id given to stack.add
+                        orbital_id2 = "Y", # this id must match the id given to stack.add
+                        coupling = lambda r : 1/r + 0j
+         )
+    ```
 
-       coulomb_repulsion = SpotCoupling(
-       orbital_id1 = "X", # this id must match the id given to stack.add
-       orbital_id2 = "Y", # this id must match the id given to stack.add
-       coupling = lambda r : 1/r + 0j
-       )
-
-
-    :param orbital_id1: orbital id
-    :param orbital_id2: orbital id
-    :param coupling_function: coupling function, must return a **complex number**
+    - `orbital_id1`: orbital id
+    - `orbital_id2`: orbital id
+    - `coupling_function`: coupling function, must return a **complex number**
     """
 
     orbital_id1: str
@@ -435,20 +433,20 @@ class DistanceCoupling:
 class SpotCoupling:
     """Onsite coupling. Can hold the coupling between two orbitals at an adatom.
 
-    For example, the onsite energy of a single adatom orbital identified by the string :code:`"A"` can be modelled
+    For example, the onsite energy of a single adatom orbital identified by the string `"A"` can be modelled
     as follows:
 
-    .. code-block:: python
-
+    ``` py
        onsite_adatom = SpotCoupling(
        orbital_id1 = "A", # this id must match the id given to stack.add
        orbital_id2 = "A",
        coupling = 0.0
        )
+    ```
 
-    :param orbital_id1: orbital id
-    :param orbital_id2: orbital id
-    :param coupling: coupling strength
+    - `orbital_id1`: orbital id
+    - `orbital_id2`: orbital id
+    - `coupling`: coupling strength
     """
 
     orbital_id1: str
@@ -462,15 +460,14 @@ class LatticeCoupling:
 
     Constructor accepts a lattice object and a list of couplings.
     The i-th entry in the couplings-list determines the coupling to the i-th neighbor,
-    i.e. :code:`couplings[0]` is the onsite coupling, :code:`couplings[2]` is the NNN-coupling.
+    i.e. `couplings[0]` is the onsite coupling, `couplings[2]` is the NNN-coupling.
 
     For example, the Coulomb coupling in spin-polarized graphene with an onsite strength
-    of :code:`16.522`, nearest-neighbor interaction of :code:`8.64`, next-to-nearest neighbor
-    interaction of :code:`5.333` and a classical coupling for orbitals further away can be modelled
+    of `16.522`, nearest-neighbor interaction of `8.64`, next-to-nearest neighbor
+    interaction of `5.333` and a classical coupling for orbitals further away can be modelled
     as follows:
 
-    .. code-block:: python
-
+    ``` py
        coulomb_graphene = LatticeCoupling(
        orbital_id1 = "pz", # this id must match the id given to stack.add
        orbital_id2 = "pz",
@@ -478,12 +475,13 @@ class LatticeCoupling:
        couplings = [16.522, 8.64, 5.333],
        coupling_function = lambda d: 14.399 / d + 0j,
        )
+    ```
 
-    :param orbital_id1: orbital id
-    :param orbital_id2: orbital id
-    :param lattice: lattice material
-    :param couplings: couplings
-    :param coupling_function: function to apply to all neighbours not covered by couplings
+    - `orbital_id1`: orbital id
+    - `orbital_id2`: orbital id
+    - `lattice`: lattice material
+    - `couplings`: couplings
+    - `coupling_function`: function to apply to all neighbours not covered by couplings
     """
 
     orbital_id1: str
@@ -500,27 +498,27 @@ class LatticeSpotCoupling:
     Constructor accepts a list of couplings.
     The i-th entry in the couplings-list determines the coupling between the isolated spot
     and its i-th neighbor in the lattice cut,
-    i.e. :code:`couplings[0]` is the onsite coupling, :code:`couplings[2]` is the NNN-coupling.
+    i.e. `couplings[0]` is the onsite coupling, `couplings[2]` is the NNN-coupling.
 
-    For example, the Coulomb coupling of a single adatom orbital by the string :code:`"A"` to
-    a flake orbital identified by the string :code:`"pz"` with an onsite strength
-    of :code:`16.522`, nearest-neighbor interaction of :code:`8.64`, next-to-nearest neighbor
-    interaction of :code:`5.333` and a classical coupling for orbitals further away can be modelled
+    For example, the Coulomb coupling of a single adatom orbital by the string `"A"` to
+    a flake orbital identified by the string `"pz"` with an onsite strength
+    of `16.522`, nearest-neighbor interaction of `8.64`, next-to-nearest neighbor
+    interaction of `5.333` and a classical coupling for orbitals further away can be modelled
     as follows:
 
-    .. code-block:: python
-
+    ``` py
        coulomb_graphene = LatticeSpotCoupling(
        lattice_id = "pz", # this id must match the id given to stack.add
        spot_id = "A", # this id must match the id given to stack.add
        couplings = [16.522, 8.64, 5.333],
        coupling_function = lambda d: 14.399 / d + 0j,
        )
+    ```
 
-    :param lattice_id: bulk orbital id
-    :param spot_id: isolated orbital id
-    :param couplings: couplings list
-    :param coupling_function: function to apply to all neighbours not covered by couplings
+    - `lattice_id`: bulk orbital id
+    - `spot_id`: isolated orbital id
+    - `couplings`: couplings list
+    - `coupling_function`: function to apply to all neighbours not covered by couplings
     """
 
     lattice_id: str
@@ -533,9 +531,6 @@ class StackBuilder:
     """Incremental specification of a composite nanomaterial.
 
     Orbitals are added one by one and their TB-hopping and coulomb interactions specified.
-    Once the specification is finished,
-    the method :py:meth:`granad.numerics.StackBuilder.build_stack` is to be called to produce a
-    :py:class:`granad.numerics.StackBuilder.Stack` object for further use in numerical simulations.
     """
 
     def __init__(self):
@@ -554,9 +549,9 @@ class StackBuilder:
     def add(self, orbital_id: str, material: Union[Spot, Lattice], occupation: int = 1):
         """Adds new orbitals to the stack.
 
-        :param orbital_id: new orbital to be added
-        :param material: material, an isolated system or a lattice cut
-        :param occupation: number of electrons carried by the orbital
+        - `orbital_id`: new orbital to be added
+        - `material`: material, an isolated system or a lattice cut
+        - `occupation`: number of electrons carried by the orbital
         """
 
         if isinstance(material, Spot):
@@ -607,7 +602,7 @@ class StackBuilder:
     ):
         """Specifies the TB-hopping between two types of orbitals.
 
-        :param hopping: hopping strength
+        - `hopping`: hopping strength
         """
 
         self._set_coupling(self.hopping, hopping)
@@ -620,7 +615,7 @@ class StackBuilder:
     ):
         """Specifies the Coulomb interaction between two types of orbitals.
 
-        :param coulomb: coulomb coupling
+        - `coulomb`: coulomb coupling
         """
 
         self._set_coupling(self.coulomb, coulomb)
@@ -628,8 +623,11 @@ class StackBuilder:
     def get_positions(self, orbital_id: str = None) -> Array:
         """Gets the positions in the stack.
 
-        :param orbital_id: If supplied, only get the positions of this orbital
-        :returns: A :math:`N \\times 3`-array, where :math:`N` is the number of orbitals
+                - `orbital_id`: If supplied, only get the positions of this orbital
+
+        **Returns:**
+
+         $N \\times 3$ - array, where $N$ is the number of orbitals
         """
 
         if orbital_id is None:
@@ -728,13 +726,16 @@ class StackBuilder:
     ) -> Stack:
         """Get stack object for numerical simulations.
 
-        :param field_func: position-dependent additive term for hamiltonian (e.g. electric field)
-        :param from_state: optional, the state from which electrons to take for the initial excited transition, the state translates to HOMO - from_state
-        :param to_state: optional, the state into which electrons to put for the initial excited transition, the state translates to HOMO + from_state
-        :param doping: optional, how many doping electrons to throw into the stack
-        :param beta: thermodynamic beta :math:`\\frac{1}{k_B T}`
-        :param eps: optional, default 1e-5: numerical threshold. if two energies E1,E2 fullfill abs(E1-E2) < eps, they are considered degenerate
-        :returns: stack object
+                - `field_func`: position-dependent additive term for hamiltonian (e.g. electric field)
+                - `from_state`: optional, the state from which electrons to take for the initial excited transition, the state translates to HOMO - from_state
+                - `to_state`: optional, the state into which electrons to put for the initial excited transition, the state translates to HOMO + from_state
+                - `doping`: optional, how many doping electrons to throw into the stack
+                - `beta`: thermodynamic beta $\\frac{1}{k_B T}$
+                - `eps`: optional, default `1e-5`: numerical threshold. if two energies E1,E2 fullfill abs(E1-E2) < eps, they are considered degenerate
+
+        **Returns:**
+
+         object
         """
 
         self._ensure_combinations()
@@ -790,9 +791,11 @@ class StackBuilder:
     ):
         """Takes in some orbitals and geometry. Returns a function that is suitable as a value in an InputDict. The returned function takes a distance and returns the appropriate nearest neighbour coupling.
 
-        :param lattice_coupling:
-        :param tolerance:
-        :returns: A function that is suitable as a value in an InputDict
+        - `lattice_coupling`:
+        - `tolerance`:
+
+        **Returns:**
+        A function that is suitable as a value in an InputDict
         """
 
         lattice_basis = lattice_coupling.lattice.lattice_basis
@@ -882,7 +885,7 @@ def _density_matrix(
     """Calculates the normalized spin-traced 1RDM. For zero temperature, accordning to the Aufbau principle.
     At finite temperature, the chemical potential is determined for the thermal density matrix.
 
-    :param energies: IP energies of the nanoflake
+    - `energies`: IP energies of the nanoflake
     """
 
     if beta == jnp.inf:
@@ -1028,15 +1031,18 @@ def _stack(
 ) -> Stack:
     """Takes a list of orbitals and two dictionaries specifying the hopping rates and coulomb interactions and produces a stack that holds the state of the system before it is propagated in time (e.g. the eigenenergies and density matrix).
 
-    :param orbs: list of orbitals
-    :param hopping: input dictionary for the hopping rates
-    :param coulomb: input dictionary for the coulomb couplings
-    :param field_func: position-dependent additive term for hamiltonian (e.g. electric field)
-    :param from_state: optional, the state from which electrons to take for the initial excited transition, the state translates to HOMO - from_state
-    :param to_state: optional, the state into which electrons to put for the initial excited transition, the state translates to HOMO + from_state
-    :param doping: optional, how many doping electrons to throw into the stack
-    :param eps: optional, default 1e-5: numerical threshold. if two energies E1,E2 fullfill abs(E1-E2) < eps, they are considered degenerate
-    :returns: stack object
+        - `orbs`: list of orbitals
+        - `hopping`: input dictionary for the hopping rates
+        - `coulomb`: input dictionary for the coulomb couplings
+        - `field_func`: position-dependent additive term for hamiltonian (e.g. electric field)
+        - `from_state`: optional, the state from which electrons to take for the initial excited transition, the state translates to HOMO - from_state
+        - `to_state`: optional, the state into which electrons to put for the initial excited transition, the state translates to HOMO + from_state
+        - `doping`: optional, how many doping electrons to throw into the stack
+        - `eps`: optional, default 1e-5: numerical threshold. if two energies E1,E2 fullfill abs(E1-E2) < eps, they are considered degenerate
+
+    **Returns:**
+
+     object
     """
 
     pos, ids, func, unique_ids = _unpack(orbs, hopping, coulomb)
@@ -1100,9 +1106,12 @@ def dipole_transitions(
 ) -> Callable:
     """Takes into account dipole transitions.
 
-    :param stack:
-    :param add_induced: add induced field to the field acting on the dipole
-    :returns: transition function as additional input for evolution function
+        - `stack`:
+        - `add_induced`: add induced field to the field acting on the dipole
+
+    **Returns:**
+
+     function as additional input for evolution function
     """
 
     def inner(charge, H, E):
@@ -1186,8 +1195,11 @@ def dipole_transitions(
 def relaxation(tau: float) -> Callable:
     """Function for modelling dissipation according to the relaxation approximation.
 
-    :param tau: relaxation time
-    :returns: JIT-compiled closure that is needed for computing the dissipative part of the lindblad equation
+        - `tau`: relaxation time
+
+    **Returns:**
+
+    -compiled closure that is needed for computing the dissipative part of the lindblad equation
     """
     return jax.jit(lambda r, rs: -(r - rs) / (2 * tau))
 
@@ -1195,10 +1207,13 @@ def relaxation(tau: float) -> Callable:
 def lindblad(stack, gamma, saturation):
     """Function for modelling dissipation according to the saturated lindblad equation as detailed in https://link.aps.org/doi/10.1103/PhysRevA.109.022237.
 
-    :param stack: object representing the state of the system
-    :param gamma: symmetric (or lower triangular) NxN matrix. The element gamma[i,j] corresponds to the transition rate from state i to state j
-    :param saturation: a saturation functional to apply, defaults to a sharp turn-off
-    :returns: JIT-compiled closure that is needed for computing the dissipative part of the lindblad equation
+        - `stack`: object representing the state of the system
+        - `gamma`: symmetric (or lower triangular) NxN matrix. The element gamma[i,j] corresponds to the transition rate from state i to state j
+        - `saturation`: a saturation functional to apply, defaults to a sharp turn-off
+
+    **Returns:**
+
+    -compiled closure that is needed for computing the dissipative part of the lindblad equation
     """
 
     commutator_diag = jnp.diag(gamma)
@@ -1231,11 +1246,14 @@ def get_self_consistent(
 ) -> Stack:
     """Get a stack with a self-consistent IP Hamiltonian.
 
-    :param stack: a stack object
-    :param iterations:
-    :param mix:
-    :param accuracy:
-    :returns: a stack object
+        - `stack`: a stack object
+        - `iterations`:
+        - `mix`:
+        - `accuracy`:
+
+    **Returns:**
+
+     stack object
     """
 
     def _to_site_basis(ev, mat):
@@ -1323,10 +1341,13 @@ def electric_field(
 ):
     """Function for computing time-harmonic electric fields.
 
-    :param amplitudes: electric field amplitudes in xyz-components
-    :param frequency: frequency
-    :param positions: position for evaluation
-    :returns: JIT-compiled closure that computes the electric field as a functon of time
+        - `amplitudes`: electric field amplitudes in xyz-components
+        - `frequency`: frequency
+        - `positions`: position for evaluation
+
+    **Returns:**
+
+    -compiled closure that computes the electric field as a functon of time
     """
     static_part = jnp.expand_dims(jnp.array(amplitudes), 1) * jnp.exp(
         -1j * jnp.pi / 2 + 1j * positions @ jnp.array(k_vector)
@@ -1344,12 +1365,15 @@ def electric_field_with_ramp_up(
 ):
     """Function for computing ramping up time-harmonic electric fields.
 
-    :param amplitudes: electric field amplitudes in xyz-components
-    :param frequency: frequency
-    :param positions: positions for evaluation
-    :param ramp_duration: specifies how long does the electric field ramps up
-    :param time_ramp:
-    :returns: JIT-compiled closure that computes the electric field as a functon of time
+        - `amplitudes`: electric field amplitudes in xyz-components
+        - `frequency`: frequency
+        - `positions`: positions for evaluation
+        - `ramp_duration`: specifies how long does the electric field ramps up
+        - `time_ramp`:
+
+    **Returns:**
+
+    -compiled closure that computes the electric field as a functon of time
     """
     static_part = jnp.expand_dims(jnp.array(amplitudes), 1) * jnp.exp(
         -1j * positions @ jnp.array(k_vector)
@@ -1373,12 +1397,15 @@ def electric_field_pulse(
 ):
     """Function for computing temporally located time-harmonics electric fields. The pulse is implemented as a temporal Gaussian.
 
-    :param amplitudes: electric field amplitudes in xyz-components
-    :param frequency: frequency of the electric field
-    :param positions: positions where the electric field is evaluated
-    :param peak: time where the pulse reaches its peak
-    :param fwhm: full width at half maximum
-    :returns: JIT-compiled closure that computes the electric field as a functon of time
+        - `amplitudes`: electric field amplitudes in xyz-components
+        - `frequency`: frequency of the electric field
+        - `positions`: positions where the electric field is evaluated
+        - `peak`: time where the pulse reaches its peak
+        - `fwhm`: full width at half maximum
+
+    **Returns:**
+
+    -compiled closure that computes the electric field as a functon of time
     """
 
     static_part = jnp.expand_dims(jnp.array(amplitudes), 1) * jnp.exp(
@@ -1395,9 +1422,9 @@ def electric_field_pulse(
 def dos(stack: Stack, omega: float, broadening: float = 0.1) -> Array:
     """IP-DOS of a nanomaterial stack.
 
-    :param stack: a stack object
-    :param omega: frequency
-    :param broadening: numerical brodening parameter to replace Dirac Deltas with
+    - `stack`: a stack object
+    - `omega`: frequency
+    - `broadening`: numerical brodening parameter to replace Dirac Deltas with
     """
 
     broadening = 1 / broadening
@@ -1409,10 +1436,10 @@ def dos(stack: Stack, omega: float, broadening: float = 0.1) -> Array:
 def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -> Array:
     """IP-LDOS of a nanomaterial stack.
 
-    :param stack: a stack object
-    :param omega: frequency
-    :param site_index: the site index to evaluate the LDOS at
-    :param broadening: numerical brodening parameter to replace Dirac Deltas with
+    - `stack`: a stack object
+    - `omega`: frequency
+    - `site_index`: the site index to evaluate the LDOS at
+    - `broadening`: numerical brodening parameter to replace Dirac Deltas with
     """
 
     broadening = 1 / broadening
@@ -1537,14 +1564,17 @@ def evolution_old(
 ) -> tuple[Stack, Array]:
     """Propagate a stack forward in time.
 
-    :param stack: stack object
-    :param time: time axis
-    :param field: electric field function
-    :param dissipation: dissipation function
-    :param coulomb_strength: scaling factor applied to coulomb interaction strength
-    :param dipole_transition: a function describing dipolar transition radiation in the stack
-    :param postprocess: a function applied to the density matrix after each time step
-    :returns: (stack with rho_0 set to the current state, array containing all results from postprocess at all timesteps)
+        - `stack`: stack object
+        - `time`: time axis
+        - `field`: electric field function
+        - `dissipation`: dissipation function
+        - `coulomb_strength`: scaling factor applied to coulomb interaction strength
+        - `dipole_transition`: a function describing dipolar transition radiation in the stack
+        - `postprocess`: a function applied to the density matrix after each time step
+
+    **Returns:**
+
+    (stack with rho_0 set to the current state, array containing all results from postprocess at all timesteps)
     """
 
     def integrate(rho, time):
@@ -1586,8 +1616,11 @@ def evolution_old(
 def transition_energies(stack: Stack) -> Array:
     """Computes independent-particle transition energies associated with the TB-Hamiltonian of a stack.
 
-    :param stack:
-    :returns: square array, the element :code:`arr[i,j]` contains the transition energy from :code:`i` to :code:`j`
+        - `stack`:
+
+    **Returns:**
+
+     array, the element `arr[i,j]` contains the transition energy from `i` to `j`
     """
     return jnp.abs(jnp.expand_dims(stack.energies, 1) - stack.energies)
 
@@ -1595,10 +1628,13 @@ def transition_energies(stack: Stack) -> Array:
 def wigner_weisskopf(stack: Stack, component: int = 0) -> Array:
     """Calculcates Wigner-Weisskopf transiton rates.
 
-    :param stack:
-    :param component: component of the dipolar transition to take :math:`(0,1,2) \\rightarrow (x,y,z)`
+        - `stack`:
+        - `component`: component of the dipolar transition to take $(0,1,2) \rightarrow (x,y,z)$`
 
-    :returns: square array, the element :code:`arr[i,j]` contains the transition rate from :code:`i` to :code:`j`
+
+    **Returns:**
+
+     array, the element `arr[i,j]` contains the transition rate from `i` to `j`
     """
     charge = 1.602e-19
     eps_0 = 8.85 * 1e-12
@@ -1615,10 +1651,13 @@ def wigner_weisskopf(stack: Stack, component: int = 0) -> Array:
 
 # TODO: this should be changed in accordance with the newly defined position operator
 def transition_dipole_moments(stack: Stack) -> Array:
-    r"""Compute transition dipole moments for all states :math:`i,j` as :math:`\braket{i | \hat{r} | j}`.
+    r"""Compute transition dipole moments for all states $i,j$ as $<i | \hat{r} | j>$.
 
-    :param stack: stack object with N orbitals
-    :returns: Transition dipole moments as a complex :math:`N \times N \times 3` - matrix, where the last component is the direction of the dipole moment.
+        - `stack`: stack object with N orbitals
+
+    **Returns:**
+
+     dipole moments as a complex $N \\times N \\times 3$ - matrix, where the last component is the direction of the dipole moment.
     """
     return jnp.einsum(
         "li,lj,lk", stack.eigenvectors.conj(), stack.eigenvectors, stack.positions
@@ -1629,13 +1668,16 @@ def transition_dipole_moments(stack: Stack) -> Array:
 
 ## INTERACTION
 def epi(stack: Stack, rho: Array, omega: float, epsilon: float = None) -> float:
-    r"""Calculates the EPI (Energy-based plasmonicity index) of a mode at :math:`\hbar\omega` in the absorption spectrum of a structure.
+    r"""Calculates the EPI (Energy-based plasmonicity index) of a mode at $\hbar\omega$ in the absorption spectrum of a structure.
 
-    :param stack: stack object
-    :param rho: density matrix
-    :param omega: energy at which the system has been CW-illuminated (:math:`\hbar\omega` in eV)
-    :param epsilon: small broadening parameter to ensure numerical stability, if :code:`None`, stack.eps is chosen
-    :returns: EPI, a number between :code:`0` (single-particle-like) and :code:`1` (plasmonic).
+        - `stack`: stack object
+        - `rho`: density matrix
+        - `omega`: energy at which the system has been CW-illuminated ($\hbar\omega$ in eV)
+        - `epsilon`: small broadening parameter to ensure numerical stability, if `None`, stack.eps is chosen
+
+    **Returns:**
+
+    , a number between `0` (single-particle-like) and `1` (plasmonic).
     """
     epsilon = stack.eps if epsilon is None else epsilon
     rho_without_diagonal = jnp.abs(rho - jnp.diag(jnp.diag(rho)))
@@ -1665,8 +1707,8 @@ def rpa_polarizability_function(
 
 def rpa_susceptibility_function(stack, tau, coulomb_strength, hungry=True):
     def _rpa_susceptibility(omega):
-        x = sus( omega )
-        return x @ jnp.linalg.inv(one - c @ x)    
+        x = sus(omega)
+        return x @ jnp.linalg.inv(one - c @ x)
 
     sus = bare_susceptibility_function(stack, tau, hungry)
     c = stack.coulomb * coulomb_strength
@@ -1756,11 +1798,14 @@ def bare_susceptibility_function(stack, tau, hungry=True):
 def indices(stack: Stack, orbital_id: str) -> Array:
     """Gets indices of a specific orbital.
 
-    Can be used to calculate, e.g. positions and energies corresponding to that orbital in the stack.
+        Can be used to calculate, e.g. positions and energies corresponding to that orbital in the stack.
 
-    :param stack: stack object
-    :param orbital_id: orbital identifier as contained in :class:`granad.numerics.Stack.unique_ids`
-    :returns: integer array corresponding to the indices of the orbitals, such that e.g. :code:`stack.energies[indices]` gives the energies associated with the orbitals.
+        - `stack`: stack object
+        - `orbital_id`: orbital identifier as contained in :class:`granad.numerics.Stack.unique_ids`
+
+    **Returns:**
+
+     array corresponding to the indices of the orbitals, such that e.g. `stack.energies[indices]` gives the energies associated with the orbitals.
     """
     return jnp.nonzero(stack.ids == stack.unique_ids.index(orbital_id))[0]
 
@@ -1768,11 +1813,14 @@ def indices(stack: Stack, orbital_id: str) -> Array:
 # TODO: this should be changed in accordance with the newly defined position operator
 def induced_dipole_moment(stack: Stack, rhos_diag: Array) -> Array:
     """
-    Calculates the induced dipole moment for a collection of density matrices.
+        Calculates the induced dipole moment for a collection of density matrices.
 
-    :param stack: stack object
-    :param rhos_diag: :math:`N \times m` time-dependent site occupation matrix, indexed by rhos_diag[timestep,site_number]
-    :returns: dipole_moments, :math:`N \times 3` matrix containing the induced dipole moment :math:`(p_x, p_y, p_z)` at :math:`N` times
+        - `stack`: stack object
+        - `rhos_diag`: $N \\times m$ time-dependent site occupation matrix, indexed by rhos_diag[timestep,site_number]
+
+    **Returns:**
+
+    , $N \\times 3$ matrix containing the induced dipole moment $(p_x, p_y, p_z)$ at $N$ times
     """
     return (
         (jnp.diag(to_site_basis(stack, stack.rho_stat)) - rhos_diag).real
@@ -1786,9 +1834,9 @@ def induced_field(
 ) -> Array:
     """Classical approximation to the induced (local) field in a stack.
 
-    :param stack: a stack object
-    :param positions: positions to evaluate the field on, must be of shape N x 3
-    :density_matrix: if given, compute the field corresponding to this density matrix. otherwise, use :code:`stack.rho_0`.
+    - `stack`: a stack object
+    - `positions`: positions to evaluate the field on, must be of shape N x 3
+    :density_matrix: if given, compute the field corresponding to this density matrix. otherwise, use `stack.rho_0`.
     """
 
     # determine whether to use argument or the state of the stack
@@ -1816,9 +1864,12 @@ def induced_field(
 def to_site_basis(stack: Stack, matrix: Array) -> Array:
     """Transforms an arbitrary matrix from energy to site basis.
 
-    :param stack: stack object
-    :param matrix: square array in energy basis
-    :returns: square array in site basis
+        - `stack`: stack object
+        - `matrix`: square array in energy basis
+
+    **Returns:**
+
+     array in site basis
     """
     return stack.eigenvectors @ matrix @ stack.eigenvectors.conj().T
 
@@ -1826,9 +1877,12 @@ def to_site_basis(stack: Stack, matrix: Array) -> Array:
 def to_energy_basis(stack: Stack, matrix: Array) -> Array:
     """Transforms an arbitrary matrix from site to energy basis.
 
-    :param stack: stack object
-    :param matrix: square array in energy basis
-    :returns: square array in energy basis
+        - `stack`: stack object
+        - `matrix`: square array in energy basis
+
+    **Returns:**
+
+     array in energy basis
     """
     return stack.eigenvectors.conj().T @ matrix @ stack.eigenvectors
 
@@ -1851,7 +1905,7 @@ def _plot_wrapper(plot_func):
 def show_energies(stack: Stack):
     """Depicts the energy and occupation landscape of a stack (energies are plotted on the y-axis ordered by size)
 
-    :param stack: stack object
+    - `stack`: stack object
     """
     fig, ax = plt.subplots(1, 1)
     plt.colorbar(
@@ -1875,10 +1929,10 @@ def show_energy_occupations(
 ):
     """Depicts energy occupations as a function of time.
 
-    :param stack: a stack object
-    :param occupations: list of energy occupations (complex arrays). The occupation at timestep n is given by :code:`occupations[n]`.
-    :param time: time axis
-    :param thresh: plotting threshold. an occupation time series o_t is selected for plotting if it outgrows/outshrinks this bound. More exactly: o_t is plotted if max(o_t) - min(o_t) > thresh
+    - `stack`: a stack object
+    - `occupations`: list of energy occupations (complex arrays). The occupation at timestep n is given by `occupations[n]`.
+    - `time`: time axis
+    - `thresh`: plotting threshold. an occupation time series o_t is selected for plotting if it outgrows/outshrinks this bound. More exactly: o_t is plotted if max(o_t) - min(o_t) > thresh
     """
     fig, ax = plt.subplots(1, 1)
     occ = jnp.array([stack.electrons * r.real for r in occupations])
@@ -1904,14 +1958,14 @@ def show_electric_field_space(
 ):
     """Shows the external electric field on a spatial grid at a fixed point in time.
 
-    :param first: grid coordinates. get passed directly as meshgrid(frist, second).
-    :param second: grid coordinates. get passed directly as meshgrid(frist, second).
-    :param plane: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'. E.g. 'xy' means: make a plot in xy-plane and use "first"-parameter as x-axis, "second"-parameter as y-axis
-    :param time: time to evalute the field at
-    :param field_func: a function taking in parameters as given by args and an additional argument "positions" that produces a closure that gives the electric field as function of time
-    :param args: arguments to field_func as a dictionary, The "positions"-argument must be dropped.
-    :param component: 0 => plot x, 1 => plot y, 2 => plot z
-    :param flag: 0 => plot real, 1 => plot imag, 2 => plot abs
+    - `first`: grid coordinates. get passed directly as meshgrid(frist, second).
+    - `second`: grid coordinates. get passed directly as meshgrid(frist, second).
+    - `plane`: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'. E.g. 'xy' means: make a plot in xy-plane and use "first"-parameter as x-axis, "second"-parameter as y-axis
+    - `time`: time to evalute the field at
+    - `field_func`: a function taking in parameters as given by args and an additional argument "positions" that produces a closure that gives the electric field as function of time
+    - `args`: arguments to field_func as a dictionary, The "positions"-argument must be dropped.
+    - `component`: 0 => plot x, 1 => plot y, 2 => plot z
+    - `flag`: 0 => plot real, 1 => plot imag, 2 => plot abs
     """
     plane_indices = {
         "xy": jnp.array([0, 1, 2]),
@@ -1953,9 +2007,9 @@ def show_electric_field_space(
 def show_electric_field_time(time: Array, field: Array, flag: int = 0):
     """Shows the external electric field with its (x,y,z)-components as a function of time at a fixed spatial point.
 
-    :param time: array of points in time for field evaluation
-    :param field: output of an electric field function
-    :param flag: 0 => plot real, 1 => plot imag, 2 => plot abs
+    - `time`: array of points in time for field evaluation
+    - `field`: output of an electric field function
+    - `flag`: 0 => plot real, 1 => plot imag, 2 => plot abs
     """
     fig, ax = plt.subplots(1, 1)
     funcs = [
@@ -1982,12 +2036,12 @@ def show_eigenstate3D(
     In the plot, orbitals are annotated with a color. The color corresponds either to the contribution to the selected eigenstate or to the type of the orbital.
     Optionally, orbitals can be annotated with a number corresponding to the hilbert space index.
 
-    :param stack: object representing system state
-    :param show_state: eigenstate index to show. (0 => eigenstate with lowest energy)
-    :param show_orbitals: orbitals to show. if None, all orbitals are shown.
-    :param indicate_size: if True, bigger points are orbitals contributing more strongly to the selected eigenstate.
-    :param color_orbitals: if True, identical orbitals are colored identically and a legend is displayed listing all the different orbital types. if False, the color corresponds to the contribution to the sublattice.
-    :param annotate_hilbert: if True, the orbitals are annotated with a number corresponding to the hilbert space index.
+    - `stack`: object representing system state
+    - `show_state`: eigenstate index to show. (0 => eigenstate with lowest energy)
+    - `show_orbitals`: orbitals to show. if None, all orbitals are shown.
+    - `indicate_size`: if True, bigger points are orbitals contributing more strongly to the selected eigenstate.
+    - `color_orbitals`: if True, identical orbitals are colored identically and a legend is displayed listing all the different orbital types. if False, the color corresponds to the contribution to the sublattice.
+    - `annotate_hilbert`: if True, the orbitals are annotated with a number corresponding to the hilbert space index.
     """
     show_orbitals = stack.unique_ids if show_orbitals is None else show_orbitals
     fig = plt.figure()
@@ -2026,13 +2080,13 @@ def show_eigenstate2D(
     In the plot, orbitals are annotated with a color. The color corresponds either to the contribution to the selected eigenstate or to the type of the orbital.
     Optionally, orbitals can be annotated with a number corresponding to the hilbert space index.
 
-    :param stack: object representing system state
-    :param plane: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'.
-    :param show_state: eigenstate index to show. (0 => eigenstate with lowest energy)
-    :param show_orbitals: list of strings. orbitals to show. if None, all orbitals are shown.
-    :param indicate_size: if True, bigger points are orbitals contributing more strongly to the selected eigenstate.
-    :param color_orbitals: if True, identical orbitals are colored identically and a legend is displayed listing all the different orbital types. if False, the color corresponds to the sublattice.
-    :param annotate_hilbert: if True, the orbitals are annotated with a number corresponding to the hilbert space index.
+    - `stack`: object representing system state
+    - `plane`: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'.
+    - `show_state`: eigenstate index to show. (0 => eigenstate with lowest energy)
+    - `show_orbitals`: list of strings. orbitals to show. if None, all orbitals are shown.
+    - `indicate_size`: if True, bigger points are orbitals contributing more strongly to the selected eigenstate.
+    - `color_orbitals`: if True, identical orbitals are colored identically and a legend is displayed listing all the different orbital types. if False, the color corresponds to the sublattice.
+    - `annotate_hilbert`: if True, the orbitals are annotated with a number corresponding to the hilbert space index.
     """
     indices = {"xy": [0, 1], "xz": [0, 2], "yz": [1, 2]}
     show_orbitals = stack.unique_ids if show_orbitals is None else show_orbitals
@@ -2067,7 +2121,7 @@ def show_eigenstate2D(
 def show_charge_distribution3D(stack: Stack):
     """Displays the ground state charge distribution of the stack in 3D
 
-    :param stack: stack object
+    - `stack`: stack object
     """
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
@@ -2082,8 +2136,8 @@ def show_charge_distribution3D(stack: Stack):
 def show_charge_distribution2D(stack: Stack, plane: str = "xy"):
     """Displays the ground state charge distribution of the stack in 2D
 
-    :param stack: object representing system state
-    :param plane: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'
+    - `stack`: object representing system state
+    - `plane`: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'
     """
     indices = {"xy": [0, 1], "xz": [0, 2], "yz": [1, 2]}
     fig, ax = plt.subplots(1, 1)
@@ -2112,16 +2166,16 @@ def show_induced_field(
 ):
     """Displays the normalized logarithm of the absolute value of the induced field in 2D
 
-    :param rho: density matrix
-    :param electrons: number of electrons
-    :param eigenvectors: eigenvectors of the corresponding stack (as stored in a stack object)
-    :param positions: positions of the orbitals in the stack
-    :param first: grid coordinates. get passed directly as meshgrid(frist, second).
-    :param second: grid coordinates. get passed directly as meshgrid(frist, second).
-    :param plane: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'. E.g. 'xy' means: make a plot in xy-plane and use "first"-parameter as x-axis, "second"-parameter as y-axis
-    :param component: 0 => plot x, 1 => plot y, 2 => plot z
-    :param norm : constant to normalize the field
-    :param plot_stack: if True, add a scatter plot indicating the positions of the orbitals in the stack
+    - `rho`: density matrix
+    - `electrons`: number of electrons
+    - `eigenvectors`: eigenvectors of the corresponding stack (as stored in a stack object)
+    - `positions`: positions of the orbitals in the stack
+    - `first`: grid coordinates. get passed directly as meshgrid(frist, second).
+    - `second`: grid coordinates. get passed directly as meshgrid(frist, second).
+    - `plane`: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'. E.g. 'xy' means: make a plot in xy-plane and use "first"-parameter as x-axis, "second"-parameter as y-axis
+    - `component`: 0 => plot x, 1 => plot y, 2 => plot z
+    - `norm` : constant to normalize the field
+    - `plot_stack`: if True, add a scatter plot indicating the positions of the orbitals in the stack
     """
     plane_indices = {
         "xy": jnp.array([0, 1, 2]),
