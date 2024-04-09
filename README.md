@@ -28,7 +28,7 @@ After that, you can get started by exploring the tutorials.
 
 
 ## Documentation
-The documentation is made with [mkdocs](https://www.mkdocs.org/) and build automatically on installation. You can view it by typing
+The documentation is made with [mkdocs](https://www.mkdocs.org/) and built automatically on installation. You can view it by typing
 
 ```
 mkdocs serve
