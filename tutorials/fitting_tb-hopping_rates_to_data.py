@@ -62,6 +62,7 @@ def ground_state_energy( stack ):
 # -
 
 # For optimization, we will:
+#
 # 1. initialize a stack with random hoppings
 # 2. compute its ground state energy
 # 3. take the gradient for the hoppings
