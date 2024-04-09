@@ -1,35 +1,30 @@
-## imports for main computations
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
 from functools import reduce
 from typing import Callable, Union
-import jax
-from flax import struct
-import jax as jax
-from jax import Array, lax
-import jax.numpy as jnp
+
 import diffrax
+import jax
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
+import numpy as np
+from flax import struct
+from matplotlib.colors import Normalize
 
-## complex precision
-from jax import config
+jax.config.update("jax_enable_x64", True)
 
-config.update("jax_enable_x64", True)
-
-## typing
-from typing import NewType
 from collections.abc import Iterable
 from enum import Enum, auto
 from functools import wraps
+from typing import NewType
 
 ## TYPE ALIASES
-FieldFunc = Callable[[float], Array]
-DissipationFunc = Callable[[Array], Array]
+FieldFunc = Callable[[float], jax.Array]
+DissipationFunc = Callable[[jax.Array], jax.Array]
 InputDict = NewType("InputDict", dict[str, Callable[[float], complex]])
 TransitionsDict = NewType(
     "TransitionsDict", Union[None, dict[tuple[str, str], list[float]]]
 )
 
+# TODO: improve and update docstrings
 
 ## CLASSES
 @struct.dataclass
@@ -69,16 +64,16 @@ class Stack:
     - `beta`: corresponds to $(k_B T)^{-1}$
     """
 
-    hamiltonian: Array
-    coulomb: Array
-    rho_0: Array
-    rho_stat: Array
-    energies: Array
-    eigenvectors: Array
-    positions: Array
+    hamiltonian: jax.Array
+    coulomb: jax.Array
+    rho_0: jax.Array
+    rho_stat: jax.Array
+    energies: jax.Array
+    eigenvectors: jax.Array
+    positions: jax.Array
     unique_ids: list[str]
-    ids: Array
-    sublattice_ids: Array
+    ids: jax.Array
+    sublattice_ids: jax.Array
     eps: float
     homo: int
     electrons: int
@@ -113,7 +108,7 @@ class Chain:
 
     length: float
 
-    def _layout(self, lattice_constant: float) -> Array:
+    def _layout(self, lattice_constant: float) -> jax.Array:
         n = int(self.length / lattice_constant)
         return jnp.expand_dims(jnp.arange(2 * n), 1) % 2
 
@@ -127,7 +122,7 @@ class Triangle:
 
     base: float
 
-    def _layout(self, lattice_constant: float) -> Array:
+    def _layout(self, lattice_constant: float) -> jax.Array:
         n = int(self.base / lattice_constant)
 
         size = 2 * n + 1
@@ -147,7 +142,7 @@ class Hexagon:
 
     side_length: float
 
-    def _layout(self, lattice_constant: float) -> Array:
+    def _layout(self, lattice_constant: float) -> jax.Array:
         n = int(self.side_length / lattice_constant)
 
         width = 2 * n + 1
@@ -172,7 +167,7 @@ class Rhomboid:
     x: float
     y: float
 
-    def _layout(self, lattice_constant: float) -> Array:
+    def _layout(self, lattice_constant: float) -> jax.Array:
         x, y = int(self.x / lattice_constant), int(self.y / lattice_constant)
         shape = np.zeros((2 * (x + y), y), dtype=bool)
         for i in range(y):
@@ -192,7 +187,7 @@ class Rectangle:
     x: float
     y: float
 
-    def _layout(self, lattice_constant: float) -> Array:
+    def _layout(self, lattice_constant: float) -> jax.Array:
         x, y = int(self.x / lattice_constant), int(self.y / lattice_constant)
 
         height = y * 2
@@ -363,7 +358,7 @@ class Lattice:
         )
 
         # TODO: fix sublattice_id
-        def add_orbitals(position: Array):
+        def add_orbitals(position: jax.Array):
             return [
                 Orbital(
                     position=jnp.array(
@@ -523,6 +518,13 @@ class LatticeSpotCoupling:
     couplings: list[float]
     coupling_function: Callable[[float], complex] = lambda x: 0j
 
+def gaussian_coupling(sigma, mu, couplings):
+    """Helper function for "almost-neighbor" coupling"""
+    return lambda x: sum(
+        couplings[i] * jnp.exp(-((x - mu[i]) ** 2) / sigma**2)
+        for i in range(len(couplings))
+    )
+
 
 class StackBuilder:
     """Incremental specification of a composite nanomaterial.
@@ -617,7 +619,7 @@ class StackBuilder:
 
         self._set_coupling(self.coulomb, coulomb)
 
-    def get_positions(self, orbital_id: str = None) -> Array:
+    def get_positions(self, orbital_id: str = None) -> jax.Array:
         """Gets the positions in the stack.
 
                 - `orbital_id`: If supplied, only get the positions of this orbital
@@ -688,20 +690,16 @@ class StackBuilder:
         plt.legend()
         plt.show()
 
-    def _ensure_combinations(self):
-        for name, coupling_dict in [
-            ("hopping", self.hopping),
-            ("coulomb", self.coulomb),
-        ]:
-            for id1 in self.orbital_ids:
-                for id2 in self.orbital_ids:
-                    if not (
-                        (id1, id2) in coupling_dict.keys()
-                        or (id2, id1) in coupling_dict.keys()
-                    ):
-                        raise Exception(
-                            f"Not all {name} combinations specified, missing {(id1,id2)}!"
-                        )
+    def _ensure_combinations(self, coupling_dict, name):
+        for id1 in self.orbital_ids:
+            for id2 in self.orbital_ids:
+                if not (
+                    (id1, id2) in coupling_dict.keys()
+                    or (id2, id1) in coupling_dict.keys()
+                ):
+                    raise Exception(
+                        f"Not all {name} combinations specified, missing {(id1,id2)}!"
+                    )
 
     @property
     def sublattice_ids(self):
@@ -710,7 +708,7 @@ class StackBuilder:
     # TODO: does the field_func make sense?
     def get_stack(
         self,
-        field_func: Callable[[float], Array] = lambda x: 0j,
+        field_func: Callable[[float], jax.Array] = lambda x: 0j,
         from_state: int = 0,
         to_state: int = 0,
         excited_electrons: int = 1,
@@ -720,6 +718,7 @@ class StackBuilder:
         spin_degenerate: bool = True,
         transitions: TransitionsDict = None,
         pingback: bool = True,
+        energies_only: bool = False,
     ) -> Stack:
         """Get stack object for numerical simulations.
 
@@ -735,7 +734,10 @@ class StackBuilder:
          object
         """
 
-        self._ensure_combinations()
+        self._ensure_combinations(self.hopping, "hopping")
+        if energies_only:
+            self.coulomb = { combination : lambda x : 0.0 for combination in self.hopping.keys() }
+            self._ensure_combinations(self.coulomb, "coulomb")
 
         stack = _stack(
             self.orbitals,
@@ -761,8 +763,8 @@ class StackBuilder:
     def _lattice_spot_coupling(
         lattice_spot_coupling: LatticeSpotCoupling,
         *,
-        lattice_pos: Array,
-        spot_pos: Array,
+        lattice_pos: jax.Array,
+        spot_pos: jax.Array,
         tolerance: float = 1e-5,
     ):
         couplings = jnp.array([x + 0j for x in lattice_spot_coupling.couplings])
@@ -772,7 +774,7 @@ class StackBuilder:
         )[: len(couplings)]
 
         def inner(d):
-            return lax.cond(
+            return jax.lax.cond(
                 jnp.min(jnp.abs(d - distances)) < tolerance,
                 lambda x: couplings[jnp.argmin(jnp.abs(x - distances))],
                 lattice_spot_coupling.coupling_function,
@@ -810,7 +812,7 @@ class StackBuilder:
         )[: len(couplings)]
 
         def inner(d):
-            return lax.cond(
+            return jax.lax.cond(
                 jnp.min(jnp.abs(d - distances)) < tolerance,
                 lambda x: couplings[jnp.argmin(jnp.abs(x - distances))],
                 lattice_coupling.coupling_function,
@@ -829,7 +831,7 @@ def _encode(i, j):
 
 def _make_fun(hf, cf):
     def inner(index, arg):
-        return lax.switch(index, hf, arg), lax.switch(index, cf, arg)
+        return jax.lax.switch(index, hf, arg), jax.lax.switch(index, cf, arg)
 
     return jax.jit(inner)
 
@@ -854,7 +856,7 @@ def _unpack(orbs, hopping, coulomb):
 
 def _hamiltonian_coulomb(pos, ids, func):
     def inner(i, j):
-        return lax.cond(
+        return jax.lax.cond(
             i >= j,
             func,
             lambda x, y: tuple(map(lambda x: x.conj(), func(x, y))),
@@ -878,7 +880,7 @@ def _density_matrix(
     to_state,
     excited_electrons,
     beta,
-) -> tuple[Array, int]:
+) -> tuple[jax.Array, int]:
     """Calculates the normalized spin-traced 1RDM. For zero temperature, accordning to the Aufbau principle.
     At finite temperature, the chemical potential is determined for the thermal density matrix.
 
@@ -946,7 +948,7 @@ def _density_aufbau(
 
     def _occupation(flags, spin_degeneracy, fraction):
         return jax.vmap(
-            lambda flag: lax.switch(
+            lambda flag: jax.lax.switch(
                 flag,
                 [lambda x: spin_degeneracy, lambda x: fraction, lambda x: 0.0],
                 flag,
@@ -972,7 +974,7 @@ def _density_aufbau(
         # transform to flag array, where 0 => else, 1 => from, 2 => to
         flags = (flags_from == 1) + (flags_to == 1) * 2
         return jax.vmap(
-            lambda flag: lax.switch(
+            lambda flag: jax.lax.switch(
                 flag,
                 [
                     lambda x: 0.0,
@@ -984,7 +986,7 @@ def _density_aufbau(
         )(flags)
 
     def _body_fun(index, occupation):
-        return lax.cond(
+        return jax.lax.cond(
             -from_state[index] == to_state[index],
             lambda x: x,
             lambda x: x
@@ -1006,7 +1008,7 @@ def _density_aufbau(
     # compute ground state occupations by distributing the remaining electrons across all degenerate levels
     occupation = _occupation(flags, spin_degeneracy, remaining_electrons / degeneracy)
     # excited states
-    occupation = lax.fori_loop(0, to_state.size, _body_fun, occupation)
+    occupation = jax.lax.fori_loop(0, to_state.size, _body_fun, occupation)
 
     return jnp.diag(occupation) / electrons, homo
 
@@ -1015,13 +1017,13 @@ def _stack(
     orbs: list[Orbital],
     hopping: InputDict,
     coulomb: InputDict,
-    field_func: Callable[[float], Array],
+    field_func: Callable[[float], jax.Array],
     from_state: int,
     to_state: int,
     excited_electrons: int,
     doping: int,
     beta: float,
-    sublattice_ids: Array,
+    sublattice_ids: jax.Array,
     eps: float,
     spin_degeneracy: int,
     transitions: TransitionsDict,
@@ -1049,7 +1051,7 @@ def _stack(
 
     electrons = sum(x.occupation for x in orbs) + doping
 
-    eigenvectors, energies = lax.linalg.eigh(hamiltonian + field_func(pos))
+    eigenvectors, energies = jax.lax.linalg.eigh(hamiltonian + field_func(pos))
 
     # TODO check same length
     from_state = jnp.array([from_state] if isinstance(from_state, int) else from_state)
@@ -1113,10 +1115,10 @@ def dipole_transitions(
 
     def inner(charge, H, E):
         def element(i, j):
-            return lax.cond(
+            return jax.lax.cond(
                 # check if position index combination corresponds to an adatom orbital
                 jnp.any(jnp.all(indices == jnp.array([i, j]), axis=2)),
-                lambda x: lax.switch(
+                lambda x: jax.lax.switch(
                     2 * (i == j) + (i < j),
                     [
                         lambda x: x
@@ -1301,7 +1303,7 @@ def get_self_consistent(
     rho = _to_site_basis(stack.eigenvectors, stack.rho_stat)
 
     # sc loop
-    rho, rho_old, idx = lax.while_loop(_stop, _loop, (rho, rho_old, 0))
+    rho, rho_old, idx = jax.lax.while_loop(_stop, _loop, (rho, rho_old, 0))
     if idx == iterations - 1:
         raise Exception("Self-consistent procedure did not converge!!")
 
@@ -1333,7 +1335,7 @@ def get_self_consistent(
 def electric_field(
     amplitudes: list[float],
     frequency: float,
-    positions: Array,
+    positions: jax.Array,
     k_vector: list[float] = [0.0, 0.0, 1.0],
 ):
     """Function for computing time-harmonic electric fields.
@@ -1355,7 +1357,7 @@ def electric_field(
 def electric_field_with_ramp_up(
     amplitudes: list[float],
     frequency: float,
-    positions: Array,
+    positions: jax.Array,
     ramp_duration: float,
     time_ramp: float,
     k_vector: list[float] = [0.0, 0.0, 1.0],
@@ -1387,7 +1389,7 @@ def electric_field_with_ramp_up(
 def electric_field_pulse(
     amplitudes: list[float],
     frequency: float,
-    positions: Array,
+    positions: jax.Array,
     peak: float,
     fwhm: float,
     k_vector: list[float] = [0.0, 0.0, 1.0],
@@ -1416,7 +1418,7 @@ def electric_field_pulse(
     )
 
 
-def dos(stack: Stack, omega: float, broadening: float = 0.1) -> Array:
+def dos(stack: Stack, omega: float, broadening: float = 0.1) -> jax.Array:
     """IP-DOS of a nanomaterial stack.
 
     - `stack`: a stack object
@@ -1430,7 +1432,7 @@ def dos(stack: Stack, omega: float, broadening: float = 0.1) -> Array:
     return prefactor * jnp.sum(gaussians)
 
 
-def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -> Array:
+def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -> jax.Array:
     """IP-LDOS of a nanomaterial stack.
 
     - `stack`: a stack object
@@ -1483,7 +1485,7 @@ def velocity_operator(stack):
 # TODO: units, reliably identify steady-states
 def evolution(
     stack: Stack,
-    time: Array,
+    time: jax.Array,
     field: FieldFunc,
     dissipation: DissipationFunc = lambda x, y: 0.0,
     coulomb_strength: float = 1.0,
@@ -1552,13 +1554,13 @@ def evolution(
 
 def evolution_old(
     stack: Stack,
-    time: Array,
+    time: jax.Array,
     field: FieldFunc,
     dissipation: DissipationFunc = None,
     coulomb_strength: float = 1.0,
-    postprocess: Callable[[Array], Array] = None,
+    postprocess: Callable[[jax.Array], jax.Array] = None,
     add_induced=False,
-) -> tuple[Stack, Array]:
+) -> tuple[Stack, jax.Array]:
     """Propagate a stack forward in time.
 
         - `stack`: stack object
@@ -1610,7 +1612,7 @@ def evolution_old(
 
 
 ## INDEPENDENT-PARTICLE CALCULATIONS
-def transition_energies(stack: Stack) -> Array:
+def transition_energies(stack: Stack) -> jax.Array:
     """Computes independent-particle transition energies associated with the TB-Hamiltonian of a stack.
 
         - `stack`:
@@ -1622,7 +1624,7 @@ def transition_energies(stack: Stack) -> Array:
     return jnp.abs(jnp.expand_dims(stack.energies, 1) - stack.energies)
 
 
-def wigner_weisskopf(stack: Stack, component: int = 0) -> Array:
+def wigner_weisskopf(stack: Stack, component: int = 0) -> jax.Array:
     """Calculcates Wigner-Weisskopf transiton rates.
 
         - `stack`:
@@ -1647,7 +1649,7 @@ def wigner_weisskopf(stack: Stack, component: int = 0) -> Array:
 
 
 # TODO: this should be changed in accordance with the newly defined position operator
-def transition_dipole_moments(stack: Stack) -> Array:
+def transition_dipole_moments(stack: Stack) -> jax.Array:
     r"""Compute transition dipole moments for all states $i,j$ as $<i | \hat{r} | j>$.
 
         - `stack`: stack object with N orbitals
@@ -1664,7 +1666,7 @@ def transition_dipole_moments(stack: Stack) -> Array:
 
 
 ## INTERACTION
-def epi(stack: Stack, rho: Array, omega: float, epsilon: float = None) -> float:
+def epi(stack: Stack, rho: jax.Array, omega: float, epsilon: float = None) -> float:
     r"""Calculates the EPI (Energy-based plasmonicity index) of a mode at $\hbar\omega$ in the absorption spectrum of a structure.
 
         - `stack`: stack object
@@ -1750,8 +1752,8 @@ def bare_susceptibility_function(stack, tau, hungry=True):
             return jax.vmap(
                 jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0
             )(sites, sites)
-        return lax.map(
-            lambda i: lax.map(lambda j: susceptibility_element(i, j), sites), sites
+        return jax.lax.map(
+            lambda i: jax.lax.map(lambda j: susceptibility_element(i, j), sites), sites
         )
 
     # unpacking
@@ -1792,7 +1794,7 @@ def bare_susceptibility_function(stack, tau, hungry=True):
 
 
 ## POSTPROCESSING
-def indices(stack: Stack, orbital_id: str) -> Array:
+def indices(stack: Stack, orbital_id: str) -> jax.Array:
     """Gets indices of a specific orbital.
 
         Can be used to calculate, e.g. positions and energies corresponding to that orbital in the stack.
@@ -1808,7 +1810,7 @@ def indices(stack: Stack, orbital_id: str) -> Array:
 
 
 # TODO: this should be changed in accordance with the newly defined position operator
-def induced_dipole_moment(stack: Stack, rhos_diag: Array) -> Array:
+def induced_dipole_moment(stack: Stack, rhos_diag: jax.Array) -> jax.Array:
     """
         Calculates the induced dipole moment for a collection of density matrices.
 
@@ -1827,8 +1829,8 @@ def induced_dipole_moment(stack: Stack, rhos_diag: Array) -> Array:
 
 
 def induced_field(
-    stack: Stack, positions: Array, density_matrix: Union[Array, None] = None
-) -> Array:
+    stack: Stack, positions: jax.Array, density_matrix: Union[jax.Array, None] = None
+) -> jax.Array:
     """Classical approximation to the induced (local) field in a stack.
 
     - `stack`: a stack object
@@ -1858,7 +1860,7 @@ def induced_field(
     return e_field
 
 
-def to_site_basis(stack: Stack, matrix: Array) -> Array:
+def to_site_basis(stack: Stack, matrix: jax.Array) -> jax.Array:
     """Transforms an arbitrary matrix from energy to site basis.
 
         - `stack`: stack object
@@ -1871,7 +1873,7 @@ def to_site_basis(stack: Stack, matrix: Array) -> Array:
     return stack.eigenvectors @ matrix @ stack.eigenvectors.conj().T
 
 
-def to_energy_basis(stack: Stack, matrix: Array) -> Array:
+def to_energy_basis(stack: Stack, matrix: jax.Array) -> jax.Array:
     """Transforms an arbitrary matrix from site to energy basis.
 
         - `stack`: stack object
@@ -1920,8 +1922,8 @@ def show_energies(stack: Stack):
 @_plot_wrapper
 def show_energy_occupations(
     stack: Stack,
-    occupations: list[Array],
-    time: Array,
+    occupations: list[jax.Array],
+    time: jax.Array,
     thresh: float = 1e-2,
 ):
     """Depicts energy occupations as a function of time.
@@ -1944,11 +1946,11 @@ def show_energy_occupations(
 
 @_plot_wrapper
 def show_electric_field_space(
-    first: Array,
-    second: Array,
+    first: jax.Array,
+    second: jax.Array,
     plane: str,
-    time: Array,
-    field_func: Callable[[float], Array],
+    time: jax.Array,
+    field_func: Callable[[float], jax.Array],
     args: dict,
     component: int = 0,
     flag: int = 0,
@@ -2001,7 +2003,7 @@ def show_electric_field_space(
 
 
 @_plot_wrapper
-def show_electric_field_time(time: Array, field: Array, flag: int = 0):
+def show_electric_field_time(time: jax.Array, field: jax.Array, flag: int = 0):
     """Shows the external electric field with its (x,y,z)-components as a function of time at a fixed spatial point.
 
     - `time`: array of points in time for field evaluation
@@ -2150,12 +2152,12 @@ def show_charge_distribution2D(stack: Stack, plane: str = "xy"):
 
 @_plot_wrapper
 def show_induced_field(
-    rho: Array,
+    rho: jax.Array,
     electrons: int,
-    eigenvectors: Array,
-    positions: Array,
-    first: Array,
-    second: Array,
+    eigenvectors: jax.Array,
+    positions: jax.Array,
+    first: jax.Array,
+    second: jax.Array,
     plane: str = "xy",
     component: int = 0,
     norm: int = 1,
