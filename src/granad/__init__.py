@@ -1368,7 +1368,7 @@ def electric_field_with_ramp_up(
         - `frequency`: frequency
         - `positions`: positions for evaluation
         - `ramp_duration`: specifies how long does the electric field ramps up
-        - `time_ramp`:
+        - `time_ramp`: specifies time at which the field starts to ramp up
 
     **Returns:**
 
