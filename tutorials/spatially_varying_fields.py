@@ -57,7 +57,7 @@ coulomb_graphene = granad.LatticeCoupling(
 sb.set_coulomb(coulomb_graphene)
 
 # create the stack object
-stack = sb.get_stack( from_state = 0, to_state = 2)
+stack = sb.get_stack(from_state=0, to_state=2)
 
 # -
 
@@ -65,22 +65,25 @@ stack = sb.get_stack( from_state = 0, to_state = 2)
 
 # +
 
-def uniform_vector_potential( r, omega ):
-    A_0 = jnp.ones_like( r )
-    return lambda t : A_0 * jnp.sin( omega * t )
 
-def uniform_e_field( r, omega ):
-    A_0 = jnp.ones_like( r )
-    return lambda t : A_0.T * (omega * jnp.cos( omega * t ) ) 
+def uniform_vector_potential(r, omega):
+    A_0 = jnp.ones_like(r)
+    return lambda t: A_0 * jnp.sin(omega * t)
+
+
+def uniform_e_field(r, omega):
+    A_0 = jnp.ones_like(r)
+    return lambda t: A_0.T * (omega * jnp.cos(omega * t))
+
 
 frequency = 100
-field_func = uniform_vector_potential( stack.positions, frequency )
-e_field_func = uniform_e_field( stack.positions, frequency )
+field_func = uniform_vector_potential(stack.positions, frequency)
+e_field_func = uniform_e_field(stack.positions, frequency)
 
 # propagate in time
 gamma = 10
-time_axis = jnp.linspace(0, 10/gamma, int(1e8))
-saveat = time_axis[::int(1e3)]
+time_axis = jnp.linspace(0, 10 / gamma, int(1e8))
+saveat = time_axis[:: int(1e3)]
 
 # -
 
@@ -90,23 +93,28 @@ saveat = time_axis[::int(1e3)]
 
 # time propagation
 stack_new, sol = granad.evolution(
-    stack, time_axis, e_field_func, granad.relaxation(gamma),
-    saveat = saveat, spatial = False )
+    stack,
+    time_axis,
+    e_field_func,
+    granad.relaxation(gamma),
+    saveat=saveat,
+    spatial=False,
+)
 
 # calculate dipole moment
-occupations = jnp.diagonal( sol.ys, axis1=1, axis2=2 ).real
-dipole_moment = granad.induced_dipole_moment(stack, occupations )
-plt.plot( saveat, dipole_moment, '-', label = 'E' )    
+occupations = jnp.diagonal(sol.ys, axis1=1, axis2=2).real
+dipole_moment = granad.induced_dipole_moment(stack, occupations)
+plt.plot(saveat, dipole_moment, "-", label="E")
 
 # time propagation
 stack_new, sol = granad.evolution(
-    stack, time_axis, field_func, granad.relaxation(gamma),
-    saveat = saveat, spatial = True )
+    stack, time_axis, field_func, granad.relaxation(gamma), saveat=saveat, spatial=True
+)
 
 # calculate dipole moment
-occupations = jnp.diagonal( sol.ys, axis1=1, axis2=2 ).real
-dipole_moment = granad.induced_dipole_moment(stack, occupations )
-plt.plot( saveat, dipole_moment, '--', label = 'A' )
+occupations = jnp.diagonal(sol.ys, axis1=1, axis2=2).real
+dipole_moment = granad.induced_dipole_moment(stack, occupations)
+plt.plot(saveat, dipole_moment, "--", label="A")
 plt.legend()
 plt.show()
 

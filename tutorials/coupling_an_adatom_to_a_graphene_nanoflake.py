@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 sb = granad.StackBuilder()
 
 # geometry
-triangle = granad.Triangle(7.4) 
+triangle = granad.Triangle(7.4)
 graphene = granad.Lattice(
     shape=triangle,
     lattice_type=granad.LatticeType.HONEYCOMB,
@@ -40,7 +40,10 @@ sb.add("pz", graphene)
 
 # couplings
 hopping_graphene = granad.LatticeCoupling(
-    orbital_id1="pz", orbital_id2="pz", lattice=graphene, couplings=[0, -2.66] # list of hopping amplitudes like [onsite, nn, ...]
+    orbital_id1="pz",
+    orbital_id2="pz",
+    lattice=graphene,
+    couplings=[0, -2.66],  # list of hopping amplitudes like [onsite, nn, ...]
 )
 sb.set_hopping(hopping_graphene)
 coulomb_graphene = granad.LatticeCoupling(
@@ -58,7 +61,7 @@ pos = sb.get_positions()
 top_position = pos[0] + jnp.array([0.0, 0.0, 1.0])
 spot = granad.Spot(position=top_position)
 sb.add("A", spot)
-sb.add("B", spot, occupation = 0)
+sb.add("B", spot, occupation=0)
 
 # onsite hopping
 sb.set_hopping(granad.SpotCoupling(orbital_id1="A", orbital_id2="A", coupling=0))
@@ -83,9 +86,9 @@ for orb in ["A", "B"]:
     sb.set_hopping(lattice_spot_hopping)
     lattice_spot_coulomb = granad.LatticeSpotCoupling(
         lattice_id="pz",
-    spot_id=orb,
-    couplings=[2],
-    coupling_function=lambda d: 1 / d + 0j,
+        spot_id=orb,
+        couplings=[2],
+        coupling_function=lambda d: 1 / d + 0j,
     )
     sb.set_coulomb(lattice_spot_coulomb)
 

@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 sb = granad.StackBuilder()
 
 # geometry
-triangle = granad.Triangle(7.4) 
+triangle = granad.Triangle(7.4)
 graphene = granad.Lattice(
     shape=triangle,
     lattice_type=granad.LatticeType.HONEYCOMB,
@@ -42,7 +42,10 @@ sb.add("pz", graphene)
 
 # couplings
 hopping_graphene = granad.LatticeCoupling(
-    orbital_id1="pz", orbital_id2="pz", lattice=graphene, couplings=[0, -2.66] # list of hopping amplitudes like [onsite, nn, ...]
+    orbital_id1="pz",
+    orbital_id2="pz",
+    lattice=graphene,
+    couplings=[0, -2.66],  # list of hopping amplitudes like [onsite, nn, ...]
 )
 sb.set_hopping(hopping_graphene)
 coulomb_graphene = granad.LatticeCoupling(
@@ -57,15 +60,21 @@ sb.set_coulomb(coulomb_graphene)
 stack = sb.get_stack()
 # -
 
-# We now compute the RPA absorption for an x-polarized uniform electric field. We do so by first computing the polarizability and then aking its imaginary part. Similar to the previous function, we have to tell GRANAD some parameters: a phenomennological broadening, coulomb strength scaling factor. In addition, we make it fast, but take a lot of memory with hungry = True. 
+# We now compute the RPA absorption for an x-polarized uniform electric field. We do so by first computing the polarizability and then aking its imaginary part. Similar to the previous function, we have to tell GRANAD some parameters: a phenomennological broadening, coulomb strength scaling factor. In addition, we make it fast, but take a lot of memory with hungry = True.
 
 # +
 omegas = jnp.linspace(0, 20, 200)
 polarization = 0
 tau = 0.1
 coulomb_strength = 1.0
-alpha = granad.rpa_polarizability_function( stack = stack, tau = tau, polarization = polarization, coulomb_strength=coulomb_strength, hungry = True )
-absorption = jax.lax.map( alpha, omegas ).imag * 4 * jnp.pi * omegas
-plt.plot( omegas, absorption )
+alpha = granad.rpa_polarizability_function(
+    stack=stack,
+    tau=tau,
+    polarization=polarization,
+    coulomb_strength=coulomb_strength,
+    hungry=True,
+)
+absorption = jax.lax.map(alpha, omegas).imag * 4 * jnp.pi * omegas
+plt.plot(omegas, absorption)
 plt.show()
 # -

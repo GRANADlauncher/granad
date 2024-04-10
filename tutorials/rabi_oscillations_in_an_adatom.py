@@ -14,7 +14,7 @@
 
 # ## Rabi Oscillations in an Adatom
 #
-# This example demonstrates the simulation of a single adatom involving a dipole transition between its energy levels. 
+# This example demonstrates the simulation of a single adatom involving a dipole transition between its energy levels.
 #
 # ### Set up the StackBuilder
 #
@@ -49,7 +49,7 @@ sb.set_coulomb(granad.SpotCoupling(orbital_id1="B", orbital_id2="B", coupling=1)
 
 # Now, we visualize the initial state.
 
-stack = sb.get_stack( from_state = 0, to_state = 1, transitions = { ("A", "B") : [1., 0, 0.] } )
+stack = sb.get_stack(from_state=0, to_state=1, transitions={("A", "B"): [1.0, 0, 0.0]})
 # granad.show_energies(stack)
 
 # Now, we simulate its dynamics. We want to model an external x-polarized field.
@@ -57,9 +57,7 @@ stack = sb.get_stack( from_state = 0, to_state = 1, transitions = { ("A", "B") :
 # +
 amplitudes = [1, 0, 0]
 frequency = max(stack.energies) - min(stack.energies)
-field_func = granad.electric_field(
-    amplitudes, frequency, stack.positions[0, :]
-)
+field_func = granad.electric_field(amplitudes, frequency, stack.positions[0, :])
 
 # -
 
@@ -74,10 +72,12 @@ time_axis = jnp.linspace(0, 10, 10**4)
 new_stack, sol = granad.evolution(
     stack,
     time_axis,
-    field_func,    
+    field_func,
 )
 
-density_matrices_new = jnp.einsum( 'ijk,kl,mj->iml', sol.ys, stack.eigenvectors, stack.eigenvectors.conj()  )
+density_matrices_new = jnp.einsum(
+    "ijk,kl,mj->iml", sol.ys, stack.eigenvectors, stack.eigenvectors.conj()
+)
 energy_occupations_new = jnp.diagonal(density_matrices_new, axis1=1, axis2=2)
 
 # propagate in time
@@ -86,11 +86,11 @@ _, energy_occupations_old = granad.evolution_old(
     stack,
     time_axis,
     field_func,
-    postprocess = lambda r : granad.to_energy_basis(stack, r).diagonal()
+    postprocess=lambda r: granad.to_energy_basis(stack, r).diagonal(),
 )
 
-plt.plot( time_axis, energy_occupations_new.real, '--', label = 'new' )
-plt.plot( time_axis, energy_occupations_old.real, label = 'old' )
+plt.plot(time_axis, energy_occupations_new.real, "--", label="new")
+plt.plot(time_axis, energy_occupations_old.real, label="old")
 plt.legend()
 plt.show()
 
@@ -107,10 +107,10 @@ _, energy_occupations_old = granad.evolution_old(
     stack,
     time_axis_high_res,
     field_func,
-    postprocess = lambda r : granad.to_energy_basis(stack, r).diagonal()
+    postprocess=lambda r: granad.to_energy_basis(stack, r).diagonal(),
 )
 
-plt.plot( time_axis, energy_occupations_new.real, '--', label = 'new' )
-plt.plot( time_axis_high_res, energy_occupations_old.real, label = 'old' )
+plt.plot(time_axis, energy_occupations_new.real, "--", label="new")
+plt.plot(time_axis_high_res, energy_occupations_old.real, label="old")
 plt.legend()
 plt.show()

@@ -50,8 +50,8 @@ coulomb_graphene = granad.LatticeCoupling(
 sb.set_coulomb(coulomb_graphene)
 
 # create the stack object
-stack = sb.get_stack( beta = 0.1 )
+stack = sb.get_stack(beta=0.1)
 
 # thermal occupation factors
-granad.show_energies( stack )
+granad.show_energies(stack)
 # -

@@ -21,6 +21,7 @@
 # Building is a stack is done with the help of an eponymous StackBuilder. We first set up an empty instance.
 
 import granad
+
 sb = granad.StackBuilder()
 
 # We want to model
@@ -29,9 +30,9 @@ sb = granad.StackBuilder()
 # 2. with an *armchair* edge type, which is
 # 3. made from graphene, i.e. a honeycomb lattice with a lattice constant of 2.46 Å.
 #
-# Step 1 specifies a concrete shape, while steps 2 and 3 define a concrete lattice. For this reason, GRANAD separates the process of defining such a flake via helper classes. First, we need the concrete shape. 
+# Step 1 specifies a concrete shape, while steps 2 and 3 define a concrete lattice. For this reason, GRANAD separates the process of defining such a flake via helper classes. First, we need the concrete shape.
 
-triangle = granad.Triangle(7.4) 
+triangle = granad.Triangle(7.4)
 
 # Now, we need the lattice.
 
@@ -50,7 +51,10 @@ sb.show3D()
 # Now, we define the couplings. GRANAD knows two types of couplings: hopping and Coulomb parameters. GRANAD offers coupling classes tailored to either lattice materials, single spots or a combination of both. Since we are investigating a lattice structure, we use the following code to set the onsite hopping between pz-Orbitals to 0 eV and the nearest-neighbor hopping to -2.66 eV.
 
 hopping_graphene = granad.LatticeCoupling(
-    orbital_id1="pz", orbital_id2="pz", lattice=graphene, couplings=[0, -2.66] # list of hopping amplitudes like [onsite, nn, ...]
+    orbital_id1="pz",
+    orbital_id2="pz",
+    lattice=graphene,
+    couplings=[0, -2.66],  # list of hopping amplitudes like [onsite, nn, ...]
 )
 sb.set_hopping(hopping_graphene)
 

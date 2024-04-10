@@ -22,10 +22,10 @@ sb = granad.StackBuilder()
 
 # add graphene
 graphene = granad.Lattice(
-shape=granad.Triangle(4.1),
-lattice_edge=granad.LatticeEdge.ARMCHAIR,
-lattice_type=granad.LatticeType.HONEYCOMB,
-lattice_constant=2.46,
+    shape=granad.Triangle(4.1),
+    lattice_edge=granad.LatticeEdge.ARMCHAIR,
+    lattice_type=granad.LatticeType.HONEYCOMB,
+    lattice_constant=2.46,
 )
 sb.add("pz", graphene)
 
@@ -49,10 +49,12 @@ stack = sb.get_stack()
 print(stack.rho_0.diagonal() * stack.electrons, stack.homo)
 
 # create the stack object with a single excitation involving two electrons
-stack = sb.get_stack( from_state = [1], to_state = [2], excited_electrons = [2], doping = 0 )
+stack = sb.get_stack(from_state=[1], to_state=[2], excited_electrons=[2], doping=0)
 print(stack.rho_0.diagonal() * stack.electrons, stack.homo)
 
 # create the stack object with two excitations
-stack = sb.get_stack( from_state = [1,0], to_state = [2,4], excited_electrons = [2,1], doping = 0 )
+stack = sb.get_stack(
+    from_state=[1, 0], to_state=[2, 4], excited_electrons=[2, 1], doping=0
+)
 print(stack.rho_0.diagonal() * stack.electrons, stack.homo)
 # -

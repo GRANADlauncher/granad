@@ -33,7 +33,7 @@ import matplotlib.pyplot as plt
 sb = granad.StackBuilder()
 
 # geometry
-triangle = granad.Triangle(7.4) 
+triangle = granad.Triangle(7.4)
 # graphene = granad.Lattice(
 #     shape=triangle,
 #     lattice_type=granad.LatticeType.HONEYCOMB,
@@ -50,7 +50,10 @@ sb.add("pz", graphene)
 
 # couplings
 hopping_graphene = granad.LatticeCoupling(
-    orbital_id1="pz", orbital_id2="pz", lattice=graphene, couplings=[0, -2.66] # list of hopping amplitudes like [onsite, nn, ...]
+    orbital_id1="pz",
+    orbital_id2="pz",
+    lattice=graphene,
+    couplings=[0, -2.66],  # list of hopping amplitudes like [onsite, nn, ...]
 )
 sb.set_hopping(hopping_graphene)
 coulomb_graphene = granad.LatticeCoupling(
@@ -79,25 +82,29 @@ quad = granad.quadrupole_operator(stack)
 
 # +
 
-def vector_potential( r, omega ):
-    A_0 = 1e-3 * jnp.ones_like( r )
-    return lambda t : A_0 * jnp.sin( omega * t )
 
-def uniform_e_field( r, omega ):
-    A_0 = jnp.ones_like( r )
-    return lambda t : A_0.T * (omega * jnp.cos( omega * t ) ) 
+def vector_potential(r, omega):
+    A_0 = 1e-3 * jnp.ones_like(r)
+    return lambda t: A_0 * jnp.sin(omega * t)
 
-field_func = vector_potential( stack.positions, 1 )
-field_func = uniform_e_field( stack.positions, 1 )
+
+def uniform_e_field(r, omega):
+    A_0 = jnp.ones_like(r)
+    return lambda t: A_0.T * (omega * jnp.cos(omega * t))
+
+
+field_func = vector_potential(stack.positions, 1)
+field_func = uniform_e_field(stack.positions, 1)
 
 # run the simulation
 gamma = 1
-time_axis = jnp.linspace(0, 1/gamma, int(1e6))
+time_axis = jnp.linspace(0, 1 / gamma, int(1e6))
 saveat = time_axis[::100]
 # stack_new, sol = granad.evolution(
 #     stack, time_axis, field_func, spatial = True, saveat = saveat)
 stack_new, sol = granad.evolution(
-    stack, time_axis, field_func, spatial = False, saveat = saveat)
+    stack, time_axis, field_func, spatial=False, saveat=saveat
+)
 
 # -
 
@@ -107,9 +114,14 @@ stack_new, sol = granad.evolution(
 
 occupations = jnp.diagonal(sol.ys, axis1=1, axis2=2)
 dipole_moment = granad.induced_dipole_moment(stack, occupations)
-dipole_moment_from_trace = jnp.einsum( 'ijk,kjr->ir', -stack.electrons*(sol.ys - granad.to_site_basis(stack, stack.rho_stat)[None,:,:]), dip )
-plt.plot( saveat, dipole_moment, '-', label = 'occupations' )
-plt.plot( saveat, dipole_moment_from_trace, '--', label = 'trace' )
+dipole_moment_from_trace = jnp.einsum(
+    "ijk,kjr->ir",
+    -stack.electrons
+    * (sol.ys - granad.to_site_basis(stack, stack.rho_stat)[None, :, :]),
+    dip,
+)
+plt.plot(saveat, dipole_moment, "-", label="occupations")
+plt.plot(saveat, dipole_moment_from_trace, "--", label="trace")
 plt.legend()
 plt.show()
 
@@ -119,15 +131,16 @@ plt.show()
 
 # +
 
-quadrupole_moments = jnp.einsum( 'ijk,kjxy->ixy', -stack.electrons*(sol.ys - granad.to_site_basis(stack, stack.rho_stat)[None,:,:]), quad )
-plt.plot( saveat, dipole_moment_from_trace, '-', label = 'dip' )
-plt.plot( saveat, quadrupole_moments.diagonal(axis1=1, axis2=2), '--', label = 'quad' )
+quadrupole_moments = jnp.einsum(
+    "ijk,kjxy->ixy",
+    -stack.electrons
+    * (sol.ys - granad.to_site_basis(stack, stack.rho_stat)[None, :, :]),
+    quad,
+)
+plt.plot(saveat, dipole_moment_from_trace, "-", label="dip")
+plt.plot(saveat, quadrupole_moments.diagonal(axis1=1, axis2=2), "--", label="quad")
 plt.legend()
-plt.savefig('quad.pdf')
+plt.savefig("quad.pdf")
 plt.show()
 
 # -
-
-
-
-

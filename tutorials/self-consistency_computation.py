@@ -14,7 +14,7 @@
 
 # ## Self-consistency computation
 #
-# This example demonstrates how to perform a self-consistent calculation. 
+# This example demonstrates how to perform a self-consistent calculation.
 
 # +
 import granad
@@ -52,10 +52,10 @@ coulomb_graphene = granad.LatticeCoupling(
 sb.set_coulomb(coulomb_graphene)
 
 # create the stack object
-stack = sb.get_stack( from_state = 0, to_state = 2, doping = 1 )
+stack = sb.get_stack(from_state=0, to_state=2, doping=1)
 
 # get a stack object where the hamiltonian and density matrices are self-consistently evaluated
-stack_new = granad.get_self_consistent( stack )
-print( jnp.linalg.norm(stack.energies - stack_new.energies ) )
-print( jnp.linalg.norm(stack.hamiltonian - stack_new.hamiltonian ) )
+stack_new = granad.get_self_consistent(stack)
+print(jnp.linalg.norm(stack.energies - stack_new.energies))
+print(jnp.linalg.norm(stack.hamiltonian - stack_new.hamiltonian))
 # -

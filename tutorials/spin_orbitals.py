@@ -30,15 +30,15 @@ sb = granad.StackBuilder()
 
 # add graphene
 graphene = granad.Lattice(
-shape=granad.Triangle(4.1),
-lattice_edge=granad.LatticeEdge.ARMCHAIR,
-lattice_type=granad.LatticeType.HONEYCOMB,
-lattice_constant=2.46,
+    shape=granad.Triangle(4.1),
+    lattice_edge=granad.LatticeEdge.ARMCHAIR,
+    lattice_type=granad.LatticeType.HONEYCOMB,
+    lattice_constant=2.46,
 )
 sb.add("pz_up", graphene)
 
 # make it half full
-sb.add("pz_down", graphene, occupation = 0)
+sb.add("pz_down", graphene, occupation=0)
 
 uu = granad.LatticeCoupling(
     orbital_id1="pz_up", orbital_id2="pz_up", lattice=graphene, couplings=[0, -2.66]
@@ -80,6 +80,10 @@ sb.set_coulomb(cdd)
 sb.set_coulomb(cud)
 
 # create the stack object
-stack = sb.get_stack( from_state = 0, to_state = 0,  doping = 0, spin_degenerate = False )
-print(stack.rho_0.diagonal() * stack.electrons, stack.homo, stack.rho_0.diagonal().sum() * stack.electrons)
+stack = sb.get_stack(from_state=0, to_state=0, doping=0, spin_degenerate=False)
+print(
+    stack.rho_0.diagonal() * stack.electrons,
+    stack.homo,
+    stack.rho_0.diagonal().sum() * stack.electrons,
+)
 # -
