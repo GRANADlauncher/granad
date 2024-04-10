@@ -109,7 +109,7 @@ for i in range(100):
         break
     grad_val = grad(params)
     params -= 1e-2 * grad_val
-    print(params, target_params)
+    print(params)
 
 # -
 
@@ -118,7 +118,7 @@ for i in range(100):
 # +
 
 granad.show_energies(stack_poly(params))
-granad.show_energies(stack_poly(target_params))
+granad.show_energies(stack_poly([0.2, 2.5]))
 
 # -
 
