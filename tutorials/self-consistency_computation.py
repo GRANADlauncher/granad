@@ -16,13 +16,14 @@
 #
 # This example demonstrates how to perform a self-consistent calculation.
 
-# +
-import granad
+import diffrax
 import jax
 import jax.numpy as jnp
-import numpy as np
-import diffrax
 import matplotlib.pyplot as plt
+import numpy as np
+
+# +
+import granad
 
 # build stack
 sb = granad.StackBuilder()

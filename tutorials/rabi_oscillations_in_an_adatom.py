@@ -20,10 +20,11 @@
 #
 # The setup is analogous to the previous tutorials. We need two adatom levels, called "A" and "B" at the same spot. Both orbitals should togehter host a single electron, so we need to explicitly mention a vanishing occupation in one of them.
 
-# +
-import granad
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
+
+# +
+import granad
 
 sb = granad.StackBuilder()
 spot = granad.Spot(position=[0.0, 0.0, 0.0])

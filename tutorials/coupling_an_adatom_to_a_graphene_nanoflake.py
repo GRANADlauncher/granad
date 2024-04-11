@@ -20,11 +20,12 @@
 #
 # The setup is analogous to the previous tutorials. We can add the isolated systems (flake, adatom) to the StackBuilder instance.
 
+import jax.numpy as jnp
+import matplotlib.pyplot as plt
+import numpy as np
+
 # +
 import granad
-import jax.numpy as jnp
-import numpy as np
-import matplotlib.pyplot as plt
 
 sb = granad.StackBuilder()
 

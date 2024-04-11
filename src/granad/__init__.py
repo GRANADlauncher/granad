@@ -26,6 +26,7 @@ TransitionsDict = NewType(
 
 # TODO: improve and update docstrings
 
+
 ## CLASSES
 @struct.dataclass
 class Orbital:
@@ -518,6 +519,7 @@ class LatticeSpotCoupling:
     couplings: list[float]
     coupling_function: Callable[[float], complex] = lambda x: 0j
 
+
 def gaussian_coupling(sigma, mu, couplings):
     """Helper function for "almost-neighbor" coupling"""
     return lambda x: sum(
@@ -736,7 +738,9 @@ class StackBuilder:
 
         self._ensure_combinations(self.hopping, "hopping")
         if energies_only:
-            self.coulomb = { combination : lambda x : 0.0 for combination in self.hopping.keys() }
+            self.coulomb = {
+                combination: lambda x: 0.0 for combination in self.hopping.keys()
+            }
             self._ensure_combinations(self.coulomb, "coulomb")
 
         stack = _stack(
@@ -1432,7 +1436,9 @@ def dos(stack: Stack, omega: float, broadening: float = 0.1) -> jax.Array:
     return prefactor * jnp.sum(gaussians)
 
 
-def ldos(stack: Stack, omega: float, site_index: int, broadening: float = 0.1) -> jax.Array:
+def ldos(
+    stack: Stack, omega: float, site_index: int, broadening: float = 0.1
+) -> jax.Array:
     """IP-LDOS of a nanomaterial stack.
 
     - `stack`: a stack object
@@ -1482,7 +1488,23 @@ def velocity_operator(stack):
     return -1j * (x_times_h - h_times_x)
 
 
-# TODO: units, reliably identify steady-states
+def fraction_periodic(signal, threshold=1e-2):
+
+    # signal is periodic => abs(signal) is periodic
+    cum_sum = jnp.abs(signal).cumsum()
+
+    # cumulative mean of periodic signal is constant
+    cum_mean = cum_sum / jnp.arange(1, len(signal) + 1)
+
+    # if cumulative mean doesn't move anymore, we have a lot of periodic signal
+    med = jnp.median(cum_mean)
+    deviation = jnp.abs(med - cum_mean) / med
+
+    # approximate admixture of periodic signal
+    return (deviation < threshold).sum() / len(signal)
+
+
+# TODO: units
 def evolution(
     stack: Stack,
     time: jax.Array,

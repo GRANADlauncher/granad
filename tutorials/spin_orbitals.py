@@ -17,13 +17,14 @@
 # This example demonstrates how to model spin orbitals in GRANAD. There are three differences to the default spin-polarized case: 1. you have to name the orbitals differently, e.g. pz_up and pz_down, 2. you leave one of it empty when adding it, 3. you pass spin_degenerate = False to get_stack.
 #
 
-# +
-import granad
+import diffrax
 import jax
 import jax.numpy as jnp
-import numpy as np
-import diffrax
 import matplotlib.pyplot as plt
+import numpy as np
+
+# +
+import granad
 
 # build stack
 sb = granad.StackBuilder()

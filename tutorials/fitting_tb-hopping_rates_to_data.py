@@ -24,12 +24,12 @@
 
 # +
 
-import granad
 import jax
 import jax.numpy as jnp
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
+import granad
 
 # define the target stack
 

@@ -23,11 +23,12 @@
 
 # +
 
-import granad
 import jax
 import jax.numpy as jnp
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
+import granad
 
 
 def stack_poly(params, n=180):

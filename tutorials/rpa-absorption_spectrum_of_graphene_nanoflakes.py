@@ -20,13 +20,14 @@
 #
 # The setup is analogous to the first tutorial. We build the Stack using the StackBuilder, which needs to know the material (a triangular armchair graphene nanoflake of 7.4 Å) and the coupling between the pz-orbitals (hopping rates and Coulomb interaction).
 
-# +
-import granad
+import diffrax
 import jax
 import jax.numpy as jnp
-import numpy as np
-import diffrax
 import matplotlib.pyplot as plt
+import numpy as np
+
+# +
+import granad
 
 sb = granad.StackBuilder()
 
