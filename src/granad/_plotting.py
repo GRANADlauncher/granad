@@ -15,16 +15,17 @@ def _plot_wrapper(plot_func):
 
     return wrapper
 
+# TODO: arg "color_by_tag" : str for orbital tag or orbital name, replaces color_orbitals, show_orbitals
 @_plot_wrapper
-def show_eigenstate3D(
+def show_3d(
     orbs,
     show_state: int = 0,
     show_orbitals: list[str] = None,
-    indicate_size: bool = True,
+    indicate_size: bool = False,
     color_orbitals: bool = True,
     annotate_hilbert: bool = True,
 ):
-    """Shows a 3D scatter plot of how selected orbitals in a stack contribute to an eigenstate.
+    """Shows a 3D scatter plot of selected orbitals.
     In the plot, orbitals are annotated with a color. The color corresponds either to the contribution to the selected eigenstate or to the type of the orbital.
     Optionally, orbitals can be annotated with a number corresponding to the hilbert space index.
 
@@ -59,7 +60,7 @@ def show_eigenstate3D(
         plt.legend()
 
 @_plot_wrapper
-def show_eigenstate2D(
+def show_2d(
     orbs,
     plane: str = "xy",
     show_state: int = 0,
@@ -110,7 +111,7 @@ def show_eigenstate2D(
     ax.axis("equal")
 
 @_plot_wrapper
-def show_charge_distribution3D(orbs):
+def show_charge_distribution_3d(orbs):
     """Displays the ground state charge distribution of the stack in 3D
 
     - `stack`: stack object
@@ -126,7 +127,7 @@ def show_charge_distribution3D(orbs):
 
 
 @_plot_wrapper
-def show_charge_distribution2D(orbs, plane: str = "xy"):
+def show_charge_distribution_2d(orbs, plane: str = "xy"):
     """Displays the ground state charge distribution of the stack in 2D
 
     - `stack`: object representing system state

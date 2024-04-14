@@ -8,6 +8,8 @@ import itertools
 import warnings
 import json
 import uuid
+from collections import namedtuple
+
 
 # TODO: hmmm
 from ._core import *
@@ -27,6 +29,10 @@ class Counter:
         cls._counter += 1
         return cls._counter
 
+OrbitalTags = namedtuple('OrbitalTags', ['sublattice', 'atom', 'lmns'] )
+def _empty_tags():
+    return OrbitalTags( sublatice = 0, atom = '', lmns = () )
+
 ## CLASSES
 @dataclass(frozen  = True)
 class Orbital:
@@ -40,8 +46,8 @@ class Orbital:
     orbital_name : str
     position : tuple[float, float, float]
     occupation : int = 1
-    atom : str = ''
     uuid : int = field(default_factory=Counter.next_value)
+    tags : OrbitalTags = field(default_factory=_empty_tags)
 
     # TODO: bla bla bla ... this should be shorter but im too tired
     def __eq__(self, other):
@@ -82,8 +88,11 @@ class Material:
     @classmethod
     def from_json(cls, filename):
         with open(filename, 'r') as f:
-            data = json.loads(json.load(f))
+            data = json.load(f)
         return cls(**data)
+    
+    def to_json(self):
+        json.dumps( self  )
 
     @property
     def _orbs( self ):
@@ -162,6 +171,12 @@ class Material:
                     pass
 
 
+    def create_tags(self, sublattice=None, atom=None, lmns=None):
+        sublattice = sublattice if sublattice is not None else 0
+        atom = atom if atom is not None else ''
+        lmns = lmns if lmns is not None else ()
+        return OrbitalTags(sublattice, atom, lmns)
+    
     # TODO: planes too big in some cases
     def cut( self, polygon_vertices, preview = False, remove_neighbors : int = 2 ):        
         # Unzip into separate lists of x and y coordinates
@@ -339,9 +354,16 @@ class OrbitalList:
             self._list[position] = value
         raise TypeError
 
-    # TODO: remove all couplings belonging to that item
+    def _delete_coupling( self, orb, coupling ):                
+        keys_to_remove = [key for key in coupling if orb in key]        
+        for key in keys_to_remove:
+            del coupling[key]
+            
     @mutates
-    def __delitem__(self, position):
+    def __delitem__(self, position):        
+        orb = self._list[position]
+        self._delete_coupling( orb, self._hopping )
+        self._delete_coupling( orb, self._coulomb )
         del self._list[position]
 
     def __getattr__(self, item):
