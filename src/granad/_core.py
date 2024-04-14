@@ -2,6 +2,47 @@ import jax
 import jax.numpy as jnp
 jax.config.update("jax_enable_x64", True)
 import diffrax
+from flax import struct
+
+@struct.dataclass
+class Stack:
+    """A stack of orbitals.
+
+    - `hamiltonian`: TB-Hamiltonian of the system.
+    - `coulomb`: Coulomb matrix of the system.
+    - `rho_0`: Density matrix corresponding to the initial state. If a simulation is interrupted at time t, then it can be resumed using the density matrix at time t as rho_0.
+    - `rho_stat`: Density matrix corresponding to the final state.
+    - `energies`: Independent particle energies as given by the eigenvalues of the TB-hamiltonian.
+    - `eigenvectors`: Eigenvectors of the TB-Hamiltonian. These are used to transform between *site* and *energy* basis.
+    - `positions`: Positions of the orbitals, $N \\times 3$ - dimensional.
+    - `unique_ids`: Collection of unique strings. Each string identifies an orbital type occuring in the stack. Typically something like `"pz_graphene"`.
+    - `ids`: The integer at the n-th position corresponds to the type of the n-th orbital via its index in `unique_ids`.
+    - `eps`: numerical precision threshold for identifiying degeneracies in the eigenenergies.
+    - `homo`: index of the homo, such that stack.energies[homo] is the energy of the ground state homo.
+    - `electrons`: total number of electrons in the system.
+    - `from_state`: the state from which electrons have been taken for the initial excited transition, the state translates to HOMO - from_state
+    - `to_state`: the state into which electrons haven been put for the initial excited transition, the state translates to HOMO + from_state
+    - `beta`: corresponds to $(k_B T)^{-1}$
+    """
+
+    hamiltonian: jax.Array
+    coulomb: jax.Array
+    rho_0: jax.Array
+    rho_stat: jax.Array
+    energies: jax.Array
+    eigenvectors: jax.Array
+    positions: jax.Array
+    unique_ids: list[str] # really needed? only once for dipoles
+    ids: jax.Array  # really needed? only once for dipoles
+    eps: float
+    homo: int
+    electrons: int
+    from_state: int
+    to_state: int
+    excited_electrons: int
+    beta: float
+    spin_degeneracy: float
+    transitions: dict
 
 def fermi(e, beta, mu):
     return 1 / (jnp.exp(beta * (e - mu)) + 1)
@@ -152,7 +193,7 @@ def _density_aufbau(
 def dipole_transitions(
     stack: Stack,
     add_induced: bool = False,
-) -> Callable:
+):
     """Takes into account dipole transitions.
 
         - `stack`:
@@ -229,7 +270,7 @@ def dipole_transitions(
         )
         - stack.positions[indices[:, 0, :].flatten(), :]
     )
-p
+    
     # array of shape positions x orbitals x 3, with entries r_point_charge[i, o, :] = (r_o - r_i)/|r_o - r_i|^3
     r_point_charge = jnp.nan_to_num(
         vec_r / jnp.expand_dims(jnp.linalg.norm(vec_r, axis=2) ** 3, 2),
@@ -239,7 +280,7 @@ p
 
     return jax.jit(inner)
 
-def relaxation(tau: float) -> Callable:
+def relaxation(tau: float):
     """Function for modelling dissipation according to the relaxation approximation.
 
         - `tau`: relaxation time
@@ -380,8 +421,8 @@ def get_self_consistent(
 def evolution(
     stack: Stack,
     time: jax.Array,
-    field: FieldFunc,
-    dissipation: DissipationFunc = lambda x, y: 0.0,
+    field,
+    dissipation = lambda x, y: 0.0,
     coulomb_strength: float = 1.0,
     saveat=None,
     solver=diffrax.Dopri5(),
