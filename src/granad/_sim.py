@@ -10,11 +10,12 @@ import warnings
 from granad import *
 import json
 from _shapes import shapes
-from pkg_resources import resource_filename, resource_stream
 import uuid
 
-# TODO JAXIFX
+# TODO: deprecated but idk tbh
+from pkg_resources import resource_filename, resource_stream
 
+# TODO JAXIFX as much as possible
 @struct.dataclass
 class Stack:
     """A stack of orbitals.
@@ -79,14 +80,13 @@ class Orbital:
     position : tuple[float, float, float]
     occupation : int = 1
     atom : str = ''
-    material = None
     uuid : int = field(default_factory=Counter.next_value)
 
     # TODO: bla bla bla ... this should be shorter but im too tired
     def __eq__(self, other):
         if not isinstance(other, Orbital):
             return NotImplemented
-        return self.uuid == other.uuid
+        return self.uuid == other.uuid and self.position == other.position and self.orbital_name == other.orbital_name and self.atom == other.atom
 
     def __lt__(self, other):
         if not isinstance(other, Orbital):
@@ -244,7 +244,7 @@ class Material:
             plt.show()
 
         uuid = Counter.next_value()
-        orbital_list = OrbitalList( [ Orbital( position = tuple(p), orbital_name = orbs[i], uuid = uuid  ) for i,p in enumerate(positions) ] )
+        orbital_list = OrbitalList( [ Orbital( position = tuple(float(x) for x in p), orbital_name = orbs[i], uuid = uuid  ) for i,p in enumerate(positions) ] )
 
         self._set_couplings( orbital_list.set_layers_hopping, self.hopping, uuid )
         self._set_couplings( orbital_list.set_layers_coulomb, self.coulomb, uuid )
@@ -331,7 +331,13 @@ class OrbitalList:
 
         # list of fields that are directly looked up from the stack
         self._stack_fields = [ n.name for n in fields(Stack)]
-        
+
+        # TODO: ufff
+        self._observable_functions = self._get_class_method_names()
+
+    @staticmethod
+    def _get_class_method_names( cls ):
+        return [func.__name__ for func in dir(cls) if callable(getattr(cls, func)) and not func.startswith('__')]
         
     def __len__(self):
         return len(self._list)
@@ -344,7 +350,18 @@ class OrbitalList:
         return str(self._list)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}({self._list})"
+        def concatenate_couplings( cd  ):
+            res = ''
+            for key, val in cd.items():
+                res += f'{key}, {val}'
+            return res
+                
+        info = f"Orbital list with {len(self)} orbitals.\n"
+        hop = concatenate_couplings( self._hopping )
+        coul = concatenate_couplings( self._coulomb )
+        params = str( self.params )
+        res = info + hop + coul + params        
+        return res 
 
     def __iter__(self):
         return iter(self._list)
@@ -372,22 +389,24 @@ class OrbitalList:
         del self._list[position]
 
     def __getattr__(self, item):
-        
-        if not item in self._stack_fields:        
+        if not item in (self._stack_fields + self._functions):        
             raise AttributeError(f"'{type(self).__name__}' object has no attribute '{item}'")
+        
+        if item in self._plotting_functions:
+            return getattr( self.dummy, item )
         
         if self._recompute_stack:
             self.build()
             self._recompute_stack = False
             
-        return getattr( self.stack, item )            
-            
+        return getattr( self.stack, item )
+
     
     @staticmethod
     def _are_orbs(candidate):
         return all(isinstance(orb, Orbital) for orb in candidate)
 
-    # any modification of couplings SHOULD ONLY HAPPEN HERE!!!, TODO: type check
+    # any modification of couplings SHOULD ONLY HAPPEN HERE!!!
     @mutates
     def _set_coupling( self, orb_or_string1, orb_or_string2, val_or_func, coupling):
         coupling[ (orb_or_string1, orb_or_string2) ] = val_or_func
@@ -462,7 +481,7 @@ class OrbitalList:
         if isinstance(orb2, int):
             orb2 = self._list[orb2]
         self._set_coupling( orb1, orb2, self._ensure_complex(val), self._coulomb )
-        
+
     # TODO: implement
     def append(self, other):
         return NotImplemented
@@ -531,73 +550,3 @@ class OrbitalList:
 
     def _hamiltonian_coulomb_slater_koster():
         return NotImplemented
-
-def test_recompute():
-    pos = [0.0, 0.0, 0.0]
-    orbs =  OrbitalList( [Orbital("A", pos)] )
-    assert orbs.recompute_stack == True
-    orbs.energies
-    assert orbs.recompute_stack == False
-
-def test_set_elements():
-    pos = [0.0, 0.0, 0.0]
-    orbs1 =  OrbitalList( [ Orbital("A", pos), Orbital("B", pos) ] )
-    orbs1.set_hamiltonian_element( 0, 1, 0.3j )
-    assert orbs1.hamiltonian[0, 1] == 0.3j
-    assert orbs1.hamiltonian[1, 0] == -0.3j
-
-def test_combine_lists():
-    pos = [0.0, 0.0, 0.0]
-    orbs1 =  OrbitalList( [ Orbital("A", pos), Orbital("B", pos) ] )
-    orbs1.set_hamiltonian_element( 0, 1, 0.3j )
-    assert orbs1.hamiltonian[0, 1] == 0.3j
-    assert orbs1.hamiltonian[1, 0] == -0.3j
-
-    orbs1.set_hamiltonian_element( 0, 0, 0.3 )
-    assert orbs1.hamiltonian[0, 0] == 0.3
-
-    orbs1.set_hamiltonian_element( 1, 1, 0.4 )
-    assert orbs1.hamiltonian[1, 1] == 0.4
-
-    orbs2 =  OrbitalList( [ Orbital("C", pos), Orbital("D", pos) ] )
-    orbs2.set_hamiltonian_element( 0, 0, 0.1 )
-    orbs2.set_hamiltonian_element( 1, 1, 0.2 )
-    orbs2.set_hamiltonian_element( 0, 1, 0.4j )
-
-    orbs = orbs1 + orbs2
-    orbs.set_hamiltonian_element( 0, 2, 0.7 )
-    orbs.set_hamiltonian_element( 1, 3, 0.8 )
-    assert orbs.hamiltonian[0, 2] == 0.7
-    assert orbs.hamiltonian[1, 3] == 0.8
-
-    
-# def test_material_loading():
-# graphene cutting 
-graphene = {
-    "orbitals": {
-        "p_z": [
-            (0, 0),  # Position of the first carbon atom in fractional coordinates
-            (-1/3, -2/3)   # Position of the second carbon atom
-        ]
-    },
-    "lattice_basis": [
-        (1.0, 0.0, 0.0),  # First lattice vector
-        (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
-    ],
-    "hopping": { "p_z-p_z" : [0.0, 2.66]  },
-    "coulomb": { "p_z-p_z" : [0.0, 2.66]  },
-    "lattice_constant" : 2.46,
-}
-
-graphene = Material(**graphene)
-orbs = graphene.cut( 20*shapes.triangle, preview = True )
-
-pos = (0.0, 0.0, 0.0)
-orbs1 =  OrbitalList( [ Orbital("A", pos), Orbital("B", pos) ] )
-orbs1.set_hamiltonian_element( 0, 1, 0.3j )
-# assert orbs1.hamiltonian[0, 1] == 0.3j
-# assert orbs1.hamiltonian[1, 0] == -0.3j
-
-orbs += orbs1
-
-print( orbs.hamiltonian )
