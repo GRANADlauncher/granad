@@ -43,8 +43,8 @@ class Stack:
     energies: jax.Array
     eigenvectors: jax.Array
     positions: jax.Array
-    unique_ids: list[str]
-    ids: jax.Array
+    unique_ids: list[str] # really needed? only once for dipoles
+    ids: jax.Array  # really needed? only once for dipoles
     eps: float
     homo: int
     electrons: int
@@ -55,6 +55,14 @@ class Stack:
     spin_degeneracy: float
     transitions: dict
 
+# TODO: this is not thread-safe
+class Counter:
+    _counter = 0
+
+    @classmethod
+    def next_value(cls):
+        cls._counter += 1
+        return cls._counter
 
 ## CLASSES
 @dataclass(frozen  = True)
@@ -68,12 +76,34 @@ class Orbital:
     """
 
     orbital_name : str
-    position : list[float]
-    uuid : str
+    position : tuple[float, float, float]
     occupation : int = 1
     atom : str = ''
     material = None
+    uuid : int = field(default_factory=Counter.next_value)
 
+    # TODO: bla bla bla ... this should be shorter but im too tired
+    def __eq__(self, other):
+        if not isinstance(other, Orbital):
+            return NotImplemented
+        return self.uuid == other.uuid
+
+    def __lt__(self, other):
+        if not isinstance(other, Orbital):
+            return NotImplemented
+        return self.uuid < self.uuid
+
+    def __le__(self, other):
+        return self < other or self == other
+
+    def __gt__(self, other):
+        return not self <= other
+
+    def __ge__(self, other):
+        return not self < other
+
+    def __ne__(self, other):
+        return not self == other
 
 # TODO: cleanup this horrible code, this was just quick-and-dirty
 # TODO: 3D extension?
@@ -135,17 +165,13 @@ class Material:
             return points[mask, :]
         else:
             return Material._prune( points[mask, :], remove_neighbors, remaining )
-    
-    def generate_uuid( self ):        
-        random_uuid = uuid.uuid4()
-        # Convert the UUID to a 128-bit integer        
-        return str(random_uuid.int)
 
     # very nasty, TODO: find better solution than rounding stuff, hardcoding 1e-5
     def neighbor_couplings_to_function(self, couplings, orb_1, orb_2 ):
         translations = self.get_translations( len(couplings) )
-        positions = self.cover_plane( translations, [orb_1, orb_2] )
-
+        positions = jnp.concatenate( self.cover_plane( translations, [orb_1, orb_2] ) )
+        couplings = jnp.array( couplings ) + 0.0j
+        
         distances = jnp.unique(
             jnp.round(jnp.linalg.norm(positions - positions[:, None, :], axis=2), 8)
         )[: len(couplings)]
@@ -154,22 +180,26 @@ class Material:
             return jax.lax.cond(
                 jnp.min(jnp.abs(d - distances)) < 1e-5,
                 lambda x: couplings[jnp.argmin(jnp.abs(x - distances))],
-                lattice_coupling.coupling_function,
+                lambda x: 0.0j,
                 d,
             )
 
         return inner
+
+    @staticmethod
+    def join_keys( keys ):
+        return '-'.join( keys )
     
     def _set_couplings( self, func, cdict, uuid ):
-        for orb1 in orbs:
-            for orb2 in orbs:            
+        for orb1 in self._orbs:
+            for orb2 in self._orbs:
+
                 try:
-                    distance_func = self.neighbor_couplings_to_function( cdict[(orb1, orb2)] )                    
+                    distance_func = self.neighbor_couplings_to_function( cdict[self.join_keys( (orb1, orb2) )], orb1, orb2 )
                     func( uuid, uuid, distance_func )                    
                 except KeyError:
                     pass
 
-        return orbital_list
 
     # TODO: planes too big in some cases
     def cut( self, polygon_vertices, preview = False, remove_neighbors : int = 2 ):        
@@ -179,8 +209,8 @@ class Material:
         # Find the maximum x and y values
         max_x = np.abs(np.array(x_coords)).max()
         max_y = np.abs(np.array(y_coords)).max()
-        lattice_max_x = np.max( self.lattice_basis, axis = 0)[0]        
-        lattice_max_y = np.max( self.lattice_basis, axis = 0)[1]
+        lattice_max_x = self.lattice_constant * np.max( self.lattice_basis, axis = 0)[0]        
+        lattice_max_y = self.lattice_constant * np.max( self.lattice_basis, axis = 0)[1]
 
         # translate by lattice vectors
         repetitions = int( np.nan_to_num( np.ceil(max( max_x / lattice_max_x, max_y / lattice_max_y )), posinf = 0) )
@@ -213,11 +243,13 @@ class Material:
             plt.axis('equal')
             plt.show()
 
-        uuid = self.generate_uuid()
-        orbital_list = OrbitalList( [ Orbital( position = p, orbital_name = orbs[i], uuid = uuid  ) for i,p in enumerate(positions) ] )
+        uuid = Counter.next_value()
+        orbital_list = OrbitalList( [ Orbital( position = tuple(p), orbital_name = orbs[i], uuid = uuid  ) for i,p in enumerate(positions) ] )
 
         self._set_couplings( orbital_list.set_layers_hopping, self.hopping, uuid )
         self._set_couplings( orbital_list.set_layers_coulomb, self.coulomb, uuid )
+
+        return orbital_list
 
     
 def _default_jax_array():
@@ -262,7 +294,7 @@ class SortedTupleDict(dict):
     def uuid_items(self):
         """Yields items where all elements of the key tuple are strings."""
         for key, value in self.items():
-            if all(isinstance(k, str) for k in key):
+            if all(isinstance(k, int) for k in key):
                 yield (key, value)
                 
     def orbital_items(self):
@@ -323,11 +355,10 @@ class OrbitalList:
             return other + self
 
         if isinstance( other, OrbitalList ):
-            other_hopping = other.hopping
-            other_coulomb = other.coulomb
-            return OrbitalList(self._list + list(other), hopping, coulomb)
-        
-        return OrbitalList(self._list + list(other), self.hopping, self.coulomb)                    
+            self._hopping.update( other._hopping )
+            self._coulomb.update( other._coulomb )
+            
+        return OrbitalList(self._list + list(other), self._hopping, self._coulomb)                    
     
     @mutates
     def __setitem__(self, position, value):
@@ -343,16 +374,14 @@ class OrbitalList:
     def __getattr__(self, item):
         
         if not item in self._stack_fields:        
-            try:
-                return self.data[item]
-            except KeyError:
-                raise AttributeError(f"'{type(self).__name__}' object has no attribute '{item}'")
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{item}'")
         
         if self._recompute_stack:
             self.build()
+            self._recompute_stack = False
             
-        return get_attr( self.stack, item )
-
+        return getattr( self.stack, item )            
+            
     
     @staticmethod
     def _are_orbs(candidate):
@@ -367,20 +396,25 @@ class OrbitalList:
         return list( map( lambda orb : orb.uuid, self._list) )
     
     def get_unique_layers( self ):
-        return list( set( self.get_layers ) )
-
-    def layers_to_ints( self ):        
-        return jnp.array( self.get_layers(), dtype = int )
+        return list( set( self.get_layers() ) )
 
     def _hamiltonian_coulomb_empirical( self ):        
 
         def fill_matrix( matrix, coupling_dict ):
-            
-            # first, we loop over all uuid couplings => interactions between layers TODO: combine in single update
+
+            # TODO: there should be an internal
+            dummy = jnp.arange( len(self._list) )
+            triangle_mask = dummy[:,None] >= dummy
+
+            # TODO: in principle we can build a big tensor NxNxlayers, vmap over the last axis and sum the layers
+            # first, we loop over all uuid couplings => interactions between layers
             for key, function in coupling_dict.uuid_items():
-                rows, cols = jnp.argwhere( uuid_ints == int(idxs_1) ), jnp.argwhere( uuid_ints == int(idxs_2) )
-                vals = function( distances[rows, cols] )
-                matrix = matrix.at[rows, cols].set(vals)
+                # select ids only in upper triangle
+                rows = uuid_ints == key[0]
+                cols = uuid_ints == key[1]
+                valid_indices = jnp.logical_and( triangle_mask, jnp.logical_and( rows, cols ) )
+                function = jax.vmap( function )                
+                matrix = matrix.at[valid_indices].set( function( distances[valid_indices] ) )
                 
             # we now set single elements
             rows, cols, vals = [], [], []
@@ -396,30 +430,38 @@ class OrbitalList:
         # TODO: oh noes rounding again, but don't know what to do else
         positions = self.get_positions()
         distances = jnp.round( jnp.linalg.norm( positions - positions[:, None], axis = -1), 6 )
-
-        # TODO: mention that uuid == layer uuid
+        uuid_ints = jnp.array( self.get_layers() )
         
-        hamiltonian = fill_matrix( jnp.zeros( len(self), len(self) ), self.hopping )
-        coulomb = fill_matrix( jnp.zeros( len(self), len(self) ), self.coulomb )
+        # TODO: mention that uuid == layer uuid
+        hamiltonian = fill_matrix( jnp.zeros( (len(self), len(self)) ).astype(complex), self._hopping )
+        coulomb = fill_matrix( jnp.zeros( (len(self), len(self)) ).astype(complex), self._coulomb )
 
         return hamiltonian, coulomb
-        
+
     
     def _ensure_complex( self, val ):
-        return jax.array(val + 0j).astype(complex)
+        return val + 0.0j
 
     # TODO: bla bla bla ... incredibly verbose, but couldn't think of anything better yet
     def set_layers_hopping( self, uuid1, uuid2, func ):
-        self._set_coupling( uuid1, uuid2, func, self.hopping )
+        self._set_coupling( uuid1, uuid2, func, self._hopping )
 
     def set_layers_coulomb( self, uuid1, uuid2, func ):
-        self._set_coupling( uuid1, uuid2, func, self.coulomb )
+        self._set_coupling( uuid1, uuid2, func, self._coulomb )
         
     def set_hamiltonian_element( self, orb1, orb2, val ):
-        self._set_coupling( orb1, orb2, self._ensure_complex(val), self.hopping )
+        if isinstance(orb1, int):
+            orb1 = self._list[orb1]
+        if isinstance(orb2, int):
+            orb2 = self._list[orb2]
+        self._set_coupling( orb1, orb2, self._ensure_complex(val), self._hopping )
 
     def set_coulomb_element( self, orb1, orb2, val ):
-        self._set_coupling( orb1, orb2, self._ensure_complex(val), self.coulomb )
+        if isinstance(orb1, int):
+            orb1 = self._list[orb1]
+        if isinstance(orb2, int):
+            orb2 = self._list[orb2]
+        self._set_coupling( orb1, orb2, self._ensure_complex(val), self._coulomb )
         
     # TODO: implement
     def append(self, other):
@@ -451,11 +493,14 @@ class OrbitalList:
             energies, self.get_electrons(), self.params.spin_degeneracy, self.params.eps, jnp.array([0]), jnp.array([0]), jnp.array([0]), self.params.beta
         )
 
-        stack =  Stack(hamiltonian, coulomb, rho_0, rho_stat, energies, eigenvectors, pos, unique_ids, ids, self.params.eps, homo, self.get_electrons(), self.params.from_state, self.params.to_state, self.params.excited_electrons, self.params.beta, self.params.spin_degeneracy, self.params.transitions )
+        # TODO: fix
+        unique_ids = 0
+        ids = 0
+        stack =  Stack(hamiltonian, coulomb, rho_0, rho_stat, energies, eigenvectors, self.get_positions(), unique_ids, ids, self.params.eps, homo, self.get_electrons(), self.params.from_state, self.params.to_state, self.params.excited_electrons, self.params.beta, self.params.spin_degeneracy, self.params.transitions )
         
         if self.params.sc_params:
             stack = _get_self_consistent( stack, **self.sc_params )
-            
+
         self.stack = stack
 
     # TODO: should be private?
@@ -464,14 +509,6 @@ class OrbitalList:
     
     def get_positions ( self ):
         return jnp.array( [ o.position for o in self._list ] )
-
-    @mutates
-    def set_hamiltonian_element( self, orbs1, orbs2, val ):
-        self._set_coupling_element( self.hopping, orbs1, orbs2, val )
-                       
-    @mutates
-    def set_coulomb_element( self, orb1, orb2, val ):
-        self._set_coupling_element( self.coulomb, orbs1, orbs2, val )
 
     @mutates
     def make_self_consistent( self, sc_params ):
@@ -533,6 +570,7 @@ def test_combine_lists():
     assert orbs.hamiltonian[0, 2] == 0.7
     assert orbs.hamiltonian[1, 3] == 0.8
 
+    
 # def test_material_loading():
 # graphene cutting 
 graphene = {
@@ -552,5 +590,14 @@ graphene = {
 }
 
 graphene = Material(**graphene)
-orbs = graphene.cut( 10*shapes.triangle )
+orbs = graphene.cut( 20*shapes.triangle, preview = True )
+
+pos = (0.0, 0.0, 0.0)
+orbs1 =  OrbitalList( [ Orbital("A", pos), Orbital("B", pos) ] )
+orbs1.set_hamiltonian_element( 0, 1, 0.3j )
+# assert orbs1.hamiltonian[0, 1] == 0.3j
+# assert orbs1.hamiltonian[1, 0] == -0.3j
+
+orbs += orbs1
+
 print( orbs.hamiltonian )
