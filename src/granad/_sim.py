@@ -31,7 +31,7 @@ class Counter:
 
 OrbitalTags = namedtuple('OrbitalTags', ['sublattice', 'atom', 'lmns'] )
 def _empty_tags():
-    return OrbitalTags( sublatice = 0, atom = '', lmns = () )
+    return OrbitalTags( sublattice = 0, atom = '', lmns = () )
 
 ## CLASSES
 @dataclass(frozen  = True)

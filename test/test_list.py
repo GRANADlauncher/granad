@@ -62,12 +62,29 @@ def test_delete():
     assert orbs.coulomb.shape == (1,1)
 
     
-def test_material_list():
+def test_material_list( size = 10 ):
+    graphene = {
+        "orbitals": {
+            "p_z": [
+                (0, 0),  # Position of the first carbon atom in fractional coordinates
+                (-1/3, -2/3)   # Position of the second carbon atom
+            ]
+        },
+        "lattice_basis": [
+            (1.0, 0.0, 0.0),  # First lattice vector
+            (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
+        ],
+        "hopping": { "p_z-p_z" : [0.0, 2.66]  },
+        "coulomb": { "p_z-p_z" : [0.0, 2.66]  },
+        "lattice_constant" : 2.46,
+    }
     
     graphene = Material(**graphene)
-    orbs = graphene.cut( 10*Shapes.triangle )    
+    orbs = graphene.cut( size*Shapes.triangle )    
     assert orbs.energies.size > 0
     
+test_material_list()
+
 # def test_material_loading():
 #     # graphene cutting 
 #     graphene = {
