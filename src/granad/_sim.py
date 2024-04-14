@@ -16,7 +16,7 @@ from . import _observables
 # TODO: deprecated but idk tbh
 from pkg_resources import resource_filename, resource_stream
 
-# TODO JAXIFX as much as possible
+# TODO JAXIFX as much as possible, some naming conventions are weird, e.g. position_operator should be get_position_operator etc., I use ints and uuid interchangeably, which is also not great, maybe command pattern to guard against illegal dict inserts
 
 # TODO: this is not thread-safe... but do I care?
 class Counter:
@@ -31,8 +31,7 @@ class Counter:
 @dataclass(frozen  = True)
 class Orbital:
     """An orbital.
-    It is only used briefly during stack construction and immediately discarded after.
-
+    
      - `orbital_id`: Orbital ID, e.g. "pz_graphene".
      - `position`: Orbital position like $(x,y,z)$, in Ångström.
      - `occupation`: number of electrons in the non-interacting orbital (`1` or `0`)
@@ -277,6 +276,8 @@ def mutates(func):
 
 # TODO: state pattern for emprical, SK ?
 class OrbitalList:
+    """A list of orbitals.
+    """
 
     def __init__(self, orbs, hopping = None, coulomb = None ):
         # couplings are dicts mapping orbital pairs to couplings
@@ -338,7 +339,7 @@ class OrbitalList:
             self._list[position] = value
         raise TypeError
 
-    # TODO: this is incredibly dangerous if there are couplings pointing to this orbital, would need to check similar things with slicing
+    # TODO: remove all couplings belonging to that item
     @mutates
     def __delitem__(self, position):
         del self._list[position]
@@ -358,10 +359,9 @@ class OrbitalList:
     def _are_orbs(candidate):
         return all(isinstance(orb, Orbital) for orb in candidate)
 
-    # any modification of couplings SHOULD ONLY HAPPEN HERE!!!
     @mutates
-    def _set_coupling( self, orb_or_string1, orb_or_string2, val_or_func, coupling):
-        coupling[ (orb_or_string1, orb_or_string2) ] = val_or_func
+    def _set_coupling( self, orb_or_uuid1, orb_or_uuid2, val_or_func, coupling):
+        coupling[ (orb_or_uuid1, orb_or_uuid2) ] = val_or_func
 
     def get_layers( self ):
         return list( map( lambda orb : orb.uuid, self._list) )
@@ -419,24 +419,30 @@ class OrbitalList:
 
     def set_layers_coulomb( self, uuid1, uuid2, func ):
         self._set_coupling( uuid1, uuid2, func, self._coulomb )
+
+    def _maybe_ints_to_orbs( self, maybe_ints ):
+        def convert( orb ):
+            if isinstance(orb, int):
+                return self._list[orb]
+            if isinstance(orb, Orbital):
+                return orb
+            return "You have passed something that is neither an orbital nor an int"
+        return list( map(convert, maybe_ints ) )
         
-    def set_hamiltonian_element( self, orb1, orb2, val ):
-        if isinstance(orb1, int):
-            orb1 = self._list[orb1]
-        if isinstance(orb2, int):
-            orb2 = self._list[orb2]
+    def set_hamiltonian_element( self, orb_or_int1, orb_or_int2, val ):
+        orb1, orb2 = self._maybe_ints_to_orbs( (orb_or_int1, orb_or_int2) )              
         self._set_coupling( orb1, orb2, self._ensure_complex(val), self._hopping )
 
-    def set_coulomb_element( self, orb1, orb2, val ):
-        if isinstance(orb1, int):
-            orb1 = self._list[orb1]
-        if isinstance(orb2, int):
-            orb2 = self._list[orb2]
+    def set_coulomb_element( self, orb_or_int1, orb_or_int2, val ):
+        orb1, orb2 = self._maybe_ints_to_orbs( (orb_or_int1, orb_or_int2) )
         self._set_coupling( orb1, orb2, self._ensure_complex(val), self._coulomb )
 
-    # TODO: implement
     def append(self, other):
-        return NotImplemented
+        if not isinstance(other, Orbital):
+            raise TypeError
+        if other in self:
+            raise ValueError            
+        self._list.append( other )
 
     def build( self ):
         
