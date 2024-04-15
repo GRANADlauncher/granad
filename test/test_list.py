@@ -51,100 +51,19 @@ def test_delete():
     orbs =  OrbitalList( [ a, b ] )
     orbs.set_hamiltonian_element(0, 1, 1)    
     del orbs[ 0 ]
-    
-    try:
-        orbs._hopping[ (a, b) ]
-        raise ValueError
-    except KeyError:
-        pass
-    
+       
+    assert (a, b) not in orbs._hopping
+    assert (a, b) not in orbs._coulomb    
     assert orbs.hamiltonian.shape == (1,1)
     assert orbs.coulomb.shape == (1,1)
-
     
-def test_material_list( size = 10 ):
-    graphene = {
-        "orbitals": {
-            "p_z": [
-                (0, 0),  # Position of the first carbon atom in fractional coordinates
-                (-1/3, -2/3)   # Position of the second carbon atom
-            ]
-        },
-        "lattice_basis": [
-            (1.0, 0.0, 0.0),  # First lattice vector
-            (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
-        ],
-        "hopping": { "p_z-p_z" : [0.0, 2.66]  },
-        "coulomb": { "p_z-p_z" : [0.0, 2.66]  },
-        "lattice_constant" : 2.46,
-    }
+def test_material_coupling():
+    def get_unique_nonzero( arr ):
+        unique = jnp.unique( jnp.array(arr) )
+        return unique[unique.nonzero()]
     
-    graphene = Material(**graphene)
-    orbs = graphene.cut( size*Shapes.triangle )    
-    assert orbs.energies.size > 0
+    graphene = Material(**MaterialDatabase.graphene)
+    orbs = graphene.cut(10*Shapes.triangle, plot = False)
+    assert jnp.allclose( get_unique_nonzero( orbs.hamiltonian ), get_unique_nonzero( list(graphene.hopping.values()) ).flatten() )
+    assert jnp.allclose( get_unique_nonzero( orbs.coulomb ), get_unique_nonzero( list(graphene.coulomb.values()) ).flatten()  )
     
-test_material_list()
-
-# def test_material_loading():
-#     # graphene cutting 
-#     graphene = {
-#         "orbitals": {
-#             "p_z": [
-#                 (0, 0),  # Position of the first carbon atom in fractional coordinates
-#                 (-1/3, -2/3)   # Position of the second carbon atom
-#             ]
-#         },
-#         "lattice_basis": [
-#             (1.0, 0.0, 0.0),  # First lattice vector
-#             (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
-#         ],
-#         "hopping": { "p_z-p_z" : [0.0, 2.66]  },
-#         "coulomb": { "p_z-p_z" : [0.0, 2.66]  },
-#         "lattice_constant" : 2.46,
-#     }
-
-#     graphene = Material(**graphene)
-#     orbs = graphene.cut( 10*Shapes.triangle, preview = False )
-
-#     pos = (0.0, 0.0, 0.0)
-#     orbs1 =  OrbitalList( [ Orbital("A", pos), Orbital("B", pos) ] )
-#     orbs1.set_hamiltonian_element( 0, 1, 0.3j )
-#     # assert orbs1.hamiltonian[0, 1] == 0.3j
-#     # assert orbs1.hamiltonian[1, 0] == -0.3j
-
-#     orbs += orbs1
-#     orbs.set_hamiltonian_element( 0, 1, 0.3j )
-#     print( orbs.hamiltonian )
-
-# # graphene cutting 
-# graphene = {
-#     "orbitals": {
-#         "p_z": [
-#             (0, 0),  # Position of the first carbon atom in fractional coordinates
-#             (-1/3, -2/3)   # Position of the second carbon atom
-#         ]
-#     },
-#     "lattice_basis": [
-#         (1.0, 0.0, 0.0),  # First lattice vector
-#         (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
-#     ],
-#     "hopping": { "p_z-p_z" : [0.0, 2.66]  },
-#     "coulomb": { "p_z-p_z" : [0.0, 2.66]  },
-#     "lattice_constant" : 2.46,
-# }
-
-# graphene = Material(**graphene)
-# orbs = graphene.cut( 10*Shapes.triangle, preview = False )
-
-# pos = (0.0, 0.0, 0.0)
-# orbs1 =  OrbitalList( [ Orbital("A", pos), Orbital("B", pos) ] )
-# orbs1.set_hamiltonian_element( 0, 1, 0.3j )
-# # assert orbs1.hamiltonian[0, 1] == 0.3j
-# # assert orbs1.hamiltonian[1, 0] == -0.3j
-
-# orbs += orbs1
-# orbs.set_hamiltonian_element( 0, 1, 0.3j )
-# print( orbs.hamiltonian )
-
-# orbs.append(  Orbital("B", pos) )
-# orbs.append(  orbs[0] )
