@@ -22,18 +22,25 @@ class Orbital:
      - `occupation`: number of electrons in the non-interacting orbital (`1` or `0`)
     """
 
-    orbital_name : str
+    name : str
     position : tuple[float, float, float]
     occupation : int = 1
     uuid : int = field(default_factory=_watchdog._Watchdog.next_value)
-    quantum_numbers : tuple[int, int, int, int]  = None
+    info : tuple[int, int, int, int, str]  = None
 
     # TODO: bla bla bla ... this should be shorter but im too tired
     def __eq__(self, other):
         if not isinstance(other, Orbital):
             return NotImplemented
-        return self.uuid == other.uuid and self.position == other.position and self.orbital_name == other.orbital_name and self.atom == other.atom
+        return self.uuid == other.uuid and self.position == other.position and self.name == other.name and self.info == other.info
 
+    def __repr__( self ):
+        name_pos = f"A '{self.name}' orbital at {self.position}."
+        occupation = f"It will contribute {self.occupation} electrons to any structure it is combined with."
+        info = f"Its info (s,l,m,n,atom) is {self.info}." if self.quantum_numbers is not None else f"There are no quantum numbers (n,l,m,s) or atoms specified."
+        id_info = f"It has the the special id {self.uuid}."
+        return f"{name_pos}\n{occupation}\n{info}\n{id_info}"
+    
     def __lt__(self, other):
         if not isinstance(other, Orbital):
             return NotImplemented
@@ -221,17 +228,19 @@ class OrbitalList:
         def fill_matrix( matrix, coupling_dict ):
 
             # TODO: there should be an internal
-            dummy = jnp.arange( len(self._list) )
+            dummy = jnp.arange( len(self) )
             triangle_mask = dummy[:,None] >= dummy
 
             # TODO: in principle we can build a big tensor NxNxlayers, vmap over the last axis and sum the layers
             # first, we loop over all uuid couplings => interactions between layers
-            for key, function in coupling_dict.uuid_items():
-                # select ids only in upper triangle
-                rows = uuid_ints == key[0]
-                cols = uuid_ints == key[1]
-                valid_indices = jnp.logical_and( triangle_mask, jnp.logical_and( rows, cols ) )
-                function = jax.vmap( function )                
+            for key, function in coupling_dict.uuid_items():                
+                # TODO:  big uff:  we rely on the correct ordering of the uuids for cols and rows, first key is always smaller than last keys => we get upper triangular valid indices
+                # if it were the other way around, these would be zeroed by the triangle mask
+                cols = uuid_ints == key[0]
+                rows = (uuid_ints == key[1])[:, None]
+                combination_indices = jnp.logical_and( rows, cols )                
+                valid_indices = jnp.logical_and( triangle_mask, combination_indices )
+                function = jax.vmap( function )
                 matrix = matrix.at[valid_indices].set( function( distances[valid_indices] ) )
                 
             # we now set single elements
@@ -257,22 +266,38 @@ class OrbitalList:
         return hamiltonian, coulomb
 
     
-    def _ensure_complex( self, val ):
-        return val + 0.0j
+    def _ensure_complex( self, func_or_val ):
+        if callable(func_or_val):
+            return lambda x: func_or_val(x) + 0.0j
+        if isinstance(func_or_val, (int, float, complex)):            
+            return func_or_val + 0.0j
+        raise TypeError
 
     # TODO: bla bla bla ... incredibly verbose, but couldn't think of anything better yet
-    def set_layers_hopping( self, uuid1, uuid2, func ):
-        self._set_coupling( uuid1, uuid2, func, self._hopping )
+    def _maybe_orbs_to_uuids( self, maybe_orbs ):
+        def convert( maybe_orb ):
+            # TODO: check if this is really a uuid
+            if isinstance(maybe_orb, int):                
+                return maybe_orb
+            if isinstance(maybe_orb, Orbital):
+                return maybe_orb.uuid
+            return "You have passed something that is neither an orbital nor a uuid"
+        return [convert(x) for x in maybe_orbs]
 
-    def set_layers_coulomb( self, uuid1, uuid2, func ):
-        self._set_coupling( uuid1, uuid2, func, self._coulomb )
+    def set_layers_hopping( self, orb_or_uuid1, orb_or_uuid2, func ):
+        uuid1, uuid2 = self._maybe_orbs_to_uuids( (orb_or_uuid1, orb_or_uuid2) )              
+        self._set_coupling( uuid1, uuid2, self._ensure_complex(func), self._hopping )
+
+    def set_layers_coulomb( self, orb_or_uuid1, orb_or_uuid2, func ):
+        uuid1, uuid2 = self._maybe_orbs_to_uuids( (orb_or_uuid1, orb_or_uuid2) )          
+        self._set_coupling( uuid1, uuid2, self._ensure_complex(func), self._coulomb )
 
     def _maybe_ints_to_orbs( self, maybe_ints ):
-        def convert( orb ):
-            if isinstance(orb, int):
-                return self._list[orb]
-            if isinstance(orb, Orbital):
-                return orb
+        def convert( maybe_int ):
+            if isinstance(maybe_int, int):
+                return self._list[maybe_int]
+            if isinstance(maybe_int, Orbital):
+                return maybe_int
             return "You have passed something that is neither an orbital nor an int"
         return [convert(x) for x in maybe_ints]
         
@@ -336,11 +361,18 @@ class OrbitalList:
     # TODO: uff
     @mutates
     def excite( self, from_state, to_state, excited_electrons ):
-        from_state = jnp.array([from_state] if isinstance(from_state, int) else from_state)
-        to_state = jnp.array([to_state] if isinstance(to_state, int) else to_state)
-        excited_electrons = jnp.array(
-            [excited_electrons] if isinstance(excited_electrons, int) else excited_electrons
-        )
+        def maybe_int_to_arr( maybe_int ):            
+            if isinstance(maybe_int, int):
+                return jnp.array([maybe_int])
+            try:
+                assert maybe_int.dtype == int
+                return maybe_int
+            except:
+                raise TypeError
+            
+        from_state = maybe_int_to_arr(from_state)
+        to_state = maybe_int_to_arr(to_state)
+        excited_electrons = maybe_int_to_arr(excited_electrons)        
         self.params.from_state = from_state
         self.params.to_state = to_state
         self.params.excited_electrons = excited_electrons

@@ -5,7 +5,7 @@ import jax
 import jax.numpy as jnp
 from itertools import combinations, product
 from matplotlib.path import Path
-import json
+import pprint
 
 # TODO: hmmm
 from ._plotting import _show_lattice_cut
@@ -20,28 +20,30 @@ class Material:
     hopping : dict = None
     coulomb : dict = None    
 
-    def _prune_neighbors( self, positions, all_positions, minimum_neighbor_number, remaining_old = jnp.inf ):
+    @classmethod
+    def from_database(cls, db_entry):
+        return cls(**db_entry)        
+    
+    def _prune_neighbors( self, positions, minimum_neighbor_number, remaining_old = jnp.inf ):
         if minimum_neighbor_number <= 0:
             return positions
-        distances = jnp.round( jnp.linalg.norm( positions - all_positions[:, None], axis = -1), 6 )
+        distances = jnp.round( jnp.linalg.norm( positions - positions[:, None], axis = -1), 4 )
         minimum = jnp.unique(distances)[1]
         mask = (distances <= minimum).sum(axis = 0)  > minimum_neighbor_number
-        remaining = mask.sum()
+        remaining = mask.sum()        
         if remaining_old == remaining:
             return positions[mask, :]        
         else:
-            return self._prune_neighbors( positions[mask, :], all_positions, minimum_neighbor_number, remaining )
+            return self._prune_neighbors( positions[mask, :], minimum_neighbor_number, remaining )
 
-    def _get_translations( self, repetitions ):
-        basis_size = jnp.array(self.lattice_basis).shape[0]
-        return list(product( *(range(-repetitions, repetitions+1) for x in range(basis_size) ) ))
-
-    def _get_orbs_positions_dict( self, coefficients, orbs = None ):
+    def _get_orbs_positions_dict( self, m, n, orbs = None ):
         if orbs is None:
             orbs = self.orbitals.keys()
 
         orbs_positions_dict = {}
-        coefficients = jnp.array( coefficients )
+        n = (-n-1,n+1) if n > 0 else (n-1,-n+1)
+        m = (-m-1,m+1) if m > 0 else (m-1,-m+1)
+        coefficients = jnp.array( list(product(range(*n), range(*m))) )
         lattice_basis = jnp.array(self.lattice_basis)
         for orb in orbs:
             orbital_shift = jnp.array(self.orbitals[orb]["position"]) @ lattice_basis
@@ -52,7 +54,7 @@ class Material:
     # very nasty, TODO: find better solution than rounding stuff, hardcoding 1e-5
     def _neighbor_couplings_to_function(self, couplings, qm_comb ):
         orbs = filter(lambda orb : self.orbitals[orb]["quantum_numbers"] in qm_comb, self.orbitals.keys() )
-        orbs_positions_dict = self._get_orbs_positions_dict( self._get_translations( len(couplings) ), orbs )
+        orbs_positions_dict = self._get_orbs_positions_dict( len(couplings), len(couplings), orbs )
         positions = jnp.concatenate( list(orbs_positions_dict.values()) )
         couplings = jnp.array( couplings ) + 0.0j        
         distances = jnp.unique(
@@ -79,38 +81,36 @@ class Material:
 
     
     def _create_orbital(self, orb, pos, uuid):
-        return Orbital(orbital_name = orb, position = tuple(float(x) for x in pos), uuid = uuid, quantum_numbers = self.orbitals[orb]["quantum_numbers"] ) 
+        return Orbital(name = orb, position = tuple(float(x) for x in pos), uuid = uuid, quantum_numbers = self.orbitals[orb]["quantum_numbers"] ) 
     
     # TODO: planes too big in some cases
     def cut( self, polygon_vertices, plot = False, minimum_neighbor_number : int = 2 ):        
         # Unzip into separate lists of x and y coordinates
         x_coords, y_coords = zip(*polygon_vertices)
-        
-        # get all positions in a plane covering the selection
         max_x =jnp.abs(jnp.array(x_coords)).max()
         max_y =jnp.abs(jnp.array(y_coords)).max()
-        lattice_max_x = self.lattice_constant *jnp.array( self.lattice_basis).max( axis = 0)[0]        
-        lattice_max_y = self.lattice_constant *jnp.array( self.lattice_basis ).max( axis = 0)[1]
-        repetitions = int(jnp.nan_to_num(jnp.ceil(max( max_x / lattice_max_x, max_y / lattice_max_y )), posinf = 0) )
-        orbs_positions_dict = self._get_orbs_positions_dict( self._get_translations( repetitions ) )        
+        basis = jnp.array(self.lattice_basis) * self.lattice_constant
+        frac_x =  jnp.nan_to_num( max_x / basis[:,0], posinf = 1, neginf = 1)
+        frac_y = jnp.nan_to_num( max_y / basis[:,1], posinf = 1, neginf = 1)
+        m_max = frac_x[ jnp.abs(frac_x).argmax() ]
+        m_max = jnp.floor(m_max)  if m_max < 0 else jnp.ceil(m_max) 
+        n_max = frac_y[ jnp.abs(frac_y).argmax() ]
+        n_max = jnp.floor(n_max) if n_max < 0 else jnp.ceil(n_max) 
+        orbs_positions_dict = self._get_orbs_positions_dict( int(m_max), int(n_max) )        
 
-        # get all positions within the polygon
+
+        # get all positions within the polygon and remove isolated spots
         polygon = Path( polygon_vertices )
-
-        # TODO: uff, i have clearly not thought of the data well enough
         all_positions = jnp.concatenate( list( orbs_positions_dict.values() ) )
-        flags = polygon.contains_points( all_positions[:,:2] )            
-        all_positions_in_polygon = all_positions[flags]
-
-        # get the positions within the polygon 
+        flags = polygon.contains_points( all_positions[:,:2] )
+        selected_positions  = self._prune_neighbors( all_positions[flags], minimum_neighbor_number )
+        
+        # associate positions to orbitals
         orbs_selected_positions_dict = {}
         for orb, orb_positions in orbs_positions_dict.items():
-            flags = polygon.contains_points( orb_positions[:,:2] )            
-            positions_in_polygon = orb_positions[flags]
-            orbs_selected_positions_dict[orb] = self._prune_neighbors( positions_in_polygon, all_positions_in_polygon, minimum_neighbor_number )
+            idxs = (jnp.round( jnp.linalg.norm( orb_positions - selected_positions[:, None], axis = -1), 4 ) == 0).nonzero()[0]
+            orbs_selected_positions_dict[orb] = selected_positions[ idxs, : ]
             
-        # do some optional plotting
-        selected_positions = jnp.concatenate( list( orbs_selected_positions_dict.values() ) )
         if plot:
             _show_lattice_cut( polygon_vertices, all_positions, selected_positions )
 
@@ -124,26 +124,21 @@ class Material:
         return orbital_list
 
 
-# TODO: make this get all attributes from a collection of JSON files
-class MaterialDatabase():
-    """positions must be fractional coordinates. lattice constant must be anström.    
+class MaterialDatabase():                    
+    """positions must be fractional coordinates. 
+    lattice constant must be anström.    
     """
-    graphene = {
-    "orbitals": {
-        "pz0" : { "position" : (0,0), "quantum_numbers"  : (0,1,0,0) },  
-        "pz1" : { "position" : (-1/3,-2/3), "quantum_numbers" : (0,1,0,0) }, 
-        },
-    "lattice_basis": [
-        (1.0, 0.0, 0.0),  # First lattice vector
-        (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
-    ],        
-    # couplings are defined by combinations of orbital quantum numbers
-    "hopping": { ((0,1,0,0), (0,1,0,0)) : [0.0, 2.66]  },
-    "coulomb": {  ((0,1,0,0), (0,1,0,0)) : [16.522, 8.64, 5.333]  },
-    "lattice_constant" : 2.46,
-}
-    @classmethod
-    def from_json(cls, filename):
-        with open(filename, 'r') as f:
-            data = json.load(f)
-        return cls(**data)
+    graphene = MaterialDatabase{
+        "orbitals": {
+            "pz0" : { "position" : (0,0), "info"  : (0,1,0,0, "C") },  
+            "pz1" : { "position" : (-1/3,-2/3), "info" : (0,1,0,0, "C") }, 
+            },
+        "lattice_basis": [
+            (1.0, 0.0, 0.0),  # First lattice vector
+            (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
+        ],        
+        # couplings are defined by combinations of orbital quantum numbers
+        "hopping": { ((0,1,0,0,"C"), (0,1,0,0,"C")) : [0.0, 2.66]  },
+        "coulomb": {  ((0,1,0,0,"C"), (0,1,0,0,"C")) : [16.522, 8.64, 5.333]  },
+        "lattice_constant" : 2.46,
+    }            

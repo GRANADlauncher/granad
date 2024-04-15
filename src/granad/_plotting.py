@@ -346,6 +346,5 @@ def _show_lattice_cut( polygon_vertices, positions, selected_positions ):
     plt.grid(True)
     plt.scatter( x = positions[:,0], y = positions[:,1] )
     plt.scatter( x = selected_positions[:,0], y = selected_positions[:,1])    
-    plt.legend()
     plt.axis('equal')
     plt.show()
