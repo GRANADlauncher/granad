@@ -336,7 +336,7 @@ def show_induced_field(
     ax.set_ylabel(plane[1])
 
 # TODO: this is also not nice
-def _show_lattice_cut( polygon_vertices, positions, selected_positions ):
+def _display_lattice_cut( polygon_vertices, positions, selected_positions ):
     fig, ax = plt.subplots()
     patch = plt.Polygon(polygon_vertices[:-1], edgecolor='orange', facecolor='none', linewidth=2)    
     ax.add_patch(patch)

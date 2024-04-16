@@ -1,6 +1,4 @@
 # TODO: 3D extension?
-
-from dataclasses import dataclass
 import jax
 import jax.numpy as jnp
 from itertools import combinations, product
@@ -8,21 +6,24 @@ from matplotlib.path import Path
 import pprint
 
 # TODO: hmmm
-from ._plotting import _show_lattice_cut
+from ._plotting import _display_lattice_cut
 from ._orbitals import OrbitalList, Orbital
 from . import _watchdog
 
-@dataclass(frozen = True)
 class Material:
-    orbitals : dict    
-    lattice_basis : list = None
-    lattice_constant : float = None    
-    hopping : dict = None
-    coulomb : dict = None    
-
+    """positions must be fractional coordinates. 
+    lattice constant must be angström.    
+    """
+    _materials = _materials
+    
     @classmethod
-    def from_database(cls, db_entry):
-        return cls(**db_entry)        
+    def get(cls, material):
+        return cls( **cls._materials[material] )
+
+    @staticmethod
+    def materials():
+        available_materials = '\n'.join( Material._materials.keys() )
+        print f"Available materials:\n{available_materials}"
     
     def _prune_neighbors( self, positions, minimum_neighbor_number, remaining_old = jnp.inf ):
         if minimum_neighbor_number <= 0:
@@ -84,7 +85,7 @@ class Material:
         return Orbital(name = orb, position = tuple(float(x) for x in pos), uuid = uuid, quantum_numbers = self.orbitals[orb]["quantum_numbers"] ) 
     
     # TODO: planes too big in some cases
-    def cut( self, polygon_vertices, plot = False, minimum_neighbor_number : int = 2 ):        
+    def cut_orbitals( self, polygon_vertices, plot = False, minimum_neighbor_number : int = 2 ):        
         # Unzip into separate lists of x and y coordinates
         x_coords, y_coords = zip(*polygon_vertices)
         max_x =jnp.abs(jnp.array(x_coords)).max()
@@ -112,7 +113,7 @@ class Material:
             orbs_selected_positions_dict[orb] = selected_positions[ idxs, : ]
             
         if plot:
-            _show_lattice_cut( polygon_vertices, all_positions, selected_positions )
+            _display_lattice_cut( polygon_vertices, all_positions, selected_positions )
 
         # prepare the orbital list, making sure that all orbitals share the same uuid TODO: rename, uuid is something else tbh
         uuid = _watchdog._Watchdog.next_value()
@@ -124,21 +125,22 @@ class Material:
         return orbital_list
 
 
-class MaterialDatabase():                    
-    """positions must be fractional coordinates. 
-    lattice constant must be anström.    
-    """
-    graphene = MaterialDatabase{
-        "orbitals": {
-            "pz0" : { "position" : (0,0), "info"  : (0,1,0,0, "C") },  
-            "pz1" : { "position" : (-1/3,-2/3), "info" : (0,1,0,0, "C") }, 
-            },
-        "lattice_basis": [
-            (1.0, 0.0, 0.0),  # First lattice vector
-            (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
-        ],        
-        # couplings are defined by combinations of orbital quantum numbers
-        "hopping": { ((0,1,0,0,"C"), (0,1,0,0,"C")) : [0.0, 2.66]  },
-        "coulomb": {  ((0,1,0,0,"C"), (0,1,0,0,"C")) : [16.522, 8.64, 5.333]  },
-        "lattice_constant" : 2.46,
-    }            
+_materials =
+"graphene" : {
+    "orbitals": {
+    (0,1,0,0,"C","sublattice_1") : (0,0), 
+    (0,1,0,0,"C","sublattice_2") : (-1/3,-2/3) }
+    "lattice_basis": [
+        (1.0, 0.0, 0.0),  # First lattice vector
+        (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
+    ],        
+    # couplings are defined by combinations of orbital quantum numbers
+    "hopping": { ((0,1,0,0,"C"), (0,1,0,0,"C")) : ([0.0, 2.66],)  },
+    "coulomb": {  ((0,1,0,0,"C"), (0,1,0,0,"C")) : ([16.522, 8.64, 5.333],lambda d: 1/d)  },
+    "lattice_constant" : 2.46,
+},
+"ssh" : {},
+"metallic_chain" : {},
+}
+
+

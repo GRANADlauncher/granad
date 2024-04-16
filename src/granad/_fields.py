@@ -60,10 +60,8 @@ def ramp_up(
 def pulse(
     amplitudes: list[float],
     frequency: float,
-    positions: jax.Array,
     peak: float,
     fwhm: float,
-    k_vector: list[float] = [0.0, 0.0, 1.0],
 ):
     """Function for computing temporally located time-harmonics electric fields. The pulse is implemented as a temporal Gaussian.
 
@@ -75,16 +73,12 @@ def pulse(
 
     **Returns:**
 
-    -compiled closure that computes the electric field as a functon of time
+    Function that computes the electric field 
     """
 
-    static_part = jnp.expand_dims(jnp.array(amplitudes), 1) * jnp.exp(
-        -1j * positions @ jnp.array(k_vector)
-    )
-    sigma = fwhm / (2.0 * jnp.sqrt(jnp.log(2)))
-    return jax.jit(
-        lambda t: static_part
+    static_part = jnp.array(amplitudes)
+    sigma = fwhm / (2.0 * jnp.sqrt(jnp.log(2)))    
+    return (lambda t: static_part
         * jnp.exp(-1j * jnp.pi / 2 + 1j * frequency * (t - peak))
-        * jnp.exp(-((t - peak) ** 2) / sigma**2)
-    )
+        * jnp.exp(-((t - peak) ** 2) / sigma**2))
 

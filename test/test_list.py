@@ -67,3 +67,33 @@ def test_material_coupling():
     assert jnp.allclose( get_unique_nonzero( orbs.hamiltonian ), get_unique_nonzero( list(graphene.hopping.values()) ).flatten() )
     assert jnp.allclose( get_unique_nonzero( orbs.coulomb ), get_unique_nonzero( list(graphene.coulomb.values()) ).flatten()  )
     
+def test_layer_orbital_coupling():    
+    graphene = Material(**MaterialDatabase.graphene)
+    orbs = graphene.cut(9*Shapes.triangle_rotated, plot = False)
+    orbs.append( Orbital("A", (0.0, 0.0, 1.1)) )
+    orbs.append( Orbital("B", (0.0, 0.0, 1.1)) )    
+    orbs.set_hamiltonian_element( -1, 0, 0.3j )
+    orbs.set_coulomb_element( -1, 0, 0.3j )    
+    func = lambda d : d
+    orbs.set_layers_hopping( orbs[-1].uuid, orbs[0].uuid, func )
+    orbs.set_layers_coulomb( orbs[-1].uuid, orbs[0].uuid, func )
+    assert orbs.hamiltonian[-1, 0] == 0.3j
+    assert orbs.coulomb[-1, 0] == 0.3j
+    assert orbs.hamiltonian[-1,:].nonzero()[0].size == len(orbs) - 2
+    assert orbs.coulomb[-1,:].nonzero()[0].size == len(orbs) - 2
+    assert jnp.all(orbs.coulomb[-1,:] == orbs.hamiltonian[-1,:])
+    assert jnp.count_nonzero(orbs.hamiltonian[-2,:]) == 0
+
+    orbs = OrbitalList( [Orbital("A", (0.0, 0.0, 1.1)), Orbital("B", (0.0, 0.0, 1.1)) ] )
+    graphene = Material(**MaterialDatabase.graphene)
+    orbs += graphene.cut(9*Shapes.triangle_rotated, plot = False)
+    orbs.set_hamiltonian_element( -1, 0, 0.3j )
+    orbs.set_coulomb_element( -1, 0, 0.3j )
+    orbs.set_layers_hopping( orbs[-1].uuid, orbs[0].uuid, func )
+    orbs.set_layers_coulomb( orbs[-1].uuid, orbs[0].uuid, func )
+    assert orbs.hamiltonian[-1, 0] == 0.3j
+    assert orbs.coulomb[-1, 0] == 0.3j
+    assert orbs.hamiltonian[0,:].nonzero()[0].size == len(orbs) - 2
+    assert orbs.coulomb[0,:].nonzero()[0].size == len(orbs) - 2
+    assert jnp.all(orbs.coulomb[0,:] == orbs.hamiltonian[0,:])
+    assert jnp.count_nonzero(orbs.hamiltonian[1,:]) == 0
