@@ -3,8 +3,10 @@ import jax.numpy as jnp
 jax.config.update("jax_enable_x64", True)
 import diffrax
 
+# TODO: write somewhere that the einsum convention used is: site indices are small, electric field component indices are big
 # TODO basis conversion is duplicated at least three times here :///
-# TODO: decouple this from the OrbitalList by just passing (a lot of) arguments
+# TODO: decouple rpa from the OrbitalList by just passing (a lot of) arguments
+# TODO: think about public / private
 
 def fraction_periodic(signal, threshold=1e-2):
 
@@ -31,7 +33,7 @@ def get_fourier_transform(t_linspace, function_of_time, return_omega_axis = True
         / jnp.max(t_linspace)
         * jnp.fft.fftfreq(function_of_omega.shape[-1])
     )
-    return omega_axis, function_of_omega if return omega_axis else function_of_omega
+    return omega_axis, function_of_omega if return_omega_axis else function_of_omega
 
 def fermi(e, beta, mu):
     return 1 / (jnp.exp(beta * (e - mu)) + 1)
@@ -175,125 +177,7 @@ def _density_aufbau(
     occupation = jax.lax.fori_loop(0, to_state.size, _body_fun, occupation)
 
     return jnp.diag(occupation) / electrons
-
-def get_dipole_transition_function(
-        dipole_operator,
-        add_induced,
-):
-    """Takes into account dipole transitions.
-
-        - `stack`:
-        - `add_induced`: add induced field to the field acting on the dipole
-
-    **Returns:**
-
-     function as additional input for evolution function
-    """
-
-
-    if orbs._transitions is None:
-        return lambda c, e: 0.0j
-
-    return lambda e : jnp.einsum('kij,k->ij', dipole_operator, e )
-
-    # # array of shape orbitals x 3, such that induced_E[i, :] corresponds to the induced field at the position of the adatom associated with the i-th transition
-    # induced_E = (
-    #     14.39
-    #     * jnp.tensordot(
-    #         r_point_charge, charge.real, axes=[0, 0]
-    #     )  # computes \sum_i r_i/|r_i|^3 * Q_i
-    #     * add_induced
-    # )
-    # return jax.vmap(jax.vmap(element, (0, None), 0), (None, 0), 0)(
-    #     idxs, idxs
-    # )
-    
-
-    # # map position index to transition index
-    # ind = lambda i: jnp.argmin(jnp.abs(i - indices[:, 0, :]))
-    # idxs = jnp.arange(stack.positions.shape[0])
-
-    # indices, moments = [], []
-    # for (orb1, orb2), moment in stack.transitions.items():
-    #     i1, i2 = (
-    #         jnp.where(stack.ids == stack.unique_ids.index(orb1))[0],
-    #         jnp.where(stack.ids == stack.unique_ids.index(orb2))[0],
-    #     )
-    #     assert (
-    #         i1.size == i2.size == 1
-    #     ), "Dipole transitions are allowed only between orbitals with unique names in the entire stack (name each dipole orbital differently, e.g. d1,d2 for 1 dipole or d11, d12 and d21, d22 for two dipoles)"
-    #     i1, i2 = i1[0], i2[0]
-    #     assert jnp.allclose(
-    #         stack.positions[i1], stack.positions[i2]
-    #     ), "Dipole transitions must happen between orbitals at the same location"
-    #     indices.append([[i1, i2], [i2, i1], [i1, i1], [i2, i2]])
-    #     moments += [moment, moment]
-
-    # indices, moments = jnp.array(indices), jnp.array(moments)
-
-    # # array of shape positions x orbitals x 3, with entries vec_r[i, o, :] = r_i - r_o
-    # vec_r = (
-    #     jnp.repeat(
-    #         stack.positions[:, jnp.newaxis, :], 2 * len(stack.transitions), axis=1
-    #     )
-    #     - stack.positions[indices[:, 0, :].flatten(), :]
-    # )
-    
-    # # array of shape positions x orbitals x 3, with entries r_point_charge[i, o, :] = (r_o - r_i)/|r_o - r_i|^3
-    # r_point_charge = jnp.nan_to_num(
-    #     vec_r / jnp.expand_dims(jnp.linalg.norm(vec_r, axis=2) ** 3, 2),
-    #     posinf=0.0,
-    #     neginf=0.0,
-    # )
-
-    # return inner
-
-def relaxation_time_approximation(relaxation_time, stationary_density_matrix):
-    """Function for modelling dissipation according to the relaxation approximation.
-
-        - `relaxation_time`: relaxation time
-
-    **Returns:**
-
-    -compiled closure that is needed for computing the dissipative part of the lindblad equation
-    """
-    return lambda r: -(r - stationary_density_matrix) / (2 * relaxation_time)
-
-
-def lindblad_saturation_functional(eigenvectors, gamma, saturation):
-    """Function for modelling dissipation according to the saturated lindblad equation as detailed in https://link.aps.org/doi/10.1103/PhysRevA.109.022237.
-
-        - `stack`: object representing the state of the system
-        - `gamma`: symmetric (or lower triangular) NxN matrix. The element gamma[i,j] corresponds to the transition rate from state i to state j
-        - `saturation`: a saturation functional to apply, defaults to a sharp turn-off
-
-    **Returns:**
-
-    -compiled closure that is needed for computing the dissipative part of the lindblad equation
-    """
-
-    commutator_diag = jnp.diag(gamma)
-    gamma_matrix = gamma.astype(complex)
-    saturation_vmapped = jax.vmap(saturation, 0, 0)
-
-    def inner(r):
-        # convert rho to energy basis
-        r = eigenvectors.conj().T @ r @ eigenvectors
-
-        # extract occupations
-        diag = jnp.diag(r) * stack.electrons
-
-        # apply the saturation functional to turn off elements in the gamma matrix
-        gamma = gamma_matrix * saturation_vmapped(diag)[None, :]
-
-        a = jnp.diag(gamma.T @ jnp.diag(r))
-        mat = jnp.diag(jnp.sum(gamma, axis=1))
-        b = -1 / 2 * (mat @ r + r @ mat)
-        val = a + b
-
-        return eigenvectors @ val @ eigenvectors.conj().T
-
-    return inner
+        
 
 # TODO: this needs more clarity, and basis trafo is essentially duplicated here
 def _get_self_consistent(hamiltonian, coulomb, positions, spin_degeneracy, electrons, eps, eigenvectors, rho_stat, iterations, mix, accuracy ):
@@ -364,39 +248,156 @@ def _get_self_consistent(hamiltonian, coulomb, positions, spin_degeneracy, elect
     
     return ham_new, rho_0, eigenvectors.conj().T @ rho @ eigenvectors, energies, eigenvectors
 
+def relaxation_time_approximation(relaxation_time, stationary_density_matrix):
+    """Function for modelling dissipation according to the relaxation approximation.
+
+        - `relaxation_time`: relaxation time
+
+    **Returns:**
+
+    -compiled closure that is needed for computing the dissipative part of the lindblad equation
+    """
+    return lambda r: -(r - stationary_density_matrix) / (2 * relaxation_time)
+
+
+def lindblad_saturation_functional(eigenvectors, gamma, saturation):
+    """Function for modelling dissipation according to the saturated lindblad equation as detailed in https://link.aps.org/doi/10.1103/PhysRevA.109.022237.
+
+        - `stack`: object representing the state of the system
+        - `gamma`: symmetric (or lower triangular) NxN matrix. The element gamma[i,j] corresponds to the transition rate from state i to state j
+        - `saturation`: a saturation functional to apply, defaults to a sharp turn-off
+
+    **Returns:**
+
+    -compiled closure that is needed for computing the dissipative part of the lindblad equation
+    """
+
+    commutator_diag = jnp.diag(gamma)
+    gamma_matrix = gamma.astype(complex)
+    saturation_vmapped = jax.vmap(saturation, 0, 0)
+
+    def inner(r):
+        # convert rho to energy basis
+        r = eigenvectors.conj().T @ r @ eigenvectors
+
+        # extract occupations
+        diag = jnp.diag(r) * stack.electrons
+
+        # apply the saturation functional to turn off elements in the gamma matrix
+        gamma = gamma_matrix * saturation_vmapped(diag)[None, :]
+
+        a = jnp.diag(gamma.T @ jnp.diag(r))
+        mat = jnp.diag(jnp.sum(gamma, axis=1))
+        b = -1 / 2 * (mat @ r + r @ mat)
+        val = a + b
+
+        return eigenvectors @ val @ eigenvectors.conj().T
+
+    return inner
+
+def get_coulomb_field_to_from(source_positions, target_positions):
+    """
+    Calculate the contributions of point charges located at `source_positions`
+    on points at `target_positions`.
+
+    **Args:**
+    - source_positions (array): An (n_source, 3) array of source positions.
+    - target_positions (array): An (n_target, 3) array of target positions.
+
+    **Returns:**
+    - array: An (n_source, n_target, 3) array where each element is the contribution
+          of a source at a target position.
+    """
+    # Calculate vector differences between each pair of source and target positions
+    distance_vector = target_positions[:,None,:] - source_positions
+    # Compute the norm of these vectors
+    norms = jnp.linalg.norm(distance_vector, axis=-1)
+    # Safe division by the cube of the norm
+    one_over_distance_cubed = jnp.where(norms > 0, 1 / norms**3, 0)
+    # Calculate and return the contributions
+    coulomb_field_to_from = distance_vector * one_over_distance_cubed[:, :, None]
+    return coulomb_field_to_from
+
+
+def get_induced_field_contribution(
+        positions,
+        compute_only_at : None,
+        
+):
+    """Takes into account dipole transitions.
+
+        - `stack`:
+        - `add_induced`: add induced field to the field acting on the dipole
+
+    **Returns:**
+
+     function as additional input for evolution function
+    """
+
+    contributions = get_point_charge_contributions(positions, positions)    
+    if compute_only_at is not None:
+        selected_contributions = jnp.zeros_like( contributions )
+        selected_contributions.at[compute_only_at].set( contributions[compute_only_at] )
+        return selected_contributions
+    return contributions
+
+
+# TODO: this is slightly awkard, change to faster axis
+def get_induced_electric_field( coulomb_field_to_from, charge ):
+    # sum up up all charges weighted like \sum_r q_r r/|r-r'|
+    # read: field to i from j
+    return jnp.einsum( 'ijK,j->iK', coulomb_field_to_from, charge)    
+
 # TODO: units
 def density_matrix_vector_potential(
         hamiltonian,
         coulomb,
+        dipole_operator,
         electrons,
         initial_density_matrix,
         stationary_density_matrix,
         time_axis,
         vector_potential_function,
-        velocity_operator,
+        velocity_operator,        
         dissipation_function,
+        coulomb_field_from_to,
+        no_induced_contribution,
         coulomb_strength,
         solver,
         stepsize_controller,
 ):
+    # TODO: uff, also: should this be here?
+    def _get_induced_field_potential( charge ):
+        if no_induced_contribution:
+            return 0.0
+        induced_electric_field = get_induced_electric_field( coulomb_field_to_from, charge )
+        return jnp.einsum( 'ijK,jK->i', dipole_operator, induced_electric_field )        
 
     def rhs(time, density_matrix, args):
-        vector_potential, delta_rho = vector_potential_function(time), density_matrix - initial_density_matrix
-        charge = -jnp.diag(delta_rho) * electrons
-        p_ind = coulomb @ charge
+        # inhomogeneous external field => Nx3-dim array of real
+        vector_potential = vector_potential_function(time)
+        
+        # net induced charge => N-dim array of complex (although diagonal elements are mostly real)
+        charge = -jnp.diag( density_matrix - stationary_density_matrix ) * electrons
 
-        # we need to go from velocity to momentum under minimal coupling, i.e. p -> p - qA; H -> H - q A v + q^2/(2m) A^2
-        h_total = (
-            hamiltonian
-            - q * jnp.einsum("ijr, ir -> ij", velocity_operator, vector_potential)
-            + jnp.diag(q**2 / m * 0.5 * jnp.sum(vector_potential**2, axis=1) - p_ind)
-        )
+        # coulomb term is just \sum_{i} C_{ij} \rho_{ii}
+        coulomb_potential = coulomb @ charge
+        induced_field_potential = _get_induced_field_potential( charge )
+
+        # ~ A p 
+        paramagnetic = - q * jnp.einsum("ijr, ir -> ij", velocity_operator, vector_potential)
+
+        # ~ A^2
+        diamagnetic = q**2 / m * 0.5 * jnp.sum(vector_potential**2, axis=1) 
+        
+        h_total = hamiltonian + paramagnetic + jnp.diag( diamagnetic + induced_field_potential + coulomb_potential )
+        
         return -1j * (h_total @ rho - rho @ h_total) + dissipation_function(rho)
 
     # atomic units
     q, m = 1, 1
+        
     term = diffrax.ODETerm(rhs)
-    
     return diffrax.diffeqsolve(
         term,
         solver,
@@ -411,28 +412,50 @@ def density_matrix_vector_potential(
 def density_matrix_electric_field(
         hamiltonian,
         coulomb,
-        positions,
+        dipole_operator,
         electrons,
         initial_density_matrix,
         stationary_density_matrix,
         time_axis,
         electric_field_function,
         dissipation_function,
-        dipole_transition_function,
+        coulomb_field_to_from,
+        no_induced_contribution,
         coulomb_strength,
         solver,
-        stepsize_controller,
+        stepsize_controller
 ):
-
+    # TODO: uff
+    def _induced_electric_field_func( charge ):
+        if no_induced_contribution:
+            return 0.0
+        return get_induced_electric_field(coulomb_field_to_from, charge)
+    
     def rhs(time, density_matrix, args):
-        electric_field, delta_rho = electric_field_function(time), density_matrix - stationary_density_matrix
-        charge = -jnp.diag(delta_rho) * electrons
-        p_ext = jnp.sum(positions * electric_field.real.T, axis=1)
-        p_ind = coulomb @ charge
-        h_total = dipole_transition_function(charge, electric_field) + jnp.diag(
-            p_ext - p_ind
-        )
+        
+        # homogeneous external field => 3-dim array of real
+        external_electric_field = electric_field_function(time)
+
+        # net induced charge => N-dim array of complex (although diagonal elements are mostly real)
+        charge = -jnp.diag(density_matrix - stationary_density_matrix) * electrons
+        
+        # coulomb term is just \sum_{i} C_{ij} \rho_{ii}
+        coulomb_potential = coulomb @ charge
+
+        induced_electric_field = _induced_electric_field_func( charge )
+
+        # total electric field
+        electric_field = external_electric_field + induced_electric_field
+
+        # TODO: order of site indices does not matter for real transition dipole moments, but what about complex?
+        # the dipole operator contains the dipole moments and the position matrix elements
+        total_field_potential = jnp.einsum( 'ijK,jK->i', dipole_operator, electric_field )
+
+        # collect terms in hamiltonian
+        h_total = hamiltonian + jnp.diag( total_field_potential + coulomb_potential )
+        
         return -1j * (h_total @ rho - rho @ h_total) + dissipation_function(rho)
+
 
     term = diffrax.ODETerm(rhs)    
     return diffrax.diffeqsolve(
@@ -446,29 +469,51 @@ def density_matrix_electric_field(
         stepsize_controller=stepsize_controller,
     )
 
+# TODO: this is duplication!!!
 def density_matrix_old(
         hamiltonian,
         coulomb,
-        positions,
+        dipole_operator,
         electrons,
         initial_density_matrix,
         stationary_density_matrix,
         time_axis,
         electric_field_function,
         dissipation_function,
-        dipole_transition_function,
+        coulomb_field_to_from,
+        no_induced_contribution,
         coulomb_strength,
+        solver,
+        stepsize_controller
 ):
-
+    def _induced_electric_field_func( charge ):
+        if no_induced_contribution:
+            return 0.0
+        return get_induced_electric_field(coulomb_field_to_from, charge)
 
     def runge_kutta_first_order(density_matrix, time):
-        electric_field, delta_rho = electric_field_function(time), density_matrix - stationary_density_matrix
-        charge = -jnp.diag(delta_rho) * electrons
-        p_ext = jnp.sum(positions * electric_field.real.T, axis=1)
-        p_ind = coulomb @ charge
-        h_total = dipole_transition_function(charge, electric_field) + jnp.diag(
-            p_ext - p_ind
-        )
+        
+        # homogeneous external field => 3-dim array of real
+        external_electric_field = electric_field_function(time)
+
+        # net induced charge => N-dim array of complex (although diagonal elements are mostly real)
+        charge = -jnp.diag(density_matrix - stationary_density_matrix) * electrons
+        
+        # coulomb term is just \sum_{i} C_{ij} \rho_{ii}
+        coulomb_potential = coulomb @ charge
+
+        induced_electric_field = _induced_electric_field_func( charge )
+
+        # total electric field
+        electric_field = external_electric_field + induced_electric_field
+
+        # TODO: order of site indices does not matter for real transition dipole moments, but what about complex?
+        # the dipole operator contains the dipole moments and the position matrix elements
+        total_field_potential = jnp.einsum( 'ijK,jK->i', dipole_operator, electric_field )
+
+        # collect terms in hamiltonian
+        h_total = hamiltonian + jnp.diag( total_field_potential + coulomb_potential )
+        
         return density_matrix - 1j * dt * (h_total @ rho - rho @ h_total) + dt * dissipation_function(density_matrix)    
 
     dt = time[1] - time[0]

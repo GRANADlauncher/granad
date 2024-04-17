@@ -1,9 +1,9 @@
 import jax
 import jax.numpy as jnp
 
-# TODO: need explicit JIT?
+# TODO: not really pythonic naming style ...
 
-def wave(
+def Wave(
     amplitudes: list[float],
     frequency: float,
     positions: jax.Array,
@@ -22,10 +22,10 @@ def wave(
     static_part = jnp.expand_dims(jnp.array(amplitudes), 1) * jnp.exp(
         -1j * jnp.pi / 2 + 1j * positions @ jnp.array(k_vector)
     )
-    return jax.jit(lambda t: jnp.exp(1j * frequency * t) * static_part)
+    return lambda t: (jnp.exp(1j * frequency * t) * static_part).real
 
 
-def ramp_up(
+def Ramp(
     amplitudes: list[float],
     frequency: float,
     positions: jax.Array,
@@ -50,14 +50,13 @@ def ramp_up(
     )
     p = 0.99
     ramp_constant = 2 * jnp.log(p / (1 - p)) / ramp_duration
-    return jax.jit(
-        lambda t: static_part
+    return (lambda t: static_part
         * jnp.exp(1j * frequency * t)
         / (1 + 1.0 * jnp.exp(-ramp_constant * (t - time_ramp)))
-    )
+    ).real
 
 
-def pulse(
+def Pulse(
     amplitudes: list[float],
     frequency: float,
     peak: float,
@@ -80,5 +79,5 @@ def pulse(
     sigma = fwhm / (2.0 * jnp.sqrt(jnp.log(2)))    
     return (lambda t: static_part
         * jnp.exp(-1j * jnp.pi / 2 + 1j * frequency * (t - peak))
-        * jnp.exp(-((t - peak) ** 2) / sigma**2))
+        * jnp.exp(-((t - peak) ** 2) / sigma**2)).real
 

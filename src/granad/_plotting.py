@@ -272,17 +272,13 @@ def show_electric_field_time(time: jax.Array, field: jax.Array, flag: int = 0):
     ax.set_ylabel(labels[flag])
 
 @_plot_wrapper
-def show_induced_field(
-    rho: jax.Array,
-    electrons: int,
-    eigenvectors: jax.Array,
-    positions: jax.Array,
-    first: jax.Array,
-    second: jax.Array,
-    plane: str = "xy",
-    component: int = 0,
-    norm: int = 1,
-    plot_stack: bool = True,
+def show_induced_field_at(
+        orbs,
+        positions,
+        x = None,
+        y = None,
+        z = None,
+        density_matrix = None
 ):
     """Displays the normalized logarithm of the absolute value of the induced field in 2D
 
@@ -297,41 +293,27 @@ def show_induced_field(
     - `norm` : constant to normalize the field
     - `plot_stack`: if True, add a scatter plot indicating the positions of the orbitals in the stack
     """
-    plane_indices = {
-        "xy": jnp.array([0, 1, 2]),
-        "xz": jnp.array([0, 2, 1]),
-        "yz": jnp.array([2, 0, 1]),
-    }
-    first, second = jnp.meshgrid(first, second)
-    dim = first.size
-    vec_r = jnp.ones((dim, 3, positions.shape[0])) * jnp.swapaxes(
-        positions, 0, 1
-    ) - jnp.expand_dims(
-        jnp.concatenate(
-            (
-                jnp.stack((first, second), axis=2).reshape(dim, 2),
-                jnp.expand_dims(jnp.zeros(dim), 1),
-            ),
-            axis=1,
-        )[:, plane_indices[plane]],
-        2,
-    )
-    r_point_charge = jnp.nan_to_num(
-        vec_r / jnp.expand_dims(jnp.linalg.norm(vec_r, axis=1) ** 3, 1),
-        posinf=0.0,
-        neginf=0.0,
-    )
-    charge = electrons * jnp.diag(eigenvectors @ rho.real @ eigenvectors.conj().T)
-    E_induced = jnp.log(
-        jnp.abs(14.39 * jnp.sum(r_point_charge * charge.real, axis=2)) / norm
-    )
+    
+    density_matrix = density_matrix if density_matrix is not None else orbs.density_matrix
+    charge = density_matrix.diag().real
+
+    x = jnp.linspace(-5, 5, 100)
+    y = jnp.linspace(-5, 5, 100)
+    z = jnp.linspace(-1, 1, 10)
+    X, Y, Z = jnp.meshgrid(x, y, z)
+    positions = jnp.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
+
+    
+    induced_field = get_induced_electric_field( get_coulomb_field_to_from(orbs.positions, positions), charge)    
+    E_induced_abs_rescaled = jnp.log( jnp.abs(14.39 * induced_field) )
+    
     fig, ax = plt.subplots(1, 1)
     fig.colorbar(
-        ax.contourf(first, second, E_induced[:, component].reshape(first.shape)),
+        ax.contourf(first, second, E_induced_abs_rescaled[:, component].reshape(first.shape)),
         label=r"$\log(|E|/|E_0|)$",
     )
-    if plot_stack:
-        ax.scatter(*zip(*positions[:, plane_indices[plane][:2]]), s=16)
+    
+    ax.scatter(*zip(*orbs.positions[:, plane_indices[plane][:2]]), s=16)
     ax.set_xlabel(plane[0])
     ax.set_ylabel(plane[1])
 

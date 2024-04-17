@@ -7,9 +7,9 @@ import jax.numpy as jnp
 import diffrax
 
 # TODO: hmmm
-from . import _plotting, _watchdog, _numerics
+from . import _plotting, _watchdog, _numerics, _array_with_basis
 
-# TODO: clean this up, repair doc strings, some naming conventions are weird, e.g. position_operator should be get_position_operator
+# TODO: clean this up, repair doc strings, some naming conventions are weird, e.g. position_operator should be get_position_operator, make einsum magic more versatile, rethink the "use private members in recompute" idea
 # TODO: HF for parameter estimation
 
 @dataclass(frozen=True)
@@ -102,15 +102,11 @@ def plotting_methods(cls):
             setattr(cls, name, method)
     return cls
 
-def switch_basis(is_site_basis):
+def returns_basis(is_site_basis):
     def decorator(func):
         def wrapper(self, *args, **kwargs):
             results = func(self, *args, **kwargs)
-            if is_site_basis == self.use_site_basis:
-                return results
-            if is_site_basis:
-                return self.transform_to_energy_basis( results )
-            return self.transform_to_site_basis( results )
+            return _array_with_basis.ArrayWithBasis( results, is_site_basis )
         return wrapper
     return decorator
 
@@ -140,7 +136,6 @@ class OrbitalList:
         self.self_consistency_params = {}
         self.spin_degeneracy  = 2.0
         self.electrons = len( self._list )
-        self.use_site_basis = True
 
     def __len__(self):
         return len(self._list)
@@ -308,8 +303,9 @@ class OrbitalList:
         self._list.append( other )
 
     def _build( self ):
-
+        
         # TODO: uff
+        assert len(self) > 0
         self._positions = self._get_positions()
         
         self._hamiltonian, self._coulomb = self._hamiltonian_coulomb()
@@ -384,33 +380,33 @@ class OrbitalList:
     def energies(self):
         return self._energies
 
-    # TODO: uff decorator inception
+    # TODO: uff decorator inception, also should return copies to avoid weirdness
     @property
-    @switch_basis(is_site_basis = True)
+    @returns_basis(is_site_basis = True)
     @recomputes
     def hamiltonian(self):
         return self._hamiltonian
     
     @property
-    @switch_basis(is_site_basis = True)
+    @returns_basis(is_site_basis = True)
     @recomputes
     def coulomb(self):
         return self._coulomb
     
     @property
-    @switch_basis(is_site_basis = False)
+    @returns_basis(is_site_basis = False)
     @recomputes
     def initial_density_matrix(self):
         return self._initial_density_matrix
     
     @property
-    @switch_basis(is_site_basis = False)
+    @returns_basis(is_site_basis = False)
     @recomputes
     def stationary_density_matrix(self):
         return self._stationary_density_matrix
 
     @property
-    @switch_basis(is_site_basis = True)
+    @returns_basis(is_site_basis = True)
     @recomputes
     def quadrupole_operator(self):        
         dip = self._dipole_operator()
@@ -421,7 +417,7 @@ class OrbitalList:
 
     # TODO: port
     @property
-    @switch_basis(is_site_basis = True)
+    @returns_basis(is_site_basis = True)
     @recomputes
     def dipole_operator(self):
         N = pos.shape[0]
@@ -436,7 +432,7 @@ class OrbitalList:
         return dip + jnp.transdipe(dip, (1, 0, 2))
 
     @property
-    @switch_basis(is_site_basis = True)
+    @returns_basis(is_site_basis = True)
     @recomputes
     def velocity_operator(self):
         if orbs.transitions is None:
@@ -481,24 +477,28 @@ class OrbitalList:
         c = 3e8  # 137 (a.u.)
         factor = 1.6e-29 * charge / (3 * jnp.pi * eps_0 * hbar**2 * c**3)
         te = self.transition_energies
-        transition_dipole_moments = self.dipole_operator.to_energy_basis()
+        transition_dipole_moments = self.transform_to_energy_basis(self.dipole_operator)
         return (
             (te * (te > self.eps)) ** 3
             * jnp.squeeze( transition_dipole_moments ** 2)
             * factor
         )
 
-    def _transform_basis( observable, vectors ):
-        dims_einsum_strings = { (3,2): 'ijk,kj->i', (3,3): 'ijk,lkj->il', (2,3): 'ij,kji->k', (2,2): 'ij,ji->'}
-        first = jnp.einsum( dims_einsum_strings[(operator.ndim, density_matrix.nimd)], operator, density_matrix )
-        return jnp.einsum( dims_einsum_strings[(operator.ndim, density_matrix.nimd)], operator, density_matrix )
-
+    def _transform_basis( observable, vectors, flag ):
+        dims_einsum_strings = {  2 : 'ij,jk,lk->il' , 3 : 'ij,mjk,lk->mil' }
+        einsum_string = dims_einsum_strings[(observable.ndim)]
+        return ArrayWithBasis( jnp.einsum(einsum_string, vectors, observable, vectors.conj()), flag )
     
-    def transform_to_site_basis(self, observable):        
-        return self._transform_basis( observable, self._eigenvectors) #self._eigenvectors @ observable @ self._eigenvectors.conj().T
+    def transform_to_site_basis(self, observable):
+        if not (isinstance(observable, ArrayWithBasis) or not observable.is_in_site_basis):
+            return self._transform_basis( observable, self._eigenvectors, True)
+        return observable
+        # return self._transform_basis( observable, self._eigenvectors) #self._eigenvectors @ observable @ self._eigenvectors.conj().T
 
     def transform_to_energy_basis(self, observable):
-        return self._transform_basis( observable, self._eigenvectors.conj().T)
+        if not (isinstance(observable, ArrayWithBasis) or observable.is_in_site_basis):
+            return self._transform_basis( observable, self._eigenvectors.conj(), False)
+        return observable
     
     @recomputes
     def get_dos(self, omega: float, broadening: float = 0.1) :
@@ -580,7 +580,7 @@ class OrbitalList:
         )
 
         # compute charge via occupations in site basis
-        charge = self.electrons * density_matrix.to_site_basis().real
+        charge = self.electrons * self.transform_to_site_basis(density_matrix).real
 
         # induced field is a sum of point charges, i.e. \vec{r} / r^3
         e_field = 14.39 * jnp.sum(point_charge * charge[:, None, None], axis=0)
@@ -605,12 +605,12 @@ class OrbitalList:
         density_matrices = self.get_density_matrix_time_domain( *args, **kwargs )
         return self.expectation_value( operator, density_matrices )
 
-    @switch_basis(is_site_basis = True)
+    @returns_basis(is_site_basis = True)
+    @recomputes
     def get_density_matrix_time_domain(
         self,
-        start_time: float, 
         end_time: float, 
-        steps_time: int, 
+        steps_time: Optional[int] = None, 
         relaxation_rate: Union[float, jnp.Array], 
         illumination_function: Callable[[float], jnp.Array], 
         saturation_functional: Callable[[float], float] = lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x))),
@@ -620,16 +620,17 @@ class OrbitalList:
         solver: diffrax.ODESolver = diffrax.Dopri5(),
         stepsize_controller: diffrax.StepSizeController = diffrax.PIDController(rtol=1e-8, atol=1e-8)
     ) -> jnp.Array:
+        
         # Time axis creation
-        time_axis = jnp.linspace(start_time, end_time, steps_time)
+        time_axis = jnp.linspace(0, end_time, int(end_time * 1000) if steps_time is None else steps_time )
 
         # Determine relaxation function based on the input type
         if isinstance(relaxation_rate, jnp.Array):
             relaxation_function = _numerics.lindblad_saturation_functional(
-                self.eigenvectors.data, relaxation_rate, saturation_functional)
+                self._eigenvectors, relaxation_rate, saturation_functional)
         else:
             relaxation_function = _numerics.relaxation_time_approximation(
-                relaxation_rate, self.stationary_density_matrix.to_site_basis().data)
+                relaxation_rate, self.transform_to_site_basis(self._stationary_density_matrix)
 
         # Verify that illumination is a callable
         if not callable(illumination_function):
@@ -639,29 +640,29 @@ class OrbitalList:
         coulomb = self._coulomb * coulomb_strength
         hamiltonian = self._hamiltonian
         electrons = self.electrons
-        initial_density_matrix = self.initial_density_matrix.to_site_basis().data
-        stationary_density_matrix = self.stationary_density_matrix.to_site_basis().data
+        initial_density_matrix = self.transform_to_site_basis(self._initial_density_matrix)
+        stationary_density_matrix = self.transform_to_site_basis(self._stationary_density_matrix)
 
         # Check illumination dimensions for different numerical treatments
         if illumination_function(0.1).ndim > 1:
             return _numerics.density_matrix_vector_potential(
                 hamiltonian, coulomb, electrons, initial_density_matrix,
-                stationary_density_matrix, time_axis, illumination_function, self.velocity_operator.data,
+                stationary_density_matrix, time_axis, illumination_function, self.velocity_operator,
                 relaxation_function, coulomb_strength, solver, stepsize_controller)
 
-        dipole_transition_function = _numerics.get_dipole_transition_function( self, add_induced )
+        induced_field_function = _numerics.get_induced_field_function( self, add_induced )
         # Decide the method based on the old or new approach
         if use_old_method:
             return _numerics.density_matrix_old(
-                hamiltonian, coulomb, self._positions, electrons,
+                hamiltonian, coulomb, self.dipole_operator, electrons,
                 initial_density_matrix, stationary_density_matrix, time_axis,
-                illumination_function, relaxation_function, dipole_transition_function,
+                illumination_function, relaxation_function, induced_field_function,
                 coulomb_strength)
         else:
             return _numerics.density_matrix_electric_field(
-                hamiltonian, coulomb, self._positions, electrons,
+                hamiltonian, coulomb, self.dipole_operator, electrons,
                 initial_density_matrix, stationary_density_matrix, time_axis,
-                illumination_function, relaxation_function, dipole_transition_function,
+                illumination_function, relaxation_function, induced_field_function,
                 coulomb_strength, solver, stepsize_controller)
 
     # TODO: uff, again verbose
