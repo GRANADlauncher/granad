@@ -24,16 +24,19 @@ def fraction_periodic(signal, threshold=1e-2):
     return (deviation < threshold).sum() / len(signal)
 
 # TODO: does this work as intended?
-def get_fourier_transform(t_linspace, function_of_time, return_omega_axis = True):
-    function_of_omega = jnp.fft.fft(function_of_time) / len(t_linspace)
-    omega_axis = (
-        2
-        * jnp.pi
-        * len(t_linspace)
-        / jnp.max(t_linspace)
-        * jnp.fft.fftfreq(function_of_omega.shape[-1])
-    )
-    return omega_axis, function_of_omega if return_omega_axis else function_of_omega
+def get_fourier_transform(t_linspace, function_of_time, return_omega_axis=True):
+    # Compute the FFT along the first axis
+    function_of_omega = jnp.fft.fft(function_of_time, axis=0) / function_of_time.shape[0]
+    
+    # Calculate the frequency axis
+    delta_t = t_linspace[1] - t_linspace[0]  # assuming uniform spacing
+    N = function_of_time.shape[0]  # number of points in t_linspace
+    omega_axis = 2 * jnp.pi * jnp.fft.fftfreq(N, d=delta_t)
+    
+    if return_omega_axis:
+        return omega_axis, function_of_omega
+    else:
+        return function_of_omega
 
 def fermi(e, beta, mu):
     return 1 / (jnp.exp(beta * (e - mu)) + 1)
@@ -295,7 +298,13 @@ def lindblad_saturation_functional(eigenvectors, gamma, saturation):
 
     return inner
 
-def get_coulomb_field_to_from(source_positions, target_positions):
+# TODO: this is slightly awkard, change to faster axis
+def get_induced_electric_field( coulomb_field_to_from, charge ):
+    # sum up up all charges weighted like \sum_r q_r r/|r-r'|
+    # read: field to i from j
+    return jnp.einsum( 'ijK,j->iK', coulomb_field_to_from, charge)    
+
+def get_coulomb_field_to_from(source_positions, target_positions, compute_only_at = None):
     """
     Calculate the contributions of point charges located at `source_positions`
     on points at `target_positions`.
@@ -316,210 +325,136 @@ def get_coulomb_field_to_from(source_positions, target_positions):
     one_over_distance_cubed = jnp.where(norms > 0, 1 / norms**3, 0)
     # Calculate and return the contributions
     coulomb_field_to_from = distance_vector * one_over_distance_cubed[:, :, None]
+
+    # TODO: could probably be baked into the calculation
+    if compute_only_at is not None:
+        coulomb_field_to_from_masked = jnp.zeros_like( contributions )
+        coulomb_field_to_from_masked.at[compute_only_at].set( contributions[compute_only_at] )
+        coulomb_field_to_from = coulomb_field_to_from_masked
+
     return coulomb_field_to_from
 
 
-def get_induced_field_contribution(
-        positions,
-        compute_only_at : None,
-        
-):
-    """Takes into account dipole transitions.
+def get_rhs_master_equation(hamiltonian, coulomb,
+            dipole_operator, electrons, velocity_operator,
+            stationary_density_matrix,
+            time_axis, illumination, relaxation_function,
+            coulomb_field_to_from, include_induced_contribution, use_rwa):    
+    """Computes the right-hand side of the Liouville-von-Neumann equation."""
 
-        - `stack`:
-        - `add_induced`: add induced field to the field acting on the dipole
-
-    **Returns:**
-
-     function as additional input for evolution function
-    """
-
-    contributions = get_point_charge_contributions(positions, positions)    
-    if compute_only_at is not None:
-        selected_contributions = jnp.zeros_like( contributions )
-        selected_contributions.at[compute_only_at].set( contributions[compute_only_at] )
-        return selected_contributions
-    return contributions
-
-
-# TODO: this is slightly awkard, change to faster axis
-def get_induced_electric_field( coulomb_field_to_from, charge ):
-    # sum up up all charges weighted like \sum_r q_r r/|r-r'|
-    # read: field to i from j
-    return jnp.einsum( 'ijK,j->iK', coulomb_field_to_from, charge)    
-
-# TODO: units
-def density_matrix_vector_potential(
-        hamiltonian,
-        coulomb,
-        dipole_operator,
-        electrons,
-        initial_density_matrix,
-        stationary_density_matrix,
-        time_axis,
-        vector_potential_function,
-        velocity_operator,        
-        dissipation_function,
-        coulomb_field_from_to,
-        no_induced_contribution,
-        coulomb_strength,
-        solver,
-        stepsize_controller,
-):
-    # TODO: uff, also: should this be here?
+    # TODO: UFUFFFFUFUFUFUFUFUFFFF
+    
+    def _get_induced_electric_field( charge ):
+        if include_induced_contribution:
+            return get_induced_electric_field(coulomb_field_to_from, charge)
+        return jnp.zeros((hamiltonian.shape[0], 3))
+    
     def _get_induced_field_potential( charge ):
-        if no_induced_contribution:
-            return 0.0
-        induced_electric_field = get_induced_electric_field( coulomb_field_to_from, charge )
-        return jnp.einsum( 'ijK,jK->i', dipole_operator, induced_electric_field )        
+        if include_induced_contribution:
+            induced_electric_field = get_induced_electric_field( coulomb_field_to_from, charge )
+            return jnp.einsum( 'ijK,jK->i', dipole_operator, induced_electric_field )
+        return 0.0
 
-    def rhs(time, density_matrix, args):
+    def _get_total_potential( electric_field ):
+        if use_rwa:
+            # TODO: order of site indices does not matter for real transition dipole moments, but what about complex?
+            total_field_potential = jnp.einsum( 'Kij,iK->ij', dipole_operator, electric_field )
+
+            # Get the indices for the lower triangle, excluding the diagonal
+            lower_indices = jnp.tril_indices(total_field_potential.shape[0], -1)
+
+            # Replace elements in the lower triangle with their complex conjugates
+            return total_field_potential.at[lower_indices].set(jnp.conj(total_field_potential[lower_indices]))
+        return jnp.einsum( 'Kij,iK->ij', dipole_operator, electric_field.real )
+
+    
+    def _rhs_e_field(time, density_matrix, args):
+
+        # homogeneous external field => 3-dim array of real
+        external_electric_field = illumination(time)
+
+        # net induced charge => N-dim array of complex (although diagonal elements are mostly real)
+        charge = -jnp.diag(density_matrix - stationary_density_matrix) * electrons
+
+        # coulomb term is just \sum_{i} C_{ij} \rho_{ii}
+        coulomb_potential = coulomb @ charge
+
+        induced_electric_field = _get_induced_electric_field( charge )        
+
+        # total electric field
+        electric_field = external_electric_field + induced_electric_field        
+        total_field_potential = _get_total_potential( electric_field )
+        
+        # collect terms in hamiltonian
+        h_total = hamiltonian + total_field_potential + jnp.diag( coulomb_potential )
+
+        return -1j * (h_total @ density_matrix - density_matrix @ h_total) + relaxation_function(density_matrix)
+
+    def _rhs_vector_potential(time, density_matrix, args):
+        
         # inhomogeneous external field => Nx3-dim array of real
-        vector_potential = vector_potential_function(time)
+        vector_potential = illumination(time)
         
         # net induced charge => N-dim array of complex (although diagonal elements are mostly real)
         charge = -jnp.diag( density_matrix - stationary_density_matrix ) * electrons
 
         # coulomb term is just \sum_{i} C_{ij} \rho_{ii}
         coulomb_potential = coulomb @ charge
+
+        # TODO: does this really belong here?
         induced_field_potential = _get_induced_field_potential( charge )
 
+        # atomic units
+        q, m  = 1, 1
+        
         # ~ A p 
-        paramagnetic = - q * jnp.einsum("ijr, ir -> ij", velocity_operator, vector_potential)
+        paramagnetic = - q * jnp.einsum("Kij, iK -> ij", velocity_operator, vector_potential)
 
         # ~ A^2
         diamagnetic = q**2 / m * 0.5 * jnp.sum(vector_potential**2, axis=1) 
         
         h_total = hamiltonian + paramagnetic + jnp.diag( diamagnetic + induced_field_potential + coulomb_potential )
         
-        return -1j * (h_total @ rho - rho @ h_total) + dissipation_function(rho)
+        return -1j * (h_total @ density_matrix - density_matrix @ h_total) + relaxation_function(density_matrix)
 
-    # atomic units
-    q, m = 1, 1
-        
-    term = diffrax.ODETerm(rhs)
-    return diffrax.diffeqsolve(
-        term,
-        solver,
-        t0=time_axis[0],
-        t1=time_axis[-1],
-        dt0=time_axis[1] - time_axis[0],
-        y0=rho_init,
-        saveat=time_axis,
-        stepsize_controller=stepsize_controller,
-    )
+    rhs = _rhs_e_field if illumination(0).ndim == 1 else _rhs_vector_potential    
+    return rhs
 
-def density_matrix_electric_field(
-        hamiltonian,
-        coulomb,
-        dipole_operator,
-        electrons,
-        initial_density_matrix,
-        stationary_density_matrix,
-        time_axis,
-        electric_field_function,
-        dissipation_function,
-        coulomb_field_to_from,
-        no_induced_contribution,
-        coulomb_strength,
-        solver,
-        stepsize_controller
-):
-    # TODO: uff
-    def _induced_electric_field_func( charge ):
-        if no_induced_contribution:
-            return 0.0
-        return get_induced_electric_field(coulomb_field_to_from, charge)
+# TODO: return valid solution objects 
+def integrate_master_equation(
+        hamiltonian, coulomb,
+        dipole_operator, electrons, velocity_operator,
+        initial_density_matrix, stationary_density_matrix,
+        time_axis, illumination, relaxation_function,
+        coulomb_field_to_from, include_induced_contribution, use_rwa,
+        solver, stepsize_controller, use_old_method ):
     
-    def rhs(time, density_matrix, args):
-        
-        # homogeneous external field => 3-dim array of real
-        external_electric_field = electric_field_function(time)
-
-        # net induced charge => N-dim array of complex (although diagonal elements are mostly real)
-        charge = -jnp.diag(density_matrix - stationary_density_matrix) * electrons
-        
-        # coulomb term is just \sum_{i} C_{ij} \rho_{ii}
-        coulomb_potential = coulomb @ charge
-
-        induced_electric_field = _induced_electric_field_func( charge )
-
-        # total electric field
-        electric_field = external_electric_field + induced_electric_field
-
-        # TODO: order of site indices does not matter for real transition dipole moments, but what about complex?
-        # the dipole operator contains the dipole moments and the position matrix elements
-        total_field_potential = jnp.einsum( 'ijK,jK->i', dipole_operator, electric_field )
-
-        # collect terms in hamiltonian
-        h_total = hamiltonian + jnp.diag( total_field_potential + coulomb_potential )
-        
-        return -1j * (h_total @ rho - rho @ h_total) + dissipation_function(rho)
-
-
-    term = diffrax.ODETerm(rhs)    
-    return diffrax.diffeqsolve(
+    rhs = get_rhs_master_equation(hamiltonian, coulomb,
+                  dipole_operator, electrons, velocity_operator,
+                  stationary_density_matrix,
+                  time_axis, illumination, relaxation_function,
+                coulomb_field_to_from, include_induced_contribution, use_rwa)
+    
+    dt = time_axis[1] - time_axis[0]
+    
+    if use_old_method:
+        # TODO: here, we essentially do rk first order
+        kernel = lambda r, t : (r + dt * rhs(t, r, 0), r)
+        _, density_matrices = jax.lax.scan( kernel, initial_density_matrix, time_axis )
+        return density_matrices
+    
+    term = diffrax.ODETerm(rhs)
+    solution = diffrax.diffeqsolve(
         term,
         solver,
         t0=time_axis[0],
         t1=time_axis[-1],
-        dt0=time_axis[1] - time_axis[0],
+        dt0=dt,
         y0=initial_density_matrix,
-        saveat=time_axis,
+        saveat=diffrax.SaveAt(ts=time_axis),
         stepsize_controller=stepsize_controller,
     )
-
-# TODO: this is duplication!!!
-def density_matrix_old(
-        hamiltonian,
-        coulomb,
-        dipole_operator,
-        electrons,
-        initial_density_matrix,
-        stationary_density_matrix,
-        time_axis,
-        electric_field_function,
-        dissipation_function,
-        coulomb_field_to_from,
-        no_induced_contribution,
-        coulomb_strength,
-        solver,
-        stepsize_controller
-):
-    def _induced_electric_field_func( charge ):
-        if no_induced_contribution:
-            return 0.0
-        return get_induced_electric_field(coulomb_field_to_from, charge)
-
-    def runge_kutta_first_order(density_matrix, time):
-        
-        # homogeneous external field => 3-dim array of real
-        external_electric_field = electric_field_function(time)
-
-        # net induced charge => N-dim array of complex (although diagonal elements are mostly real)
-        charge = -jnp.diag(density_matrix - stationary_density_matrix) * electrons
-        
-        # coulomb term is just \sum_{i} C_{ij} \rho_{ii}
-        coulomb_potential = coulomb @ charge
-
-        induced_electric_field = _induced_electric_field_func( charge )
-
-        # total electric field
-        electric_field = external_electric_field + induced_electric_field
-
-        # TODO: order of site indices does not matter for real transition dipole moments, but what about complex?
-        # the dipole operator contains the dipole moments and the position matrix elements
-        total_field_potential = jnp.einsum( 'ijK,jK->i', dipole_operator, electric_field )
-
-        # collect terms in hamiltonian
-        h_total = hamiltonian + jnp.diag( total_field_potential + coulomb_potential )
-        
-        return density_matrix - 1j * dt * (h_total @ rho - rho @ h_total) + dt * dissipation_function(density_matrix)    
-
-    dt = time[1] - time[0]
-    rho, rhos = jax.lax.scan( runge_kutta_first_order, initial_density_matrix, time )
-
-    return rhos
+    return solution
 
 def rpa_polarizability_function(
     orbs, relaxation_time, polarization, coulomb_strength, phi_ext=None, hungry=True
@@ -621,3 +556,4 @@ def bare_susceptibility_function(orbs, relaxation_time, hungry=True):
     comparison_matrix = omega_grid[:, None] == jnp.unique(omega_up)[None, :]
     mask2 = (jnp.argmax(comparison_matrix, axis=1) + 1) * comparison_matrix.any(axis=1)
     return _susceptibility
+

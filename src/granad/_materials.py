@@ -2,28 +2,81 @@
 import jax
 import jax.numpy as jnp
 from itertools import combinations, product
+from collections import defaultdict
+from dataclasses import dataclass
 from matplotlib.path import Path
 import pprint
 
 # TODO: hmmm
-from ._plotting import _display_lattice_cut
-from ._orbitals import OrbitalList, Orbital
-from . import _watchdog
+# from ._plotting import _display_lattice_cut
+# from ._orbitals import OrbitalList, Orbital
+# from . import _watchdog
+from granad._plotting import _display_lattice_cut
+from granad._orbitals import OrbitalList, Orbital
+from granad import _watchdog
 
+
+# TODO: the entire class is a big uff
+@dataclass( frozen  = True )
 class Material:
     """positions must be fractional coordinates. 
     lattice constant must be angström.    
     """
-    _materials = _materials
+    orbitals : dict
+    hopping : dict
+    coulomb : dict
+    lattice_basis : list
+    lattice_constant : float
     
+    _materials = {
+        "graphene" : {
+            "orbitals": [
+                { "position" : (0,0), "attributes" : (0,1,0,0,"C"), "tag" : "sublattice_1" },
+                { "position" : (-1/3,-2/3), "attributes" : (0,1,0,0,"C"), "tag" : "sublattice_2" }
+            ],
+            "lattice_basis": [
+                (1.0, 0.0, 0.0),  # First lattice vector
+                (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
+            ],        
+            # couplings are defined by combinations of orbital quantum numbers
+            "hopping": { ((0,1,0,0,"C"), (0,1,0,0,"C")) : ([0.0, 2.66],lambda d: 0j)  },
+            "coulomb": {  ((0,1,0,0,"C"), (0,1,0,0,"C")) : ([16.522, 8.64, 5.333],lambda d: 1/d+0j)  },
+            "lattice_constant" : 2.46},
+        "ssh" : {
+            "orbitals": [
+                { "position" : (0,0), "attributes" : (0,1,0,0,None), "tag" : "sublattice_1" },
+                { "position" : (0.8,0), "attributes" : (0,1,0,0,None), "tag" : "sublattice_2" }
+            ],
+            "lattice_basis": [
+                (1.0, 0.0, 0.0),
+                (0.0, 0.0, 0.0)
+            ],        
+            # couplings are defined by combinations of orbital quantum numbers
+            "hopping": { ((0,1,0,0,None), (0,1,0,0,None)) : ([0.0, 1., 0.5],lambda d: 0j)  },
+            "coulomb": {  ((0,1,0,0,None), (0,1,0,0,None)) : ([16.522, 8.64, 5.333],lambda d: 1/d+0j)  },
+            "lattice_constant" : 2.46},
+        "metallic_chain" : {
+            "orbitals": [
+                { "position" : (0,0), "attributes" : (0,1,0,0,None), "tag" : "" }
+            ],
+            "lattice_basis": [
+                (1.0, 0.0, 0.0),
+                (0.0, 0.0, 0.0)
+            ],        
+            # couplings are defined by combinations of orbital quantum numbers
+            "hopping": { ((0,1,0,0,None), (0,1,0,0,None)) : ([0.0, 2.66],lambda d: 0j)  },
+            "coulomb": {  ((0,1,0,0,None), (0,1,0,0,None)) : ([16.522, 8.64, 5.333],lambda d: 1/d+0j)  },
+            "lattice_constant" : 2.46},
+        }    
+
     @classmethod
     def get(cls, material):
         return cls( **cls._materials[material] )
-
+    
     @staticmethod
-    def materials():
+    def available():
         available_materials = '\n'.join( Material._materials.keys() )
-        print f"Available materials:\n{available_materials}"
+        print( f"Available materials:\n{available_materials}" )
     
     def _prune_neighbors( self, positions, minimum_neighbor_number, remaining_old = jnp.inf ):
         if minimum_neighbor_number <= 0:
@@ -33,30 +86,29 @@ class Material:
         mask = (distances <= minimum).sum(axis = 0)  > minimum_neighbor_number
         remaining = mask.sum()        
         if remaining_old == remaining:
-            return positions[mask, :]        
+            return positions[mask]        
         else:
-            return self._prune_neighbors( positions[mask, :], minimum_neighbor_number, remaining )
-
-    def _get_orbs_positions_dict( self, m, n, orbs = None ):
-        if orbs is None:
-            orbs = self.orbitals.keys()
-
-        orbs_positions_dict = {}
+            return self._prune_neighbors( positions[mask], minimum_neighbor_number, remaining )    
+        
+    def _get_positions_in_lattice( self, positions_in_unit_cell, m, n ):
+        m, n = int(m), int(n)
         n = (-n-1,n+1) if n > 0 else (n-1,-n+1)
         m = (-m-1,m+1) if m > 0 else (m-1,-m+1)
-        coefficients = jnp.array( list(product(range(*n), range(*m))) )
+        coefficients = jnp.array( list(product(range(*m), range(*n))) )
         lattice_basis = jnp.array(self.lattice_basis)
-        for orb in orbs:
-            orbital_shift = jnp.array(self.orbitals[orb]["position"]) @ lattice_basis
-            pos = self.lattice_constant * (coefficients @ lattice_basis + orbital_shift)
-            orbs_positions_dict[orb] = pos
-        return orbs_positions_dict
+        shift = jnp.array(positions_in_unit_cell) @ lattice_basis
+        return self.lattice_constant * (coefficients @ lattice_basis + shift[:,None,:]).reshape(shift.shape[0]*coefficients.shape[0], 3)
+
+    def _keep_matching_positions( self, positions, candidate_span, m_max, n_max):
+        candidates = self._get_positions_in_lattice( candidate_span, m_max, n_max )
+        idxs = (jnp.round( jnp.linalg.norm( positions - candidates[:, None], axis = -1), 4 ) == 0).nonzero()[0]
+        return candidates[idxs]
     
     # very nasty, TODO: find better solution than rounding stuff, hardcoding 1e-5
-    def _neighbor_couplings_to_function(self, couplings, qm_comb ):
-        orbs = filter(lambda orb : self.orbitals[orb]["quantum_numbers"] in qm_comb, self.orbitals.keys() )
-        orbs_positions_dict = self._get_orbs_positions_dict( len(couplings), len(couplings), orbs )
-        positions = jnp.concatenate( list(orbs_positions_dict.values()) )
+    def _neighbor_couplings_to_function(self, couplings, outside_fun, attribute_combination ):
+        matching_orbs  = filter(lambda orb_spec : orb_spec["attributes"] in attribute_combination, self.orbitals )
+        fractional_positions = jnp.array( [x["position"] for x in matching_orbs] )
+        positions = self._get_positions_in_lattice( fractional_positions, len(couplings), len(couplings) )        
         couplings = jnp.array( couplings ) + 0.0j        
         distances = jnp.unique(
             jnp.round(jnp.linalg.norm(positions - positions[:, None, :], axis=2), 8)
@@ -65,28 +117,24 @@ class Material:
             return jax.lax.cond(
                 jnp.min(jnp.abs(d - distances)) < 1e-5,
                 lambda x: couplings[jnp.argmin(jnp.abs(x - distances))],
-                lambda x: 0.0j,
+                outside_fun,
                 d,
             )
         return inner
     
-    def _set_couplings( self, setter_func, cdict, uuid ):
-        quantum_numbers = (self.orbitals[x]["quantum_numbers"] for x in  self.orbitals.keys())
-        for comb in combinations( quantum_numbers, 2 ):
-            try:
-                neighbor_couplings = cdict[comb]
-            except KeyError:
-                pass            
-            distance_func = self._neighbor_couplings_to_function(neighbor_couplings, comb)
-            setter_func( uuid, uuid, distance_func )                    
+    def _set_couplings( self, setter_func, cdict, group_id_to_attributes ):
+        for group_id_1, attributes_1 in group_id_to_attributes.items():
+            for group_id_2, attributes_2 in group_id_to_attributes.items():            
+                try:
+                    neighbor_couplings = cdict[(attributes_1, attributes_2)]
+                except KeyError:
+                    continue            
+                distance_func = self._neighbor_couplings_to_function(*neighbor_couplings, (attributes_1, attributes_2))
+                setter_func( group_id_1, group_id_2, distance_func )                    
 
-    
-    def _create_orbital(self, orb, pos, uuid):
-        return Orbital(name = orb, position = tuple(float(x) for x in pos), uuid = uuid, quantum_numbers = self.orbitals[orb]["quantum_numbers"] ) 
-    
-    # TODO: planes too big in some cases
+    # TODO: planes too big again
     def cut_orbitals( self, polygon_vertices, plot = False, minimum_neighbor_number : int = 2 ):        
-        # Unzip into separate lists of x and y coordinates
+        # Unpack polygon vertices into x and y coordinates
         x_coords, y_coords = zip(*polygon_vertices)
         max_x =jnp.abs(jnp.array(x_coords)).max()
         max_y =jnp.abs(jnp.array(y_coords)).max()
@@ -97,50 +145,63 @@ class Material:
         m_max = jnp.floor(m_max)  if m_max < 0 else jnp.ceil(m_max) 
         n_max = frac_y[ jnp.abs(frac_y).argmax() ]
         n_max = jnp.floor(n_max) if n_max < 0 else jnp.ceil(n_max) 
-        orbs_positions_dict = self._get_orbs_positions_dict( int(m_max), int(n_max) )        
 
+        # get atom positions in the unit cell in fractional coordinates
+        orbital_positions = jnp.array( [ orbital["position"] for orbital in self.orbitals ] )        
+        unit_cell_fractional_atom_positions = jnp.unique( jnp.round( orbital_positions, 6 ), axis = 0 )
 
-        # get all positions within the polygon and remove isolated spots
+        # get all atom positions in a plane completely covering the polygon
+        initial_atom_positions = self._get_positions_in_lattice( unit_cell_fractional_atom_positions, m_max, n_max )
+
+        # get atom positions within the polygon 
         polygon = Path( polygon_vertices )
-        all_positions = jnp.concatenate( list( orbs_positions_dict.values() ) )
-        flags = polygon.contains_points( all_positions[:,:2] )
-        selected_positions  = self._prune_neighbors( all_positions[flags], minimum_neighbor_number )
+        flags = polygon.contains_points( initial_atom_positions[:,:2] )
         
-        # associate positions to orbitals
-        orbs_selected_positions_dict = {}
-        for orb, orb_positions in orbs_positions_dict.items():
-            idxs = (jnp.round( jnp.linalg.norm( orb_positions - selected_positions[:, None], axis = -1), 4 ) == 0).nonzero()[0]
-            orbs_selected_positions_dict[orb] = selected_positions[ idxs, : ]
-            
+        # get atom positions where every atom has at least minimum_neighbor_number neighbors
+        final_atom_positions  = self._prune_neighbors( initial_atom_positions[flags], minimum_neighbor_number )
+        
         if plot:
-            _display_lattice_cut( polygon_vertices, all_positions, selected_positions )
+            _display_lattice_cut( polygon_vertices, initial_atom_positions, final_atom_positions )
 
-        # prepare the orbital list, making sure that all orbitals share the same uuid TODO: rename, uuid is something else tbh
-        uuid = _watchdog._Watchdog.next_value()
-        raw_list = [ self._create_orbital(orb, pos, uuid) for orb, positions in orbs_selected_positions_dict.items() for pos in positions ]        
-        orbital_list = OrbitalList( raw_list )        
-        self._set_couplings( orbital_list.set_layers_hopping, self.hopping, uuid )
-        self._set_couplings( orbital_list.set_layers_coulomb, self.coulomb, uuid )
+        # groups together orbitals with identical quantum numbers
+        orbitals_by_quantum_numbers = defaultdict(list)
+        
+        for orbital_spec in self.orbitals:
+            # Use the attributes tuple as the key
+            attr_key = tuple(orbital_spec["attributes"])
+            # Append the dictionary to the list corresponding to the attributes key
+            orbitals_by_quantum_numbers[attr_key].append(orbital_spec)
+
+        # TODO: uff
+        raw_list = []
+        group_id_to_attributes = {}
+        for attributes, orbital_properties_list in orbitals_by_quantum_numbers.items():
+            
+            # orbitals with identical quantum numbers get assigned the same group_id
+            group_id = _watchdog._Watchdog.next_value()            
+            energy_level, angular_momentum, angular_momentum_z, spin, atom_name = attributes
+            group_id_to_attributes[group_id] = attributes
+
+            # a custom attribute, e.g. sublattice id may distinguish them
+            for orbital_property in orbital_properties_list:                
+                plane_orbital_positions = self._keep_matching_positions( final_atom_positions,
+                                                                         jnp.array([orbital_property["position"]]),
+                                                                         m_max,
+                                                                         n_max  )
+                tag = orbital_property["tag"]
+                for position in plane_orbital_positions:
+                    orb = Orbital(position = tuple(float(x) for x in position),
+                                  tag = tag,
+                                  energy_level = energy_level,
+                                  angular_momentum = angular_momentum,
+                                  angular_momentum_z=angular_momentum_z,
+                                  spin=spin,
+                                  atom_name=atom_name,
+                                  group_id=group_id)
+                    raw_list.append( orb )
+                    
+        orbital_list = OrbitalList( raw_list )
+        self._set_couplings( orbital_list.set_groups_hopping, self.hopping, group_id_to_attributes )
+        self._set_couplings( orbital_list.set_groups_coulomb, self.coulomb, group_id_to_attributes )
         
         return orbital_list
-
-
-_materials =
-"graphene" : {
-    "orbitals": {
-    (0,1,0,0,"C","sublattice_1") : (0,0), 
-    (0,1,0,0,"C","sublattice_2") : (-1/3,-2/3) }
-    "lattice_basis": [
-        (1.0, 0.0, 0.0),  # First lattice vector
-        (-0.5, 0.86602540378, 0.0)  # Second lattice vector (approx for sqrt(3)/2)
-    ],        
-    # couplings are defined by combinations of orbital quantum numbers
-    "hopping": { ((0,1,0,0,"C"), (0,1,0,0,"C")) : ([0.0, 2.66],)  },
-    "coulomb": {  ((0,1,0,0,"C"), (0,1,0,0,"C")) : ([16.522, 8.64, 5.333],lambda d: 1/d)  },
-    "lattice_constant" : 2.46,
-},
-"ssh" : {},
-"metallic_chain" : {},
-}
-
-

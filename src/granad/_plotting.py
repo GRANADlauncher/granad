@@ -1,6 +1,7 @@
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
+from collections import defaultdict
 from functools import wraps
 
 def _plot_wrapper(plot_func):
@@ -15,131 +16,59 @@ def _plot_wrapper(plot_func):
 
     return wrapper
 
-# TODO: arg "color_by_tag" : str for orbital tag or orbital name, replaces color_orbitals, show_orbitals
-@_plot_wrapper
-def show_3d(
-    orbs,
-    show_state: int = 0,
-    show_orbitals: list[str] = None,
-    indicate_size: bool = False,
-    color_orbitals: bool = True,
-    annotate_hilbert: bool = True,
-):
-    """Shows a 3D scatter plot of selected orbitals.
-    In the plot, orbitals are annotated with a color. The color corresponds either to the contribution to the selected eigenstate or to the type of the orbital.
-    Optionally, orbitals can be annotated with a number corresponding to the hilbert space index.
-
-    - `stack`: object representing system state
-    - `show_state`: eigenstate index to show. (0 => eigenstate with lowest energy)
-    - `show_orbitals`: orbitals to show. if None, all orbitals are shown.
-    - `indicate_size`: if True, bigger points are orbitals contributing more strongly to the selected eigenstate.
-    - `color_orbitals`: if True, identical orbitals are colored identically and a legend is displayed listing all the different orbital types. if False, the color corresponds to the contribution to the sublattice.
-    - `annotate_hilbert`: if True, the orbitals are annotated with a number corresponding to the hilbert space index.
-    """
-    stack = orb.stack
-    show_orbitals = stack.unique_ids if show_orbitals is None else show_orbitals
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    for orb in show_orbitals:
-        idxs = jnp.nonzero(stack.ids == stack.unique_ids.index(orb))[0]
-        ax.scatter(
-            *zip(*stack.positions[idxs, :2]),
-            zs=stack.positions[idxs, 2],
-            s=(
-                6000 * jnp.abs(stack.eigenvectors[idxs, show_state])
-                if indicate_size
-                else 40
-            ),
-            c=stack.sublattice_ids[idxs] if not color_orbitals else None,
-            label=orb,
-        )
-        if annotate_hilbert:
-            for idx in idxs:
-                ax.text(*stack.positions[idx, :], str(idx), "x")
-    if color_orbitals:
-        plt.legend()
-
 @_plot_wrapper
 def show_2d(
-    orbs,
-    plane: str = "xy",
-    show_state: int = 0,
-    show_orbitals: bool = None,
-    indicate_size: bool = True,
-    color_orbitals: bool = True,
-    annotate_hilbert: bool = True,
+        orbs,
+        show_selected_tags = None,
+        show_hilbert_space_index = False
 ):
-    """Shows a 2D scatter plot of how selected orbitals in a stack contribute to an eigenstate.
-    In the plot, orbitals are annotated with a color. The color corresponds either to the contribution to the selected eigenstate or to the type of the orbital.
-    Optionally, orbitals can be annotated with a number corresponding to the hilbert space index.
+    """Shows a 2D scatter plot in the xy-plane of selected orbitals. Selections are made by a list 
+    of tags.
 
-    - `stack`: object representing system state
-    - `plane`: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'.
-    - `show_state`: eigenstate index to show. (0 => eigenstate with lowest energy)
-    - `show_orbitals`: list of strings. orbitals to show. if None, all orbitals are shown.
-    - `indicate_size`: if True, bigger points are orbitals contributing more strongly to the selected eigenstate.
-    - `color_orbitals`: if True, identical orbitals are colored identically and a legend is displayed listing all the different orbital types. if False, the color corresponds to the sublattice.
-    - `annotate_hilbert`: if True, the orbitals are annotated with a number corresponding to the hilbert space index.
+    - `show_selected_tags` : a list of strings 
     """
-    stack = orbs.stack
-    indices = {"xy": [0, 1], "xz": [0, 2], "yz": [1, 2]}
-    show_orbitals = stack.unique_ids if show_orbitals is None else show_orbitals
+    show_selected_tags = set((x.tag for x in orbs)) if show_selected_tags is None else set(show_selected_tags)
+    tags_to_pos, tags_to_idxs = defaultdict(list), defaultdict(list)
+    for i, orb in enumerate(orbs):
+        if orb.tag in show_selected_tags:
+            tags_to_pos[ orb.tag ].append( orb.position )
+            tags_to_idxs[ orb.tag ].append( i )
+        
     fig, ax = plt.subplots(1, 1)
-    for orb in show_orbitals:
-        idxs = jnp.nonzero(stack.ids == stack.unique_ids.index(orb))[0]
-        ax.scatter(
-            *zip(*stack.positions[idxs, :][:, indices[plane]]),
-            s=(
-                6000 * jnp.abs(stack.eigenvectors[idxs, show_state])
-                if indicate_size
-                else 40
-            ),
-            c=stack.sublattice_ids[idxs] if not color_orbitals else None,
-            label=orb,
-        )
-        if annotate_hilbert:
-            for idx in idxs:
-                ax.annotate(
-                    str(idx),
-                    (
-                        stack.positions[idx, indices[plane][0]],
-                        stack.positions[idx, indices[plane][1]],
-                    ),
-                )
-    if color_orbitals:
-        plt.legend()
+    for tag, positions in tags_to_pos.items():
+        positions = jnp.array(positions)
+        plt.scatter( x = positions[:,0], y = positions[:,1], label = tag )
+        if not show_hilbert_space_index:
+            continue
+        for i, idx in enumerate(tags_to_idxs[tag]):
+            ax.annotate( str(idx), ( positions[i, 0], positions[i, 1], ),)            
+    plt.legend()
     ax.axis("equal")
-
+    
 @_plot_wrapper
-def show_charge_distribution_3d(orbs):
+def show_charge_distribution_3d(orbs, density_matrix = None):
     """Displays the ground state charge distribution of the stack in 3D
 
     - `stack`: stack object
     """
-    stack = orbs.stack
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    charge = stack.electrons * jnp.diag(
-        stack.eigenvectors @ stack.rho_0.real @ stack.eigenvectors.conj().T
-    )
-    sp = ax.scatter(*zip(*stack.positions[:, :2]), zs=stack.positions[:, 2], c=charge)
+    charge = orbs.get_charge( density_matrix )
+    sp = ax.scatter(*zip(*orbs.positions[:, :2]), zs=orbs.positions[:, 2], c=charge)
     plt.colorbar(sp)
 
 
 @_plot_wrapper
-def show_charge_distribution_2d(orbs, plane: str = "xy"):
+def show_charge_distribution_2d(orbs, density_matrix = None, plane: str = "xy"):
     """Displays the ground state charge distribution of the stack in 2D
 
     - `stack`: object representing system state
     - `plane`: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'
     """
-    stack = orbs.stack
     indices = {"xy": [0, 1], "xz": [0, 2], "yz": [1, 2]}
     fig, ax = plt.subplots(1, 1)
-    charge = stack.electrons * jnp.diag(
-        stack.eigenvectors @ stack.rho_0.real @ stack.eigenvectors.conj().T
-    )
-    sp = ax.scatter(*zip(*stack.positions[:, indices[plane]]), c=charge)
+    charge = orbs.get_charge( density_matrix )
+    sp = ax.scatter(*zip(*orbs.positions[:, indices[plane]]), c=charge)
     ax.axis("equal")
     ax.set_xlabel(plane[0])
     ax.set_ylabel(plane[1])
@@ -152,13 +81,12 @@ def show_energies(orbs):
 
     - `stack`: stack object
     """
-    stack = orbs.stack
     fig, ax = plt.subplots(1, 1)
     plt.colorbar(
         ax.scatter(
-            jnp.arange(stack.energies.size),
-            stack.energies,
-            c=stack.electrons * jnp.diag(stack.rho_0.real),
+            jnp.arange(orbs.energies.size),
+            orbs.energies,
+            c=jnp.diag(orbs.electrons * orbs.initial_density_matrix),
         ),
         label="ground state occupation",
     )
@@ -169,8 +97,8 @@ def show_energies(orbs):
 @_plot_wrapper
 def show_energy_occupations(
     orbs,
-    occupations: list[jax.Array],
     time: jax.Array,
+    density_matrices_or_solution,
     thresh: float = 1e-2,
 ):
     """Depicts energy occupations as a function of time.
@@ -180,20 +108,21 @@ def show_energy_occupations(
     - `time`: time axis
     - `thresh`: plotting threshold. an occupation time series o_t is selected for plotting if it outgrows/outshrinks this bound. More exactly: o_t is plotted if max(o_t) - min(o_t) > thresh
     """
-    stack = orbs.stack
+    if not isinstance( density_matrices_or_solution, jax.Array ):
+        density_matrices_or_solution = density_matrices_or_solution.ys
+    occupations = jnp.diagonal( density_matrices_or_solution, axis1 = -1, axis2 = -2).real
     fig, ax = plt.subplots(1, 1)
-    occ = jnp.array([stack.electrons * r.real for r in occupations])
     for idx in jnp.nonzero(
-        jnp.abs(jnp.amax(occ, axis=0) - jnp.amin(occ, axis=0)) > thresh
+        jnp.abs(jnp.amax(occupations, axis=0) - jnp.amin(occupations, axis=0)) > thresh
     )[0]:
-        ax.plot(time, occ[:, idx], label=f"{float(stack.energies[idx]):2.2f} eV")
+        ax.plot(time, occupations[:, idx], label=f"{float(orbs.energies[idx]):2.2f} eV")
     ax.set_xlabel(r"time [$\hbar$/eV]")
     ax.set_ylabel("occupation of eigenstate")
     plt.legend()
 
 
 
-
+# FIXME: also broken, is this actually needed?
 @_plot_wrapper
 def show_electric_field_space(
     first: jax.Array,
@@ -251,7 +180,7 @@ def show_electric_field_space(
     ax.set_xlabel(plane[0])
     ax.set_ylabel(plane[1])
 
-
+# FIXME: also broken, is this actually needed?
 @_plot_wrapper
 def show_electric_field_time(time: jax.Array, field: jax.Array, flag: int = 0):
     """Shows the external electric field with its (x,y,z)-components as a function of time at a fixed spatial point.

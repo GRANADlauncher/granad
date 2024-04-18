@@ -33,7 +33,7 @@ my_first_orbital
 
 # +
 
-my_first_orbital.position = (1,1,1)
+#my_first_orbital.position = (1,1,1)
 
 # -
 
@@ -56,7 +56,7 @@ my_second_orbital
 # +
 from granad import Material
 
-Material.materials()
+Material.available()
 
 # -
 
@@ -95,21 +95,21 @@ triangle
 # Since they are arrays, we can scale them to any size we want!
 
 # + 
-10_angstroem_wide_triangle = 10 * triangle
+ten_angstroem_wide_triangle = 10 * triangle
 # -
 
 # Now, our shape is ready and we can start cutting. To make sure that we are satisfied with what we get, we plot the flake.
 
 # +
-my_first_flake = graphene.cut( 10_anstroem_wide_triangle, plot = True )
+my_first_flake = graphene.cut_orbitals( ten_angstroem_wide_triangle, plot = False )
 # -
 
 # Let's say that this is not what we want. For example, we might have gotten the wrong edge type. The solution to this is simple: we just have to rotate the triangle by 90 degrees to get the correct edge type. Luckily, rotated shapes are already built in.
 
 # +
 triangle_rotated = Shapes.triangle_rotated
-10_angstroem_wide_rotated_triangle = 10 * triangle_rotated
-my_second_flake = graphene.cut( 10_anstroem_wide_rotated_triangle, plot = True )
+ten_angstroem_wide_rotated_triangle = 10 * triangle_rotated
+my_second_flake = graphene.cut_orbitals( ten_angstroem_wide_rotated_triangle, plot = False )
 # -
 
 # Now we are satisified and can start simulating.
@@ -119,7 +119,7 @@ my_second_flake = graphene.cut( 10_anstroem_wide_rotated_triangle, plot = True )
 # To get a feeling of the setup, we first inspect the energies of the flake
 
 # +
-my_second_flake.show_energies()
+# my_second_flake.show_energies()
 # -
 
 # Let's say we want to compute the absorption spectrum of the flake. One way of doing this is based on integrating a modified von-Neumann equation in time-domain. You can do this in two steps: # TODO: ref
@@ -130,15 +130,19 @@ my_second_flake.show_energies()
 # We first do step 1. To make sure that we get a meaningful spectrum, we must pick an electric field with many frequencies, i.e. a narrow pulse in time-domain
 
 # +
-from granad.fields import pulse
-my_first_illumination = pulse( amplitudes = [1e-5, 1e-5, 0], peak = 1.0, fwhm = 0.1 ) # TODO: units
+from granad import Pulse
+my_first_illumination = Pulse( amplitudes = [1e-5, 1e-5, 0], frequency = 1, peak = 1.0, fwhm = 0.1 ) # TODO: units
 # -
 
 # Step 2 looks like this # TODO: explain better
 
+# import jax.numpy as jnp; (my_first_illumination(0.1) + jnp.arange(4*3).reshape(4,3)).shape, (jnp.arange(4*3).reshape(4,3) + my_first_illumination(0.1)  ).shape
+
 # +
-omegas, absorption = my_second_flake.get_absorption_time_domain( start_time = 0, end_time = 10, steps_time = 100, relaxation_time = 10 )
-plt.plot( omegas, absorption )
+import matplotlib.pyplot as plt
+omegas, polarizability = my_second_flake.get_polarizability_time_domain( end_time = 0.1, relaxation_rate = 0.1, illumination = my_first_illumination )
+plt.plot( omegas, polarizability[:,0].imag )
+plt.show()
 # -
 
 orbs.expectation_value( orbs.operator, orbs.rho )

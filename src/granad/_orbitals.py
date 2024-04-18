@@ -1,4 +1,5 @@
 from dataclasses import dataclass, fields, field
+from collections import Counter
 from pprint import pformat
 from typing import Optional, Callable, Union
 from functools import wraps
@@ -7,7 +8,7 @@ import jax.numpy as jnp
 import diffrax
 
 # TODO: hmmm
-from . import _plotting, _watchdog, _numerics, _array_with_basis
+from . import _plotting, _watchdog, _numerics
 
 # TODO: clean this up, repair doc strings, some naming conventions are weird, e.g. position_operator should be get_position_operator, make einsum magic more versatile, rethink the "use private members in recompute" idea
 # TODO: HF for parameter estimation
@@ -15,7 +16,7 @@ from . import _plotting, _watchdog, _numerics, _array_with_basis
 @dataclass(frozen=True)
 class Orbital:
     position: tuple[float, float, float]
-    additional_info: Optional[str] = None
+    tag: Optional[str] = None
     energy_level: Optional[int] = None
     angular_momentum: Optional[int] = None
     angular_momentum_z: Optional[int] = None
@@ -27,7 +28,7 @@ class Orbital:
     def __post_init__(self):
         object.__setattr__(self, 'position', tuple(map(float, self.position)))
 
-    def __repr__( self ):
+    def __str__( self ):
         return pformat( vars(self), sort_dicts = False )
 
     # TODO: bla bla bla ... this should be shorter but im too tired
@@ -54,7 +55,8 @@ class Orbital:
         return not self == other
     
 # TODO: inheritance :///, typecheck keys
-class SortedTupleDict(dict):
+class SortedTupleDict(dict):  
+  
     def __getitem__(self, key):
         sorted_key = tuple(sorted(key))
         return super().__getitem__(sorted_key)
@@ -83,7 +85,7 @@ def mutates(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         self._recompute = True
-        return func(*args, **kwargs)
+        return func(self, *args, **kwargs)
     return wrapper
 
 def recomputes(func):
@@ -92,33 +94,25 @@ def recomputes(func):
         if self._recompute:
             self._build()
             self._recompute = False
-        return func(*args, **kwargs)
+        return func(self, *args, **kwargs)
     return wrapper
 
 def plotting_methods(cls):
     for name in dir(_plotting):
-        method = getattr(_observables, name)
+        method = getattr(_plotting, name)
         if callable(method) and name.startswith('show'):
             setattr(cls, name, method)
     return cls
-
-def returns_basis(is_site_basis):
-    def decorator(func):
-        def wrapper(self, *args, **kwargs):
-            results = func(self, *args, **kwargs)
-            return _array_with_basis.ArrayWithBasis( results, is_site_basis )
-        return wrapper
-    return decorator
 
 @plotting_methods
 class OrbitalList:
     """A list of orbitals.
     """
         
-    def __init__(self, orbs ):
+    def __init__(self, orbs, _hopping_dict = None, _coulomb_dict = None ):
         # couplings are dicts mapping orbital pairs to couplings
-        self._hopping =  SortedTupleDict()
-        self._coulomb =  SortedTupleDict()
+        self._hopping_dict = _hopping_dict if _hopping_dict is not None else SortedTupleDict() 
+        self._coulomb_dict =  _coulomb_dict if _coulomb_dict is not None else SortedTupleDict() 
         self._transitions = SortedTupleDict()
         
         # contains all high-level simulation information
@@ -135,30 +129,24 @@ class OrbitalList:
         self.beta = jnp.inf        
         self.self_consistency_params = {}
         self.spin_degeneracy  = 2.0
-        self.electrons = len( self._list )
+        self.electrons = len( self._list ) 
 
     def __len__(self):
         return len(self._list)
     
     # can't mutate, because orbitals are immutable
     def __getitem__(self, position):
-        return self._list[position]    
-        
-    def __str__(self):
-        return str(self._list)
+        return self._list[position]
 
-    def __repr__(self):
-        def concatenate_couplings( cd  ):
-            res = ''
-            for key, val in cd.items():
-                res += f'{key}, {val}'
-            return res
-                
-        info = f"Orbital list with {len(self)} orbitals.\n"
-        hop = concatenate_couplings( self._hopping )
-        coul = concatenate_couplings( self._coulomb )
-        res = info + hop + coul 
-        return res 
+    def __repr__( self ):
+        return repr(self._list)
+
+    # TODO: hmmm
+    def __str__(self):
+        info = f"List with {len(self)} orbitals, {self.electrons} electrons."
+        excited = f"{self.excited_electrons} electrons excited from {self.from_state} to {self.to_state}."
+        groups = '\n'.join( [f'group id {key} : {val} orbitals' for key, val in Counter( self.get_group_ids()).items() ])
+        return '\n'.join( (info, excited, groups ) )
 
     def __iter__(self):
         return iter(self._list)
@@ -166,13 +154,16 @@ class OrbitalList:
     # TODO: uff, addition, or, in general, mutation should wipe all attributes except for coupling
     def __add__(self, other):        
         if not self._are_orbs( other ):
-            return other + self
+            raise TypeError
+
+        if any(orb in other for orb in self._list):
+            raise ValueError
 
         if isinstance( other, OrbitalList ):
-            self._hopping.update( other._hopping )
-            self._coulomb.update( other._coulomb )
+            self._hopping_dict.update( other._hopping_dict )
+            self._coulomb_dict.update( other._coulomb_dict )
             
-        return OrbitalList(self._list + list(other), self._hopping, self._coulomb)                    
+        return OrbitalList(self._list + list(other), self._hopping_dict, self._coulomb_dict)                    
     
     @mutates
     def __setitem__(self, position, value):
@@ -188,8 +179,8 @@ class OrbitalList:
     @mutates
     def __delitem__(self, position):        
         orb = self._list[position]
-        self._delete_coupling( orb, self._hopping )
-        self._delete_coupling( orb, self._coulomb )
+        self._delete_coupling( orb, self._hopping_dict )
+        self._delete_coupling( orb, self._coulomb_dict )
         del self._list[position]
             
     @staticmethod
@@ -243,8 +234,8 @@ class OrbitalList:
         distances = jnp.round( jnp.linalg.norm( positions - positions[:, None], axis = -1 ), 6 )
         group_ids = jnp.array( self.get_group_ids() )
         
-        hamiltonian = fill_matrix( jnp.zeros( (len(self), len(self)) ).astype(complex), self._hopping )
-        coulomb = fill_matrix( jnp.zeros( (len(self), len(self)) ).astype(complex), self._coulomb )
+        hamiltonian = fill_matrix( jnp.zeros( (len(self), len(self)) ).astype(complex), self._hopping_dict )
+        coulomb = fill_matrix( jnp.zeros( (len(self), len(self)) ).astype(complex), self._coulomb_dict )
 
         return hamiltonian, coulomb
 
@@ -270,12 +261,12 @@ class OrbitalList:
         return [convert(x) for x in maybe_orbs]
 
     def set_groups_hopping( self, orb_or_group_id1, orb_or_group_id2, func ):
-        group_id1, group_id2 = self._maybe_orbs_to_group_ids( (orb_or_group_id1, orb_or_group_id2) )              
-        self._set_coupling( group_id1, group_id2, self._ensure_complex(func), self._hopping )
+        group_id1, group_id2 = self._maybe_orbs_to_group_ids( (orb_or_group_id1, orb_or_group_id2) )
+        self._set_coupling( group_id1, group_id2, self._ensure_complex(func), self._hopping_dict )
 
     def set_groups_coulomb( self, orb_or_group_id1, orb_or_group_id2, func ):
         group_id1, group_id2 = self._maybe_orbs_to_group_ids( (orb_or_group_id1, orb_or_group_id2) )          
-        self._set_coupling( group_id1, group_id2, self._ensure_complex(func), self._coulomb )
+        self._set_coupling( group_id1, group_id2, self._ensure_complex(func), self._coulomb_dict )
 
     def _maybe_indices_to_orbs( self, maybe_indices ):
         def convert( maybe_index ):
@@ -288,11 +279,11 @@ class OrbitalList:
         
     def set_hamiltonian_element( self, orb_or_index1, orb_or_index2, val ):
         orb1, orb2 = self._maybe_indices_to_orbs( (orb_or_index1, orb_or_index2) )              
-        self._set_coupling( orb1, orb2, self._ensure_complex(val), self._hopping )
+        self._set_coupling( orb1, orb2, self._ensure_complex(val), self._hopping_dict )
 
     def set_coulomb_element( self, orb_or_index1, orb_or_index2, val ):
         orb1, orb2 = self._maybe_indices_to_orbs( (orb_or_index1, orb_or_index2) )
-        self._set_coupling( orb1, orb2, self._ensure_complex(val), self._coulomb )
+        self._set_coupling( orb1, orb2, self._ensure_complex(val), self._coulomb_dict )
 
     @mutates
     def append(self, other):
@@ -310,9 +301,9 @@ class OrbitalList:
         
         self._hamiltonian, self._coulomb = self._hamiltonian_coulomb()
                 
-        self._eigenvectors, self._energies = jax.lax.linalg.eigh(hamiltonian)
+        self._eigenvectors, self._energies = jax.lax.linalg.eigh(self._hamiltonian)
         
-        self._initial_density_matrix = _core._density_matrix(
+        self._initial_density_matrix = _numerics._density_matrix(
             self._energies,
             self.electrons,
             self.spin_degeneracy,
@@ -322,7 +313,7 @@ class OrbitalList:
             self.excited_electrons,
             self.beta,
         )
-        self._static_density_matrix  = _core._density_matrix(
+        self._stationary_density_matrix  = _numerics._density_matrix(
             self._energies,
             self.electrons,
             self.spin_degeneracy,
@@ -334,7 +325,7 @@ class OrbitalList:
         )
         
         # TODO: uff
-        if self.self_consistent_params:
+        if self.self_consistency_params:
             self._hamiltonian, self._initial_density_matrix, self._stationary_density_matrix, self._energies, self._eigenvectors =  _get_self_consistent(
                 self._hamiltonian, self._coulomb, self._positions, self.spin_degeneracy, self.electrons, self.eps, self._eigenvectors, self._static_density_matrix, **self.self_consistent_params )
 
@@ -362,9 +353,15 @@ class OrbitalList:
     @mutates
     def set_dipole_transition( self, orb_or_index1, orb_or_index2, arr ):        
         orb1, orb2 = self._maybe_indices_to_orbs( (orb_or_index1, orb_or_index2) )              
-        self._transitions[ (orb_or_index1, orb_or_index2) ] = arr
+        self._transitions[ (orb_or_index1, orb_or_index2) ] = jnp.array(arr).astype(complex)
         
     # TODO: bla bla bla
+    @property
+    @recomputes
+    def homo(self):
+        # TODO: hmmm
+        return jnp.diag(self._stationary_density_matrix).nonzero()[-1]
+
     @property
     @recomputes
     def positions(self):
@@ -382,66 +379,57 @@ class OrbitalList:
 
     # TODO: uff decorator inception, also should return copies to avoid weirdness
     @property
-    @returns_basis(is_site_basis = True)
     @recomputes
     def hamiltonian(self):
         return self._hamiltonian
     
     @property
-    @returns_basis(is_site_basis = True)
     @recomputes
     def coulomb(self):
         return self._coulomb
     
     @property
-    @returns_basis(is_site_basis = False)
     @recomputes
     def initial_density_matrix(self):
         return self._initial_density_matrix
     
     @property
-    @returns_basis(is_site_basis = False)
     @recomputes
     def stationary_density_matrix(self):
         return self._stationary_density_matrix
 
     @property
-    @returns_basis(is_site_basis = True)
     @recomputes
     def quadrupole_operator(self):        
-        dip = self._dipole_operator()
+        dip = self.dipole_operator
         term = jnp.einsum("ijk,jlm->ilkm", dip, dip)
         diag = jnp.einsum("ijk,jlk->il", dip, dip)
         diag = jnp.einsum("ij,kl->ijkl", diag, jnp.eye(term.shape[-1]))
         return 3 * term - diag
 
-    # TODO: port
     @property
-    @returns_basis(is_site_basis = True)
     @recomputes
     def dipole_operator(self):
-        N = pos.shape[0]
-        dip = jnp.zeros((3, N, N))
+        N = self.positions.shape[0]
+        dipole_operator = jnp.zeros((3, N, N)).astype(complex)
         for i in range(3):
-            dip = dip.at[i, :, :].set(jnp.diag(self._positions[:, i] / 2))
-        for key, value in self.transitions.items():
-            value = jnp.array(value)
-            i, j = indices(stack, key[0]), indices(stack, key[1])
+            dipole_operator = dipole_operator.at[i, :, :].set(jnp.diag(self._positions[:, i] / 2))
+        for orbital_combination, value in self._transitions.items():
+            i, j = self._list.index(orbital_combination[0]), self._list.index(orbital_combination[1])
             k = value.nonzero()[0]
-            dip = dip.at[k, i, j].set(value[k])
-        return dip + jnp.transdipe(dip, (1, 0, 2))
+            dipole_operator = dipole_operator.at[k, i, j].set(value[k])
+        return dipole_operator + jnp.transpose(dipole_operator, (0, 2, 1)).conj()
 
     @property
-    @returns_basis(is_site_basis = True)
     @recomputes
     def velocity_operator(self):
-        if orbs.transitions is None:
-            x_times_h = jnp.einsum("ij,ir->ijr", self._hamiltonian, self._positions)
-            h_times_x = jnp.einsum("ij,jr->ijr", self._hamiltonian, self._positions)
+        if self._transitions is None:
+            x_times_h = jnp.einsum("ij,iL->ijL", self._hamiltonian, self._positions)
+            h_times_x = jnp.einsum("ij,jL->ijL", self._hamiltonian, self._positions)
         else:
             positions = self.dipole_operator
-            x_times_h = jnp.einsum("kj,ikr->ijr", self._hamiltonian, positions)
-            h_times_x = jnp.einsum("ik,kjr->ijr", self._hamiltonian, positions)
+            x_times_h = jnp.einsum("kj,Lik->Lij", self._hamiltonian, positions)
+            h_times_x = jnp.einsum("ik,Lkj->Lij", self._hamiltonian, positions)
         return -1j * (x_times_h - h_times_x)
 
 
@@ -484,21 +472,25 @@ class OrbitalList:
             * factor
         )
 
-    def _transform_basis( observable, vectors, flag ):
+    @staticmethod
+    def _transform_basis( observable, vectors ):
         dims_einsum_strings = {  2 : 'ij,jk,lk->il' , 3 : 'ij,mjk,lk->mil' }
         einsum_string = dims_einsum_strings[(observable.ndim)]
-        return ArrayWithBasis( jnp.einsum(einsum_string, vectors, observable, vectors.conj()), flag )
+        return jnp.einsum(einsum_string, vectors, observable, vectors.conj())
     
     def transform_to_site_basis(self, observable):
-        if not (isinstance(observable, ArrayWithBasis) or not observable.is_in_site_basis):
-            return self._transform_basis( observable, self._eigenvectors, True)
-        return observable
+        return self._transform_basis( observable, self._eigenvectors)
         # return self._transform_basis( observable, self._eigenvectors) #self._eigenvectors @ observable @ self._eigenvectors.conj().T
 
     def transform_to_energy_basis(self, observable):
-        if not (isinstance(observable, ArrayWithBasis) or observable.is_in_site_basis):
-            return self._transform_basis( observable, self._eigenvectors.conj(), False)
-        return observable
+        return self._transform_basis( observable, self._eigenvectors.conj())
+
+    @recomputes
+    def get_charge( density_matrix : None ):
+        if density_matrix is None:
+            return jnp.diag(self.transform_to_site_basis( self.initial_density_matrix ) * self.electrons)
+        else:
+            return jnp.diag(density_matrix * self.electrons)
     
     @recomputes
     def get_dos(self, omega: float, broadening: float = 0.1) :
@@ -535,17 +527,6 @@ class OrbitalList:
 
     @recomputes
     def get_epi(self, rho: jax.Array, omega: float, epsilon: float = None) -> float:
-        r"""Calculates the EPI (Energy-based plasmonicity index) of a mode at $\hbar\omega$ in the absorption spectrum of a structure.
-
-            - `stack`: stack object
-            - `rho`: density matrix
-            - `omega`: energy at which the system has been CW-illuminated ($\hbar\omega$ in eV)
-            - `epsilon`: small broadening parameter to ensure numerical stability, if `None`, stack.eps is chosen
-
-        **Returns:**
-
-        , a number between `0` (single-particle-like) and `1` (plasmonic).
-        """
         epsilon = self.params.eps if epsilon is None else epsilon
         rho_without_diagonal = jnp.abs(rho - jnp.diag(jnp.diag(rho)))
         rho_normalized = rho_without_diagonal / jnp.linalg.norm(rho_without_diagonal)
@@ -561,12 +542,6 @@ class OrbitalList:
     def get_induced_field(
         self, positions: jax.Array, density_matrix
     ) :
-        """Classical approximation to the induced (local) field in a stack.
-
-        - `stack`: a stack object
-        - `positions`: positions to evaluate the field on, must be of shape N x 3
-        :density_matrix: if given, compute the field corresponding to this density matrix. otherwise, use `stack.rho_0`.
-        """
 
         # distance vector array from field sources to positions to evaluate field on
         vec_r = self._positions[:, None] - positions
@@ -586,89 +561,96 @@ class OrbitalList:
         e_field = 14.39 * jnp.sum(point_charge * charge[:, None, None], axis=0)
         return e_field
 
-    # TODO: uff
     @staticmethod
     def get_expectation_value( operator, density_matrix ):
         dims_einsum_strings = { (3,2): 'ijk,kj->i', (3,3): 'ijk,lkj->il', (2,3): 'ij,kji->k', (2,2): 'ij,ji->'}
-        return jnp.einsum( dims_einsum_strings[(operator.ndim, density_matrix.nimd)], operator, density_matrix )
+        return jnp.einsum( dims_einsum_strings[(operator.ndim, density_matrix.ndim)], operator, density_matrix )
         
-    # TODO: uff
-    def get_polarizability_time_domain( *args, **kwargs ):
-        kwags['operator'] = self.dipole_operator
-        dipole_moment = self.get_expectation_value_time_domain( *args, **kwargs )        
-        omegas, dipole_moment_omega = _numerics.get_fourier_transform( time_axis, dipole_moment )
-        field_omega = _numerics.get_fourier_transform(saveat, electric_field, return_omega_axis = False)
-        return dipole_moment_omega / field_omega                
-    
-    def get_expectation_value_time_domain( *args, **kwargs ):
+    # TODO: uff, all of the methods below should be rewritten
+    def get_expectation_value_time_domain( self, *args, **kwargs ):
         operator = kwargs.pop('operator', None) 
-        density_matrices = self.get_density_matrix_time_domain( *args, **kwargs )
-        return self.expectation_value( operator, density_matrices )
+        time_axis, density_matrices = self.get_density_matrix_time_domain( *args, **kwargs )
+        return time_axis, self.get_expectation_value( operator, density_matrices.ys )
+    
+    def get_polarizability_time_domain( self, *args, **kwargs ):
+        kwargs['operator'] = self.dipole_operator
+        time_axis, dipole_moment = self.get_expectation_value_time_domain( self, *args, **kwargs )        
+        omegas, dipole_moment_omega = _numerics.get_fourier_transform( time_axis, dipole_moment.T )
+        electric_field = jax.vmap(kwargs['illumination'])(time_axis)
+        field_omega = _numerics.get_fourier_transform(time_axis, electric_field, return_omega_axis = False)
+        return omegas, dipole_moment_omega / field_omega
 
-    @returns_basis(is_site_basis = True)
+    # TODO: solve the Lindblad equation analytically
+    @recomputes
+    def get_density_matrix_time_domain_analytical(
+        self,
+        end_time: float, 
+        illumination: Callable[[float], jax.Array], 
+        relaxation_rate: Union[float, jax.Array] = None, 
+        steps_time: Optional[int] = None, 
+        saturation_functional: Callable[[float], float] = lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x))),
+        use_old_method: bool = False,
+        include_induced_contribution : bool = False,
+        compute_only_at = None,
+        coulomb_strength = 1.0):
+        return NotImplemented
+
+    # TODO: das hier ist absolut überkonfigurierbar und kotzt mich richtig an
     @recomputes
     def get_density_matrix_time_domain(
         self,
-        end_time: float, 
-        steps_time: Optional[int] = None, 
-        relaxation_rate: Union[float, jnp.Array], 
-        illumination_function: Callable[[float], jnp.Array], 
+        end_time : float,
+        illumination: Callable[[float], jax.Array], 
+        start_time: Optional[float] = None,
+        steps_time : Optional[int] = None,
+        relaxation_rate: Union[float, jax.Array] = None, 
         saturation_functional: Callable[[float], float] = lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x))),
         use_old_method: bool = False,
-        add_induced : bool = False,
+        include_induced_contribution : bool = False,
+        use_rwa = False,
+        compute_only_at = None,
         coulomb_strength = 1.0,
-        solver: diffrax.ODESolver = diffrax.Dopri5(),
-        stepsize_controller: diffrax.StepSizeController = diffrax.PIDController(rtol=1e-8, atol=1e-8)
-    ) -> jnp.Array:
-        
+        solver = diffrax.Dopri5(),
+        stepsize_controller = diffrax.PIDController(rtol=1e-8, atol=1e-8)
+    ):
         # Time axis creation
-        time_axis = jnp.linspace(0, end_time, int(end_time * 1000) if steps_time is None else steps_time )
+        start_time = float(start_time) if start_time is not None else 0.0
+        steps_time = int(steps_time) if steps_time is not None else int(end_time * 1000)
+        time_axis = jnp.linspace(start_time, end_time, steps_time)
 
         # Determine relaxation function based on the input type
-        if isinstance(relaxation_rate, jnp.Array):
+        if relaxation_rate is None:
+            relaxation_function = lambda r : 0.0
+        elif isinstance(relaxation_rate, jax.Array):
             relaxation_function = _numerics.lindblad_saturation_functional(
                 self._eigenvectors, relaxation_rate, saturation_functional)
         else:
             relaxation_function = _numerics.relaxation_time_approximation(
-                relaxation_rate, self.transform_to_site_basis(self._stationary_density_matrix)
+                1 / relaxation_rate, self.transform_to_site_basis(self._stationary_density_matrix) )            
 
         # Verify that illumination is a callable
-        if not callable(illumination_function):
+        if not callable(illumination):
             raise TypeError("Provide a function for e-field")
-
+        
         # Initialize common variables
-        coulomb = self._coulomb * coulomb_strength
-        hamiltonian = self._hamiltonian
-        electrons = self.electrons
         initial_density_matrix = self.transform_to_site_basis(self._initial_density_matrix)
         stationary_density_matrix = self.transform_to_site_basis(self._stationary_density_matrix)
+        coulomb_field_to_from = _numerics.get_coulomb_field_to_from( self.positions, self.positions, compute_only_at )        
 
-        # Check illumination dimensions for different numerical treatments
-        if illumination_function(0.1).ndim > 1:
-            return _numerics.density_matrix_vector_potential(
-                hamiltonian, coulomb, electrons, initial_density_matrix,
-                stationary_density_matrix, time_axis, illumination_function, self.velocity_operator,
-                relaxation_function, coulomb_strength, solver, stepsize_controller)
-
-        induced_field_function = _numerics.get_induced_field_function( self, add_induced )
-        # Decide the method based on the old or new approach
-        if use_old_method:
-            return _numerics.density_matrix_old(
-                hamiltonian, coulomb, self.dipole_operator, electrons,
-                initial_density_matrix, stationary_density_matrix, time_axis,
-                illumination_function, relaxation_function, induced_field_function,
-                coulomb_strength)
-        else:
-            return _numerics.density_matrix_electric_field(
-                hamiltonian, coulomb, self.dipole_operator, electrons,
-                initial_density_matrix, stationary_density_matrix, time_axis,
-                illumination_function, relaxation_function, induced_field_function,
-                coulomb_strength, solver, stepsize_controller)
-
+        # TODO: not very elegant: we just dump every argument in there by default
+        return time_axis, _numerics.integrate_master_equation(
+            self._hamiltonian, coulomb_strength * self._coulomb,
+            self.dipole_operator, self.electrons, self.velocity_operator,
+            initial_density_matrix, stationary_density_matrix,
+            time_axis, illumination, relaxation_function,
+            coulomb_field_to_from, include_induced_contribution, use_rwa,
+            solver, stepsize_controller, use_old_method )
+    
     # TODO: uff, again verbose
     def get_polarizability_rpa( omegas, relaxation_time, polarization, coulomb_strength = 1.0, hungry = False, phi_ext = None ):
         alpha = _numerics.rpa_polarizability_function( self, relaxation_time, polarization, coulomb_strength, phi_ext, hungry  )
         return jax.lax.map(alpha, omegas)
+
     
     def get_susceptibility_rpa( omegas, relaxation_time, coulomb_strength = 1.0, hungry = False ):
         sus = _numerics.rpa_polarizability_function( self, relaxation_time, coulomb_strength, hungry  )

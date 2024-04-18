@@ -6,8 +6,6 @@ import jax.numpy as jnp
 def Wave(
     amplitudes: list[float],
     frequency: float,
-    positions: jax.Array,
-    k_vector: list[float] = [0.0, 0.0, 1.0],
 ):
     """Function for computing time-harmonic electric fields.
 
@@ -19,19 +17,15 @@ def Wave(
 
     -compiled closure that computes the electric field as a functon of time
     """
-    static_part = jnp.expand_dims(jnp.array(amplitudes), 1) * jnp.exp(
-        -1j * jnp.pi / 2 + 1j * positions @ jnp.array(k_vector)
-    )
-    return lambda t: (jnp.exp(1j * frequency * t) * static_part).real
+    static_part = jnp.array(amplitudes)
+    return lambda t: (jnp.exp(1j * frequency * t) * static_part)
 
 
 def Ramp(
     amplitudes: list[float],
     frequency: float,
-    positions: jax.Array,
     ramp_duration: float,
     time_ramp: float,
-    k_vector: list[float] = [0.0, 0.0, 1.0],
 ):
     """Function for computing ramping up time-harmonic electric fields.
 
@@ -45,15 +39,13 @@ def Ramp(
 
     -compiled closure that computes the electric field as a functon of time
     """
-    static_part = jnp.expand_dims(jnp.array(amplitudes), 1) * jnp.exp(
-        -1j * positions @ jnp.array(k_vector)
-    )
+    static_part = jnp.array(amplitudes)
     p = 0.99
     ramp_constant = 2 * jnp.log(p / (1 - p)) / ramp_duration
-    return (lambda t: static_part
+    return (lambda t: (static_part
         * jnp.exp(1j * frequency * t)
-        / (1 + 1.0 * jnp.exp(-ramp_constant * (t - time_ramp)))
-    ).real
+        / (1 + 1.0 * jnp.exp(-ramp_constant * (t - time_ramp))))
+    )
 
 
 def Pulse(
@@ -77,7 +69,7 @@ def Pulse(
 
     static_part = jnp.array(amplitudes)
     sigma = fwhm / (2.0 * jnp.sqrt(jnp.log(2)))    
-    return (lambda t: static_part
+    return (lambda t: (static_part
         * jnp.exp(-1j * jnp.pi / 2 + 1j * frequency * (t - peak))
-        * jnp.exp(-((t - peak) ** 2) / sigma**2)).real
+            * jnp.exp(-((t - peak) ** 2) / sigma**2) ))
 
