@@ -97,8 +97,8 @@ def show_energies(orbs):
 @_plot_wrapper
 def show_energy_occupations(
     orbs,
-    time: jax.Array,
     density_matrices_or_solution,
+    time: jax.Array = None,
     thresh: float = 1e-2,
 ):
     """Depicts energy occupations as a function of time.
@@ -110,13 +110,21 @@ def show_energy_occupations(
     """
     if not isinstance( density_matrices_or_solution, jax.Array ):
         density_matrices_or_solution = density_matrices_or_solution.ys
-    occupations = jnp.diagonal( density_matrices_or_solution, axis1 = -1, axis2 = -2).real
+    if density_matrices_or_solution.ndim == 2:
+        occupations = density_matrices_or_solution
+    else:
+        occupations = jnp.diagonal( density_matrices_or_solution, axis1 = -1, axis2 = -2).real
+        
+    time = time if time is not None else jnp.arange(occupations.shape[0])
+    
     fig, ax = plt.subplots(1, 1)
     for idx in jnp.nonzero(
         jnp.abs(jnp.amax(occupations, axis=0) - jnp.amin(occupations, axis=0)) > thresh
     )[0]:
         ax.plot(time, occupations[:, idx], label=f"{float(orbs.energies[idx]):2.2f} eV")
-    ax.set_xlabel(r"time [$\hbar$/eV]")
+        
+    time_label = "time steps" if time.dtype == int else r"time [$\hbar$/eV]"
+    ax.set_xlabel(time_label)
     ax.set_ylabel("occupation of eigenstate")
     plt.legend()
 

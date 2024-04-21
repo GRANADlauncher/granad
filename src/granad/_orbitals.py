@@ -340,11 +340,11 @@ class OrbitalList:
         def maybe_int_to_arr( maybe_int ):            
             if isinstance(maybe_int, int):
                 return jnp.array([maybe_int])
-            try:                
-                assert maybe_int.dtype == int
-                return maybe_int
-            except:
-                raise TypeError
+            if isinstance( maybe_int, list ):            
+                maybe_int = jnp.array(maybe_int)
+            if isinstance( maybe_int, jax.Array ):            
+                return jnp.array(maybe_int) if maybe_int.ndim > 1 else jnp.array([maybe_int])
+            raise TypeError
             
         self.from_state = maybe_int_to_arr(from_state)
         self.to_state = maybe_int_to_arr(to_state)
@@ -360,7 +360,7 @@ class OrbitalList:
     @recomputes
     def homo(self):
         # TODO: hmmm
-        return jnp.diag(self._stationary_density_matrix).nonzero()[-1]
+        return jnp.diag(self._stationary_density_matrix).nonzero()[0][-1]
 
     @property
     @recomputes
@@ -477,13 +477,13 @@ class OrbitalList:
         dims_einsum_strings = {  2 : 'ij,jk,lk->il' , 3 : 'ij,mjk,lk->mil' }
         einsum_string = dims_einsum_strings[(observable.ndim)]
         return jnp.einsum(einsum_string, vectors, observable, vectors.conj())
+        
     
     def transform_to_site_basis(self, observable):
         return self._transform_basis( observable, self._eigenvectors)
-        # return self._transform_basis( observable, self._eigenvectors) #self._eigenvectors @ observable @ self._eigenvectors.conj().T
 
     def transform_to_energy_basis(self, observable):
-        return self._transform_basis( observable, self._eigenvectors.conj())
+        return self._transform_basis( observable, self._eigenvectors.conj().T)
 
     @recomputes
     def get_charge( density_matrix : None ):
@@ -568,17 +568,27 @@ class OrbitalList:
         
     # TODO: uff, all of the methods below should be rewritten
     def get_expectation_value_time_domain( self, *args, **kwargs ):
-        operator = kwargs.pop('operator', None) 
+        operator = kwargs.pop('operator', None)
+        induced = kwargs.pop('induced', True)
+        correction = self.transform_to_site_basis(self.stationary_density_matrix) if induced else 0        
         time_axis, density_matrices = self.get_density_matrix_time_domain( *args, **kwargs )
-        return time_axis, self.get_expectation_value( operator, density_matrices.ys )
-    
-    def get_polarizability_time_domain( self, *args, **kwargs ):
-        kwargs['operator'] = self.dipole_operator
-        time_axis, dipole_moment = self.get_expectation_value_time_domain( self, *args, **kwargs )        
-        omegas, dipole_moment_omega = _numerics.get_fourier_transform( time_axis, dipole_moment.T )
-        electric_field = jax.vmap(kwargs['illumination'])(time_axis)
-        field_omega = _numerics.get_fourier_transform(time_axis, electric_field, return_omega_axis = False)
-        return omegas, dipole_moment_omega / field_omega
+        try:
+            return time_axis, self.electrons* self.get_expectation_value( correction - density_matrices.ys, operator )
+        except AttributeError:
+            return time_axis, self.electrons* self.get_expectation_value( correction - density_matrices, operator )
+
+    def get_expectation_value_frequency_domain(self, *args, **kwargs):
+        omega_min = kwargs.pop('omega_min', 0)
+        omega_max = kwargs.pop('omega_max', 100)
+        time_axis, exp_val_td = self.get_expectation_value_time_domain( *args, **kwargs )        
+        omega, exp_val_omega = _numerics.get_fourier_transform( time_axis, exp_val_td )        
+        mask = (omega >= omega_min) & (omega <= omega_max)
+        try:
+            electric_field = jax.vmap(kwargs['illumination'])(time_axis)
+            field_omega = _numerics.get_fourier_transform(time_axis, electric_field, return_omega_axis = False)
+            return omega[mask], exp_val_omega[mask], field_omega[mask]
+        except KeyError:            
+            return omega[mask], exp_val_omega[mask]
 
     # TODO: solve the Lindblad equation analytically
     @recomputes
@@ -603,6 +613,7 @@ class OrbitalList:
         illumination: Callable[[float], jax.Array], 
         start_time: Optional[float] = None,
         steps_time : Optional[int] = None,
+        skip : Optional[int] = None,
         relaxation_rate: Union[float, jax.Array] = None, 
         saturation_functional: Callable[[float], float] = lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x))),
         use_old_method: bool = False,
@@ -617,16 +628,17 @@ class OrbitalList:
         start_time = float(start_time) if start_time is not None else 0.0
         steps_time = int(steps_time) if steps_time is not None else int(end_time * 1000)
         time_axis = jnp.linspace(start_time, end_time, steps_time)
+        skip = skip if skip is not None else 1            
 
         # Determine relaxation function based on the input type
         if relaxation_rate is None:
             relaxation_function = lambda r : 0.0
         elif isinstance(relaxation_rate, jax.Array):
             relaxation_function = _numerics.lindblad_saturation_functional(
-                self._eigenvectors, relaxation_rate, saturation_functional)
+                self._eigenvectors, relaxation_rate, saturation_functional, self.electrons, self._stationary_density_matrix)
         else:
             relaxation_function = _numerics.relaxation_time_approximation(
-                1 / relaxation_rate, self.transform_to_site_basis(self._stationary_density_matrix) )            
+                relaxation_rate, self.transform_to_site_basis(self._stationary_density_matrix) )            
 
         # Verify that illumination is a callable
         if not callable(illumination):
@@ -638,13 +650,13 @@ class OrbitalList:
         coulomb_field_to_from = _numerics.get_coulomb_field_to_from( self.positions, self.positions, compute_only_at )        
 
         # TODO: not very elegant: we just dump every argument in there by default
-        return time_axis, _numerics.integrate_master_equation(
+        return time_axis[::skip], _numerics.integrate_master_equation(
             self._hamiltonian, coulomb_strength * self._coulomb,
             self.dipole_operator, self.electrons, self.velocity_operator,
             initial_density_matrix, stationary_density_matrix,
             time_axis, illumination, relaxation_function,
             coulomb_field_to_from, include_induced_contribution, use_rwa,
-            solver, stepsize_controller, use_old_method )
+            solver, stepsize_controller, use_old_method, skip )
     
     # TODO: uff, again verbose
     def get_polarizability_rpa( omegas, relaxation_time, polarization, coulomb_strength = 1.0, hungry = False, phi_ext = None ):
