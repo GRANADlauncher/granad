@@ -152,7 +152,7 @@ You can specify any shape you want, but this is covered in a separate tutorial.
 For now, we will use a built-in shape: an equilateral triangle with a side length of 15 Angström.</p>
 <pre class="highlight"><code class="language-python">from granad import Triangle
 import jax.numpy as jnp
-triangle = Triangle(15, armchair = True) + jnp.array([10,10])</code></pre>
+triangle = Triangle(15, armchair = True)</code></pre>
 <p>Now, our shape is ready and we can start cutting. To make sure that we are satisfied with what we get, we plot the flake. By default, GRANAD cuts any "dangling" atoms.</p>
 <pre class="highlight"><code class="language-python">my_first_flake = graphene.cut_orbitals(triangle, plot = True)
 print(my_first_flake)</code></pre>
