@@ -62,8 +62,8 @@ def test_material_coupling():
         unique = jnp.unique( jnp.array(arr) )
         return unique[unique.nonzero()]
     
-    graphene = Material.get("graphene")
-    orbs = graphene.cut_orbitals(10*Shapes.triangle, plot = False)    
+    graphene = Material2D.get("graphene")
+    orbs = graphene.cut_orbitals(Triangle(20, armchair = True), plot = True)    
     assert jnp.allclose( get_unique_nonzero( orbs.hamiltonian ), get_unique_nonzero( list(graphene.hopping.values())[0][0] ).flatten() )
     
 def test_layer_orbital_coupling():    

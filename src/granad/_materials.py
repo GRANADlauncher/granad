@@ -44,19 +44,15 @@ class Material2D:
                     "tag": "sublattice_1",
                 },
                 {
-                    "position": (-1 / 3, -2 / 3),
+                    "position": (-1 / 3, -2/3),
                     "shift": (0, 0, 0),
                     "attributes": (0, 1, 0, 0, "C"),
                     "tag": "sublattice_2",
                 },
             ],
             "lattice_basis": [
-                (1.0, 0.0, 0.0),  # First lattice vector
-                (
-                    -0.5,
-                    0.86602540378,
-                    0.0,
-                ),  # Second lattice vector (approx for sqrt(3)/2)
+                (1, 0, 0),  # First lattice vector
+                (-1/2, jnp.sqrt(3)/2, 0),  # Second lattice vector
             ],
             # couplings are defined by combinations of orbital quantum numbers
             "hopping": {
@@ -159,7 +155,7 @@ class Material2D:
 
     # TODO: simplify vector determination
     def cut_orbitals(
-            self, polygon_vertices, plot_name = None, plot=False, minimum_neighbor_number: int = 2
+            self, polygon_vertices, plot=False, minimum_neighbor_number: int = 2
     ):
 
         # shift the polygon into the positive xy plane
@@ -190,14 +186,6 @@ class Material2D:
             unit_cell_fractional_atom_positions, coefficients
         )
 
-        # for 1d systems, we need neither pruning nor polygon cutting
-        if sum(jnp.count_nonzero(self.lattice_basis, axis=1)) == 1:
-            if plot:
-                _display_lattice_cut(
-                    polygon_vertices, initial_atom_positions, initial_atom_positions
-                )
-            return self._get_orbital_list(coefficients)
-
         # get atom positions within the polygon
         polygon = Path(polygon_vertices)
         flags = polygon.contains_points(initial_atom_positions[:, :2])
@@ -207,10 +195,6 @@ class Material2D:
             initial_atom_positions[flags], minimum_neighbor_number
         )
 
-        if plot_name is not None:
-            _display_lattice_cut(
-                polygon_vertices, initial_atom_positions, final_atom_positions, name = plot_name
-            )
         if plot == True:
             _display_lattice_cut(
                 polygon_vertices, initial_atom_positions, final_atom_positions

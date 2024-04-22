@@ -104,7 +104,7 @@ For now, we will use a built-in shape: an equilateral triangle with a side lengt
 ```python
 from granad import Triangle
 import jax.numpy as jnp
-triangle = Triangle(15, armchair = True) + jnp.array([10,10])
+triangle = Triangle(15, armchair = True)
 ```
 
 Now, our shape is ready and we can start cutting. To make sure that we are satisfied with what we get, we plot the flake. By default, GRANAD cuts any "dangling" atoms.

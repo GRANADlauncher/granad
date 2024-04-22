@@ -14,11 +14,6 @@ from . import _numerics, _plotting, _watchdog
 # TODO: clean this up, repair doc strings, some naming conventions are weird, e.g. position_operator should be get_position_operator, make einsum magic more versatile, rethink the "use private members in recompute" idea
 # TODO: HF for parameter estimation
 
-
-def pos_zero():
-    return jnp.array([0, 0, 0])
-
-
 @dataclass
 class Orbital:
     """
@@ -43,7 +38,7 @@ class Orbital:
         group_id (int): A group identifier for the orbital, automatically assigned by a Watchdog class
                         default factory method.
     """
-    position: jax.Array = field(default_factory=pos_zero, hash=False, compare=False)
+    position: jax.Array = field(default_factory=lambda : jnp.array([0, 0, 0]), hash=False, compare=False)
     layer_index: Optional[int] = None
     tag: Optional[str] = None
     energy_level: Optional[int] = None

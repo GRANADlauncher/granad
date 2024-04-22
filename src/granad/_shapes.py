@@ -22,8 +22,8 @@ def _edge_type(vertex_func):
             *args, **{key: val for key, val in kwargs.items() if key != "armchair"}
         )
         if "armchair" in kwargs and kwargs["armchair"] == True:
-            vertices = _rotate_vertices(vertices, 90)
-        return vertices
+            vertices = _rotate_vertices(vertices, 90) + jnp.array([10,10])
+        return vertices 
 
     return wrapper
 
