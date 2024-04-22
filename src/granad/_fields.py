@@ -3,6 +3,7 @@ import jax.numpy as jnp
 
 # TODO: not really pythonic naming style ...
 
+
 def Wave(
     amplitudes: list[float],
     frequency: float,
@@ -42,9 +43,10 @@ def Ramp(
     static_part = jnp.array(amplitudes)
     p = 0.99
     ramp_constant = 2 * jnp.log(p / (1 - p)) / ramp_duration
-    return (lambda t: (static_part
+    return lambda t: (
+        static_part
         * jnp.exp(1j * frequency * t)
-        / (1 + 1.0 * jnp.exp(-ramp_constant * (t - time_ramp))))
+        / (1 + 1.0 * jnp.exp(-ramp_constant * (t - time_ramp)))
     )
 
 
@@ -64,12 +66,13 @@ def Pulse(
 
     **Returns:**
 
-    Function that computes the electric field 
+    Function that computes the electric field
     """
 
     static_part = jnp.array(amplitudes)
-    sigma = fwhm / (2.0 * jnp.sqrt(jnp.log(2)))    
-    return (lambda t: (static_part
+    sigma = fwhm / (2.0 * jnp.sqrt(jnp.log(2)))
+    return lambda t: (
+        static_part
         * jnp.exp(-1j * jnp.pi / 2 + 1j * frequency * (t - peak))
-            * jnp.exp(-((t - peak) ** 2) / sigma**2) ))
-
+        * jnp.exp(-((t - peak) ** 2) / sigma**2)
+    )

@@ -12,9 +12,9 @@
 #     name: base
 # ---
 
-# ## Rabi Oscillations
+# ## What might change
 #
-# We study Rabi oscillations and get more familiar with orbital lists.
+# I dislike the fact that the orbital addition operator does not commute. I dislike the hidden state.
 
 ### Building the adatom
 #
@@ -83,11 +83,9 @@ flake_with_adatom = flake + adatom
 print(flake_with_adatom)
 # -
 
-# This looks okay, but why are we suddenly back to 15 electrons? As a rule of thumb: *combining two orbital lists resets all of their attributes except for couplings* # TODO: explain why
+# This looks okay, but why are we suddenly back to 15 electrons? As a rule of thumb, combining two orbital lists resets all of their attributes except for couplings. To see why this is consider the scenario where you 
 
 # +
 flake_with_adatom.show_2d( show_hilbert_space_index = True )
-# -
-
 
 

@@ -1,8 +1,10 @@
+from collections import defaultdict
+from functools import wraps
+
 import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
-from collections import defaultdict
-from functools import wraps
+
 
 def _plot_wrapper(plot_func):
     @wraps(plot_func)
@@ -16,50 +18,58 @@ def _plot_wrapper(plot_func):
 
     return wrapper
 
+
 @_plot_wrapper
-def show_2d(
-        orbs,
-        show_selected_tags = None,
-        show_hilbert_space_index = False
-):
-    """Shows a 2D scatter plot in the xy-plane of selected orbitals. Selections are made by a list 
+def show_2d(orbs, show_selected_tags=None, show_index=False):
+    """Shows a 2D scatter plot in the xy-plane of selected orbitals. Selections are made by a list
     of tags.
 
-    - `show_selected_tags` : a list of strings 
+    - `show_selected_tags` : a list of strings
     """
-    show_selected_tags = set((x.tag for x in orbs)) if show_selected_tags is None else set(show_selected_tags)
+    show_selected_tags = (
+        set((x.tag for x in orbs))
+        if show_selected_tags is None
+        else set(show_selected_tags)
+    )
     tags_to_pos, tags_to_idxs = defaultdict(list), defaultdict(list)
-    for i, orb in enumerate(orbs):
+    for orb in orbs:
         if orb.tag in show_selected_tags:
-            tags_to_pos[ orb.tag ].append( orb.position )
-            tags_to_idxs[ orb.tag ].append( i )
-        
+            tags_to_pos[orb.tag].append(orb.position)
+            tags_to_idxs[orb.tag].append(orbs._list.index(orb))
+
     fig, ax = plt.subplots(1, 1)
     for tag, positions in tags_to_pos.items():
         positions = jnp.array(positions)
-        plt.scatter( x = positions[:,0], y = positions[:,1], label = tag )
-        if not show_hilbert_space_index:
+        plt.scatter(x=positions[:, 0], y=positions[:, 1], label=tag)
+        if not show_index:
             continue
         for i, idx in enumerate(tags_to_idxs[tag]):
-            ax.annotate( str(idx), ( positions[i, 0], positions[i, 1], ),)            
+            ax.annotate(
+                str(idx),
+                (
+                    positions[i, 0],
+                    positions[i, 1],
+                ),
+            )
     plt.legend()
     ax.axis("equal")
-    
+
+
 @_plot_wrapper
-def show_charge_distribution_3d(orbs, density_matrix = None):
+def show_charge_distribution_3d(orbs, density_matrix=None):
     """Displays the ground state charge distribution of the stack in 3D
 
     - `stack`: stack object
     """
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
-    charge = orbs.get_charge( density_matrix )
+    charge = orbs.get_charge(density_matrix)
     sp = ax.scatter(*zip(*orbs.positions[:, :2]), zs=orbs.positions[:, 2], c=charge)
     plt.colorbar(sp)
 
 
 @_plot_wrapper
-def show_charge_distribution_2d(orbs, density_matrix = None, plane: str = "xy"):
+def show_charge_distribution_2d(orbs, density_matrix=None, plane: str = "xy"):
     """Displays the ground state charge distribution of the stack in 2D
 
     - `stack`: object representing system state
@@ -67,7 +77,7 @@ def show_charge_distribution_2d(orbs, density_matrix = None, plane: str = "xy"):
     """
     indices = {"xy": [0, 1], "xz": [0, 2], "yz": [1, 2]}
     fig, ax = plt.subplots(1, 1)
-    charge = orbs.get_charge( density_matrix )
+    charge = orbs.get_charge(density_matrix)
     sp = ax.scatter(*zip(*orbs.positions[:, indices[plane]]), c=charge)
     ax.axis("equal")
     ax.set_xlabel(plane[0])
@@ -108,26 +118,26 @@ def show_energy_occupations(
     - `time`: time axis
     - `thresh`: plotting threshold. an occupation time series o_t is selected for plotting if it outgrows/outshrinks this bound. More exactly: o_t is plotted if max(o_t) - min(o_t) > thresh
     """
-    if not isinstance( density_matrices_or_solution, jax.Array ):
+    if not isinstance(density_matrices_or_solution, jax.Array):
         density_matrices_or_solution = density_matrices_or_solution.ys
     if density_matrices_or_solution.ndim == 2:
         occupations = density_matrices_or_solution
     else:
-        occupations = jnp.diagonal( density_matrices_or_solution, axis1 = -1, axis2 = -2).real
-        
+        occupations = jnp.diagonal(
+            density_matrices_or_solution, axis1=-1, axis2=-2
+        ).real
+    occupations *= orbs.electrons
     time = time if time is not None else jnp.arange(occupations.shape[0])
-    
     fig, ax = plt.subplots(1, 1)
     for idx in jnp.nonzero(
         jnp.abs(jnp.amax(occupations, axis=0) - jnp.amin(occupations, axis=0)) > thresh
     )[0]:
         ax.plot(time, occupations[:, idx], label=f"{float(orbs.energies[idx]):2.2f} eV")
-        
+
     time_label = "time steps" if time.dtype == int else r"time [$\hbar$/eV]"
     ax.set_xlabel(time_label)
     ax.set_ylabel("occupation of eigenstate")
     plt.legend()
-
 
 
 # FIXME: also broken, is this actually needed?
@@ -188,6 +198,7 @@ def show_electric_field_space(
     ax.set_xlabel(plane[0])
     ax.set_ylabel(plane[1])
 
+
 # FIXME: also broken, is this actually needed?
 @_plot_wrapper
 def show_electric_field_time(time: jax.Array, field: jax.Array, flag: int = 0):
@@ -208,15 +219,9 @@ def show_electric_field_time(time: jax.Array, field: jax.Array, flag: int = 0):
     ax.set_xlabel(r"time [$\hbar$/eV]")
     ax.set_ylabel(labels[flag])
 
+
 @_plot_wrapper
-def show_induced_field_at(
-        orbs,
-        positions,
-        x = None,
-        y = None,
-        z = None,
-        density_matrix = None
-):
+def show_induced_field_at(orbs, positions, x=None, y=None, z=None, density_matrix=None):
     """Displays the normalized logarithm of the absolute value of the induced field in 2D
 
     - `rho`: density matrix
@@ -230,8 +235,10 @@ def show_induced_field_at(
     - `norm` : constant to normalize the field
     - `plot_stack`: if True, add a scatter plot indicating the positions of the orbitals in the stack
     """
-    
-    density_matrix = density_matrix if density_matrix is not None else orbs.density_matrix
+
+    density_matrix = (
+        density_matrix if density_matrix is not None else orbs.density_matrix
+    )
     charge = density_matrix.diag().real
 
     x = jnp.linspace(-5, 5, 100)
@@ -240,30 +247,36 @@ def show_induced_field_at(
     X, Y, Z = jnp.meshgrid(x, y, z)
     positions = jnp.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
 
-    
-    induced_field = get_induced_electric_field( get_coulomb_field_to_from(orbs.positions, positions), charge)    
-    E_induced_abs_rescaled = jnp.log( jnp.abs(14.39 * induced_field) )
-    
+    induced_field = get_induced_electric_field(
+        get_coulomb_field_to_from(orbs.positions, positions), charge
+    )
+    E_induced_abs_rescaled = jnp.log(jnp.abs(14.39 * induced_field))
+
     fig, ax = plt.subplots(1, 1)
     fig.colorbar(
-        ax.contourf(first, second, E_induced_abs_rescaled[:, component].reshape(first.shape)),
+        ax.contourf(
+            first, second, E_induced_abs_rescaled[:, component].reshape(first.shape)
+        ),
         label=r"$\log(|E|/|E_0|)$",
     )
-    
+
     ax.scatter(*zip(*orbs.positions[:, plane_indices[plane][:2]]), s=16)
     ax.set_xlabel(plane[0])
     ax.set_ylabel(plane[1])
 
+
 # TODO: this is also not nice
-def _display_lattice_cut( polygon_vertices, positions, selected_positions ):
-    fig, ax = plt.subplots()
-    patch = plt.Polygon(polygon_vertices[:-1], edgecolor='orange', facecolor='none', linewidth=2)    
+@_plot_wrapper
+def _display_lattice_cut(polygon_vertices, positions, selected_positions):
+    fig, ax = plt.subplots(1, 1)
+    patch = plt.Polygon(
+        polygon_vertices[:-1], edgecolor="orange", facecolor="none", linewidth=2
+    )
     ax.add_patch(patch)
     ax.set_xlim(-1, 1)
     ax.set_ylim(-1, 1)
-    ax.set_aspect('equal', adjustable='datalim')
+    ax.set_aspect("equal", adjustable="datalim")
     plt.grid(True)
-    plt.scatter( x = positions[:,0], y = positions[:,1] )
-    plt.scatter( x = selected_positions[:,0], y = selected_positions[:,1])    
-    plt.axis('equal')
-    plt.show()
+    plt.scatter(x=positions[:, 0], y=positions[:, 1])
+    plt.scatter(x=selected_positions[:, 0], y=selected_positions[:, 1])
+    plt.axis("equal")

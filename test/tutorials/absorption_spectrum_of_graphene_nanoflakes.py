@@ -13,7 +13,7 @@
 # ---
 
 # ## Absorption spectrum of graphene nanoflakes
-2#
+#
 # This example demonstrates an advanced simulation. We will initialize a triangular graphene nanoflake, specify the couplings, simulate it under pulsed illumination and compute the absorption spectrum.
 #
 # ### Set up the Stack
@@ -35,7 +35,7 @@ triangle = granad.Triangle(7.4)
 graphene = granad.Lattice(
     shape=triangle,
     lattice_type=granad.LatticeType.HONEYCOMB,
-    lattice_edge=granad.LatticeEdge.ARMCHAIR,
+    lattice_edge=granad.LatticeEdge.ZIGZAG,
     lattice_constant=2.46,
 )
 sb.add("pz", graphene)
@@ -58,6 +58,7 @@ coulomb_graphene = granad.LatticeCoupling(
 sb.set_coulomb(coulomb_graphene)
 
 stack = sb.get_stack()
+print(stack.electrons)
 # -
 
 # We now define the electric field as an x-polarized pulse of frequency peaking at 2, with fwhm of 0.5.
@@ -122,6 +123,8 @@ dipole_moment_new = granad.induced_dipole_moment(stack, occupations_new)
 omega_axis_new, dipole_omega_new = get_fourier_transform(
     saveat, dipole_moment_new[:, 0]
 )
+plt.plot( saveat, dipole_moment_new )
+plt.savefig('dip_ref.pdf')
 dipole_moment_old = granad.induced_dipole_moment(stack, occupations_old)
 omega_axis_old, dipole_omega_old = get_fourier_transform(
     time_axis, dipole_moment_old[:, 0]
