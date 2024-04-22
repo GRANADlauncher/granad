@@ -18,6 +18,7 @@ classifiers = [
 ]
 dependencies = [
   'jax',
+  'jaxlib',
   'diffrax',
   'matplotlib'
 ]
