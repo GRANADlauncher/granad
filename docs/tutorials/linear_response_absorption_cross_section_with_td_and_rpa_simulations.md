@@ -62,10 +62,6 @@ omegas, dipole_omega, pulse_omega =  flake.get_expectation_value_frequency_domai
 )
 ```
 
-    /home/david/miniconda3/lib/python3.9/site-packages/equinox/_jit.py:49: UserWarning: Complex dtype support is work in progress, please read https://github.com/patrick-kidger/diffrax/pull/197 and proceed carefully.
-      out = fun(*args, **kwargs)
-
-
 The polarizability is given by $p / E$ (we only take the $x$ - component).
 
 

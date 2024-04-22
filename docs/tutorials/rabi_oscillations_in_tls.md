@@ -112,12 +112,8 @@ time, density_matrices = atom.get_density_matrix_time_domain(
 atom.show_energy_occupations(density_matrices, time=time)
 ```
 
-    /home/david/miniconda3/lib/python3.9/site-packages/equinox/_jit.py:49: UserWarning: Complex dtype support is work in progress, please read https://github.com/patrick-kidger/diffrax/pull/197 and proceed carefully.
-      out = fun(*args, **kwargs)
-
-
 
     
-![png](rabi_oscillations_in_tls_files/rabi_oscillations_in_tls_16_1.png)
+![png](rabi_oscillations_in_tls_files/rabi_oscillations_in_tls_16_0.png)
     
 

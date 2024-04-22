@@ -184,10 +184,6 @@ omegas, dipole_omega, pulse_omega = (
 )
 ```
 
-    /home/david/miniconda3/lib/python3.9/site-packages/equinox/_jit.py:49: UserWarning: Complex dtype support is work in progress, please read https://github.com/patrick-kidger/diffrax/pull/197 and proceed carefully.
-      out = fun(*args, **kwargs)
-
-
 We see that three variables are returned: the omega axis we have specified, the dipole moment and the pulse in freqeuency domain. There is no way to control the number of points in the omega axis, because
 it is the result of a Fourier transform.
 
@@ -201,23 +197,17 @@ plt.plot(omegas, dipole_omega)
 plt.plot(omegas, pulse_omega, "--")
 ```
 
-    /home/david/.local/lib/python3.9/site-packages/matplotlib/cbook/__init__.py:1289: ComplexWarning: Casting complex values to real discards the imaginary part
-      return np.asarray(x, float)
-    /home/david/.local/lib/python3.9/site-packages/matplotlib/cbook/__init__.py:1289: ComplexWarning: Casting complex values to real discards the imaginary part
-      return np.asarray(x, float)
 
 
 
-
-
-    [<matplotlib.lines.Line2D at 0x68ff4f943100>,
-     <matplotlib.lines.Line2D at 0x68ff4f943220>,
-     <matplotlib.lines.Line2D at 0x68ff4f943280>]
+    [<matplotlib.lines.Line2D at 0x6d4594d589d0>,
+     <matplotlib.lines.Line2D at 0x6d4594d58af0>,
+     <matplotlib.lines.Line2D at 0x6d4594d58b50>]
 
 
 
 
     
-![png](getting_started_files/getting_started_28_2.png)
+![png](getting_started_files/getting_started_28_1.png)
     
 
