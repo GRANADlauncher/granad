@@ -64,8 +64,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../linear_response_absorption_cross_section_with_td_and_rpa_simulations/">Linear response absorption cross section with td and rpa simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../rabi_oscillations_in_isolated_and_hybrid_systems/">Rabi oscillations in isolated and hybrid systems</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../rabi_oscillations_in_tls/">Rabi oscillations in tls</a>
                   </li>
               </ul>
@@ -198,8 +196,6 @@ my_first_illumination = Pulse(
         skip=100,
     )
 )</code></pre>
-<pre class="highlight"><code>/home/david/miniconda3/lib/python3.9/site-packages/equinox/_jit.py:49: UserWarning: Complex dtype support is work in progress, please read https://github.com/patrick-kidger/diffrax/pull/197 and proceed carefully.
-  out = fun(*args, **kwargs)</code></pre>
 <p>We see that three variables are returned: the omega axis we have specified, the dipole moment and the pulse in freqeuency domain. There is no way to control the number of points in the omega axis, because
 it is the result of a Fourier transform.</p>
 <p>We now plot the dipole moment and the pulse in frequency domain.</p>
@@ -207,19 +203,10 @@ it is the result of a Fourier transform.</p>
 
 plt.plot(omegas, dipole_omega)
 plt.plot(omegas, pulse_omega, "--")</code></pre>
-<pre class="highlight"><code>/home/david/.local/lib/python3.9/site-packages/matplotlib/cbook/__init__.py:1289: ComplexWarning: Casting complex values to real discards the imaginary part
-  return np.asarray(x, float)
-/home/david/.local/lib/python3.9/site-packages/matplotlib/cbook/__init__.py:1289: ComplexWarning: Casting complex values to real discards the imaginary part
-  return np.asarray(x, float)
-
-
-
-
-
-[&lt;matplotlib.lines.Line2D at 0x68ff4f943100&gt;,
- &lt;matplotlib.lines.Line2D at 0x68ff4f943220&gt;,
- &lt;matplotlib.lines.Line2D at 0x68ff4f943280&gt;]</code></pre>
-<p><img alt="png" src="../getting_started_files/getting_started_28_2.png" /></p>
+<pre class="highlight"><code>[&lt;matplotlib.lines.Line2D at 0x6d4594d589d0&gt;,
+ &lt;matplotlib.lines.Line2D at 0x6d4594d58af0&gt;,
+ &lt;matplotlib.lines.Line2D at 0x6d4594d58b50&gt;]</code></pre>
+<p><img alt="png" src="getting_started_files/getting_started_28_1.png" /></p>
               
             </div>
           </div><footer>
