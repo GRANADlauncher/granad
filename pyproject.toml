@@ -20,8 +20,6 @@ dependencies = [
   'jax',
   'numpy',
   'flax',
-  'pyfftw',
-  'numba==0.55.1',
-  'sphinx',
+  'diffrax',
   'matplotlib'
 ]
