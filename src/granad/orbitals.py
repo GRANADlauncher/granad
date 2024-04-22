@@ -1027,7 +1027,7 @@ class OrbitalList:
         Calculates the random phase approximation (RPA) polarizability of the system at given frequencies under specified conditions.
 
         Parameters:
-           omegas (jax.Array): Frequencies at which to calculate polarizability.
+           omegas (jax.Array): Frequencies at which to calculate polarizability. If given as an nxm array, this function will be applied vectorized to the batches given by omegas[i,:]
            relaxation_rate (float): The relaxation time parameter.
            polarization (jax.Array): Polarization directions or modes.
            coulomb_strength (float): The strength of Coulomb interaction in the calculations.
@@ -1041,7 +1041,10 @@ class OrbitalList:
         alpha = _numerics.rpa_polarizability_function(
             self, relaxation_rate, polarization, coulomb_strength, phi_ext, hungry
         )
-        return jax.lax.map(alpha, omegas)
+        if omegas.ndim == 1:        
+            return jax.lax.map(alpha, omegas)
+        else:
+            return jnp.concatenate( [ jax.vmap(alpha)(omega) for omega in omegas ] )
 
     def get_susceptibility_rpa(
             self, omegas, relaxation_rate, coulomb_strength=1.0, hungry=False
