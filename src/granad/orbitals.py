@@ -512,7 +512,7 @@ class OrbitalList:
         Parameters:
             sc_params (dict): Parameters for self-consistency.
         """
-        self.params.self_consistent_params = sc_params
+        self.self_consistency_params = sc_params
 
     # TODO: uff
     @mutates
