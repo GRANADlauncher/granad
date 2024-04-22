@@ -1,6 +1,6 @@
 ## Rabi Oscillations in TLS
 
-We study Rabi oscillations. First, in a single TLS. Then, we add this TLS to a graphene flake.
+We study Rabi oscillations in isolated two-level system.
 
 NOTE: this tutorial makes heavy use of the liberal way GRANAD lets you group orbitals. You might want to consult the tutorial on orbital lists first.
 

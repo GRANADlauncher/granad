@@ -100,34 +100,34 @@ print(my_first_flake)
 my_first_flake.show_energies()
 # -
 
-# Let's say we want to compute the absorption spectrum of the flake. One way of doing this is based on integrating a modified von-Neumann equation in time-domain. You can do this in two steps: 
+# Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix $\rho(t)$ of a system by integrating a nonlinear master equation. As a result, it is possible to track the evolution of the physical observable associated with a Hermitian operator $A$ by computing $a(t) = Tr[\rho(t) A]$. Optical properties in particular are largely determined by the polarization or dipole operator $\hat{P}$ and they are usually expressed in frequency domain. To this end, GRANAD offers a way to compute the Fourier transform $a(\omega)$ directly after time propagation. We will look at an example tracking the time evolution of the dipole operator below, where the computation proceeds in two steps:
+
 #
 # 1. Excite the flake with an electric field.
-# 2. Compute its dipole moment $p(\omega)$ from the expectation value of its dipole operator to obtain the absorption spectrum from $Im[p(\omega)]$.
+# 2. Compute its dipole moment $p(\omega)$ from the expectation value of its dipole operator.
 
-# We first do step 1. To make sure that we get a meaningful spectrum, we must pick an electric field with many frequencies, i.e. a narrow pulse in time-domain
+# We first do step 1. To obtain a broad frequency spectrum, we must pick a narrow pulse in time-domain
 
 # +
 from granad import Pulse
 
 my_first_illumination = Pulse(
     amplitudes=[1e-5, 0, 0], frequency=2.3, peak=5, fwhm=2
-)  # TODO: units
+) 
 # -
 
-# For step 2, we have to think of a few parameters:
+# For step 2, a few parameters have to be chosen
 #
-# 1. TD simulation duration: we go from 0 to 40 in 1e5 steps.
-# 2. Relaxation rate: this is $r$ in the dissipation term $D[\rho] = r \cdot(\rho - \rho_0)$.
+# 1. Simulation duration: we go from 0 to 40 in 1e5 steps.
+# 2. Relaxation rate: this is $r$ in the dissipation term $D[\rho] = r \cdot(\rho - \rho_0)$ in the master equation.
 # 3. Frequency domain limits: we choose the interval [0, 16].
-# 4. Density matrix sampling rate: producing 1e5 density matrices can quickly tire our RAM. so we only save every 100th density matrix, such that we get 1000 density matrices.
+# 4. Density matrix sampling rate: producing 1e5 density matrices can quickly exhaust RAM ressources. So we only save every 100th density matrix, such that we get 1000 density matrices.
 
 # A simulation is just passing all of these parameters to the corresponding method of our flake.
 
 # +
-omegas, dipole_omega, pulse_omega = (
-    my_first_flake.get_expectation_value_frequency_domain(
-        operator=my_first_flake.dipole_operator,  # the dipole moment is the expectation value of the dipole operator
+omegas, dipole_omega, pulse_omega =  my_first_flake.get_expectation_value_frequency_domain(
+        operator=my_first_flake.dipole_operator, 
         end_time=40,
         steps_time=1e5,
         relaxation_rate=1 / 10,
@@ -136,11 +136,9 @@ omegas, dipole_omega, pulse_omega = (
         omega_max=10,
         skip=100,
     )
-)
 # -
 
-# We see that three variables are returned: the omega axis we have specified, the dipole moment and the pulse in freqeuency domain. There is no way to control the number of points in the omega axis, because
-# it is the result of a Fourier transform.
+# We see that three variables are returned: the omega axis we have specified, the dipole moment and the pulse in freqeuency domain. There is no way to control the number of points in the omega axis, because it is the result of a Fourier transform.
 
 # We now plot the dipole moment and the pulse in frequency domain.
 
@@ -149,4 +147,5 @@ import matplotlib.pyplot as plt
 
 plt.plot(omegas, dipole_omega)
 plt.plot(omegas, pulse_omega, "--")
+plt.show()
 # -
