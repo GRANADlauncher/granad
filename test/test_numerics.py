@@ -27,6 +27,12 @@ def test_rabi():
     # diffrax
     time_axis, density_matrices = adatom.get_density_matrix_time_domain( start_time = 0, end_time = 10, steps_time = 1e4, illumination = wave, use_rwa = True, use_old_method = False )
     occupations = jnp.diagonal( adatom.transform_to_energy_basis(density_matrices.ys), axis1=-1, axis2=-2)
+
+    plt.plot(time_axis[::100], occupations_old)
+    plt.plot(time_axis[::100], occupations[::100], '--')
+    plt.show()    
+
+    
     np.testing.assert_allclose( occupations[::100], occupations_old, atol = 1e-1 )
 
     # hand made RK
@@ -47,6 +53,7 @@ def test_rabi():
     plt.show()    
     np.testing.assert_allclose( occupations, occupations_rk[::100], atol = 1e-2 )
 
+# TODO: doesnt work
 def test_vector_potential():
     lower_level = Orbital( (0,0,0) )
     upper_level = Orbital( (0,0,0) )
@@ -79,6 +86,7 @@ def test_vector_potential():
     plt.plot( time_axis, occupations_vp, '--' )
     plt.show()
 
+# TODO: test with all possible arguments
 def test_rhs():
     lower_level = Orbital( (0,0,0) )
     upper_level = Orbital( (0,0,0) )
@@ -112,11 +120,114 @@ def test_rhs():
 
     rhs(0, initial_density_matrix, 0) 
 
-def test_dissipation():
+def test_dissipation():    
     return
 
 def test_dissipation_saturated():
     return
+
+graphene = Material2D.get("graphene" )
+flake = graphene.cut_orbitals( Triangle(15, armchair = True) + jnp.array([10, 10]), plot = False )
+# flake.show_2d()
+pulse = Pulse( amplitudes = [1e-5j, 0, 0], frequency = 2.3, peak = 5, fwhm = 2 )
+
+time, dipole_moments = flake.get_expectation_value_time_domain(
+    operator = flake.dipole_operator,
+    relaxation_rate = 1/10,
+    end_time = 40,
+    steps_time = 1e5,
+    illumination = pulse,
+    skip = 100,
+    use_old_method = False,
+    stepsize_controller=diffrax.PIDController(rtol=1e-10, atol=1e-10)
+)
+plt.plot(time, dipole_moments)
+plt.savefig('res.pdf')
+plt.close()
+
+omegas, pol_omega, pulse_omega = flake.get_expectation_value_frequency_domain(
+    operator = flake.dipole_operator,
+    end_time = 40,
+    steps_time = 1e5,
+    illumination = pulse,
+    skip = 100,
+    relaxation_rate = 1/10,
+    omega_min = 0,
+    omega_max = 16,
+    stepsize_controller=diffrax.PIDController(rtol=1e-10, atol=1e-10),
+)
+# def get_fourier_transform(t_linspace, function_of_time):
+#     function_of_omega = np.fft.fft(function_of_time) / len(t_linspace)
+#     omega_axis = (
+#         2
+#         * np.pi
+#         * len(t_linspace)
+#         / np.max(t_linspace)
+#         * np.fft.fftfreq(function_of_omega.shape[-1])
+#     )
+#     return omega_axis, function_of_omega
+# omega_axis_new, dipole_omega_new = get_fourier_transform(
+#     time, dipole_moments[:, 0] )
+# electric_field = jax.vmap(pulse)(time)
+# _, field_omega_new = get_fourier_transform(time, electric_field[:,0])
+# omega_max = 100
+# component = 0
+# # alpha = p / E
+# polarizability = dipole_omega_new / field_omega_new
+# spectrum = -omega_axis_new[:omega_max] * np.imag(polarizability[:omega_max])
+# plt.plot(omega_axis_new[:omega_max], np.abs(spectrum) ** (1 / 2), "--", label="new")
+# plt.legend()
+# plt.xlabel(r"$\hbar\omega$", fontsize=20)
+# plt.ylabel(r"$\sigma(\omega)$", fontsize=25)
+# plt.savefig('abs_new.pdf')
+
+
+
+
+spectrum = jnp.abs(electric_field); plt.plot(time_axis, jnp.abs(spectrum).T ); plt.savefig('pulse.pdf')
+
+# _, field_omega_old = get_fourier_transform(time_axis, electric_field[0])
+spectrum = jnp.abs(jax.vmap(pulse)(time))
+plt.plot(time, jnp.abs(spectrum) )
+plt.savefig('pulse.pdf')
+plt.close()
+
+
+spectrum = -(pol_omega / pulse_omega).imag * omegas[:,None]
+plt.plot(omegas, jnp.abs(spectrum)**0.5 )
+plt.savefig('abs.pdf')
+plt.close()
+
+spectrum = jnp.abs(pol_omega)
+plt.plot(omegas, jnp.abs(spectrum) )
+plt.savefig('dip.pdf')
+plt.close()
+
+spectrum = jnp.abs(pulse_omega)
+plt.plot(omegas, jnp.abs(spectrum) )
+plt.savefig('pulse.pdf')
+# omegas, pol = flake.get_polarizability_time_domain( end_time = 10, steps_time = 1e5, relaxation_rate = 1/10, illumination = pulse )
+
+# propagate in time
+# gamma = 1
+# time_axis = jnp.linspace(0, 1 / gamma, int(1e5))
+
+# allow transfer from higher energies to lower energies only if the
+# two energy levels are not degenerate
+# diff = orbs.energies[:, None] - orbs.energies
+# gamma_matrix = gamma * jnp.logical_and(
+#     diff < 0,
+#     jnp.abs(diff) > orbs.eps,
+# )
+
+# wave = Wave(amplitudes = [0, 0, 0], frequency = 2  )
+# time_axis, density_matrices = orbs.get_density_matrix_time_domain( start_time = 0, end_time = 1/gamma, steps_time = 1e5, illumination = wave, use_old_method = True )
+# occ = jnp.diagonal( orbs.transform_to_energy_basis( density_matrices ), axis1 = -1, axis2=-2)
+# # jnp.diagonal( adatom.transform_to_energy_basis(density_matrices.ys), axis1=-1, axis2=-2)
+
+# plt.plot( time_axis, occ*orbs.electrons )
+# plt.show()
+    
 
 def test_rpa():
     return
