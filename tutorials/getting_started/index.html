@@ -165,28 +165,27 @@ group id 3 : 36 orbitals</code></pre>
 <p>To get a feeling of the setup, we first inspect the energies of the flake</p>
 <pre class="highlight"><code class="language-python">my_first_flake.show_energies()</code></pre>
 <p><img alt="png" src="../getting_started_files/getting_started_19_0.png" /></p>
-<p>Let's say we want to compute the absorption spectrum of the flake. One way of doing this is based on integrating a modified von-Neumann equation in time-domain. You can do this in two steps: </p>
+<p>Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix <span class="arithmatex">\(\rho(t)\)</span> of a system by integrating a nonlinear master equation. As a result, it is possible to track the evolution of the physical observable associated with a Hermitian operator <span class="arithmatex">\(A\)</span> by computing <span class="arithmatex">\(a(t) = Tr[\rho(t) A]\)</span>. Optical properties in particular are largely determined by the polarization or dipole operator <span class="arithmatex">\(\hat{P}\)</span> and they are usually expressed in frequency domain. To this end, GRANAD offers a way to compute the Fourier transform <span class="arithmatex">\(a(\omega)\)</span> directly after time propagation. We will look at an example tracking the time evolution of the dipole operator below, where the computation proceeds in two steps:</p>
 <ol>
 <li>Excite the flake with an electric field.</li>
-<li>Compute its dipole moment <span class="arithmatex">\(p(\omega)\)</span> from the expectation value of its dipole operator to obtain the absorption spectrum from <span class="arithmatex">\(Im[p(\omega)]\)</span>.</li>
+<li>Compute its dipole moment <span class="arithmatex">\(p(\omega)\)</span> from the expectation value of its dipole operator.</li>
 </ol>
-<p>We first do step 1. To make sure that we get a meaningful spectrum, we must pick an electric field with many frequencies, i.e. a narrow pulse in time-domain</p>
+<p>We first do step 1. To obtain a broad frequency spectrum, we must pick a narrow pulse in time-domain</p>
 <pre class="highlight"><code class="language-python">from granad import Pulse
 
 my_first_illumination = Pulse(
     amplitudes=[1e-5, 0, 0], frequency=2.3, peak=5, fwhm=2
-)  # TODO: units</code></pre>
-<p>For step 2, we have to think of a few parameters:</p>
+) </code></pre>
+<p>For step 2, a few parameters have to be chosen</p>
 <ol>
-<li>TD simulation duration: we go from 0 to 40 in 1e5 steps.</li>
-<li>Relaxation rate: this is <span class="arithmatex">\(r\)</span> in the dissipation term <span class="arithmatex">\(D[\rho] = r \cdot(\rho - \rho_0)\)</span>.</li>
+<li>Simulation duration: we go from 0 to 40 in 1e5 steps.</li>
+<li>Relaxation rate: this is <span class="arithmatex">\(r\)</span> in the dissipation term <span class="arithmatex">\(D[\rho] = r \cdot(\rho - \rho_0)\)</span> in the master equation.</li>
 <li>Frequency domain limits: we choose the interval [0, 16].</li>
-<li>Density matrix sampling rate: producing 1e5 density matrices can quickly tire our RAM. so we only save every 100th density matrix, such that we get 1000 density matrices.</li>
+<li>Density matrix sampling rate: producing 1e5 density matrices can quickly exhaust RAM ressources. So we only save every 100th density matrix, such that we get 1000 density matrices.</li>
 </ol>
 <p>A simulation is just passing all of these parameters to the corresponding method of our flake.</p>
-<pre class="highlight"><code class="language-python">omegas, dipole_omega, pulse_omega = (
-    my_first_flake.get_expectation_value_frequency_domain(
-        operator=my_first_flake.dipole_operator,  # the dipole moment is the expectation value of the dipole operator
+<pre class="highlight"><code class="language-python">omegas, dipole_omega, pulse_omega =  my_first_flake.get_expectation_value_frequency_domain(
+        operator=my_first_flake.dipole_operator, 
         end_time=40,
         steps_time=1e5,
         relaxation_rate=1 / 10,
@@ -194,19 +193,15 @@ my_first_illumination = Pulse(
         omega_min=0,
         omega_max=10,
         skip=100,
-    )
-)</code></pre>
-<p>We see that three variables are returned: the omega axis we have specified, the dipole moment and the pulse in freqeuency domain. There is no way to control the number of points in the omega axis, because
-it is the result of a Fourier transform.</p>
+    )</code></pre>
+<p>We see that three variables are returned: the omega axis we have specified, the dipole moment and the pulse in freqeuency domain. There is no way to control the number of points in the omega axis, because it is the result of a Fourier transform.</p>
 <p>We now plot the dipole moment and the pulse in frequency domain.</p>
 <pre class="highlight"><code class="language-python">import matplotlib.pyplot as plt
 
 plt.plot(omegas, dipole_omega)
-plt.plot(omegas, pulse_omega, "--")</code></pre>
-<pre class="highlight"><code>[&lt;matplotlib.lines.Line2D at 0x6d4594d589d0&gt;,
- &lt;matplotlib.lines.Line2D at 0x6d4594d58af0&gt;,
- &lt;matplotlib.lines.Line2D at 0x6d4594d58b50&gt;]</code></pre>
-<p><img alt="png" src="getting_started_files/getting_started_28_1.png" /></p>
+plt.plot(omegas, pulse_omega, "--")
+plt.show()</code></pre>
+<p><img alt="png" src="../getting_started_files/getting_started_29_0.png" /></p>
               
             </div>
           </div><footer>
