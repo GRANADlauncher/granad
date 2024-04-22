@@ -24,6 +24,7 @@ jobs:
           pip install pymdown-extensions
           pip install mkdocstrings
           pip install mkdocstrings-python
+          pip install -e .
           
       - name: Build MkDocs site
         run: mkdocs build  
