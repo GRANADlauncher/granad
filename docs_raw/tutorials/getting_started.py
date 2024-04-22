@@ -27,7 +27,7 @@ from granad import Orbital
 
 my_first_orbital = Orbital(
     position = (0, 0, 0),
-    tag = "this is some information about my first orbital I might need to use later",
+    tag = "a tag contains arbitrary information",
 )
 print(my_first_orbital)
 # -

@@ -14,15 +14,14 @@ from granad import Orbital
 
 my_first_orbital = Orbital(
     position = (0, 0, 0),
-    tag = "this is some information about my first orbital I might need to use later",
+    tag = "a tag contains arbitrary information",
 )
 print(my_first_orbital)
 ```
 
     {'position': Array([0., 0., 0.], dtype=float64),
      'layer_index': None,
-     'tag': 'this is some information about my first orbital I might need to use '
-            'later',
+     'tag': 'a tag contains arbitrary information',
      'energy_level': None,
      'angular_momentum': None,
      'angular_momentum_z': None,
@@ -211,9 +210,9 @@ plt.plot(omegas, pulse_omega, "--")
 
 
 
-    [<matplotlib.lines.Line2D at 0x6d0d8c8e9d00>,
-     <matplotlib.lines.Line2D at 0x6d0d8c8e9e20>,
-     <matplotlib.lines.Line2D at 0x6d0d8c8e9e80>]
+    [<matplotlib.lines.Line2D at 0x68ff4f943100>,
+     <matplotlib.lines.Line2D at 0x68ff4f943220>,
+     <matplotlib.lines.Line2D at 0x68ff4f943280>]
 
 
 
