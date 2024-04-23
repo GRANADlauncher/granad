@@ -26,9 +26,6 @@ for filename in docs_src/tutorials/*.py; do
     fi
 done
 
-# black src/granad/*; isort --profile=black src/granad/*
-# black notebooks/tutorials/*; isort --profile=black notebooks/tutorials/*
-
 # convert index page
 jupytext --to notebook --execute docs_src/index.py -o docs/index.ipynb
 jupyter nbconvert --to markdown --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags='["remove_cell"]' docs/index.ipynb
