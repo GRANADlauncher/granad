@@ -46,10 +46,10 @@
 
 # +
 import jax.numpy as jnp
-from granad import Material2D, Triangle
+from granad import Materials, Triangle
 
 # get material
-graphene = Material2D.get( "graphene" )
+graphene = Materials.get( "graphene" )
 
 # cut a 15 Angström wide triangle from the lattice (can also be an arbitrary polygon)
 flake = graphene.cut_orbitals( Triangle(15)  ) 
@@ -62,7 +62,8 @@ polarizability = flake.get_polarizability_rpa(
     omegas,
     relaxation_rate = 1/10,
     polarization = 0,
-    hungry = True )
+    hungry = 2 # higher numbers are faster and consume more RAM
+)
 absorption = polarizability.imag * 4 * jnp.pi * omegas
 # -
 

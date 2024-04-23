@@ -23,13 +23,13 @@
 
 # +
 import jax.numpy as jnp
-from granad import Material2D, Triangle
+from granad import Materials, Triangle
 
 # get material
-graphene = Material2D.get( "graphene" )
+graphene = Materials.get( "graphene" )
 
 # cut a 15 Angström wide triangle from the lattice (can also be an arbitrary polygon)
-flake = graphene.cut_orbitals( Triangle(15)  ) 
+flake = graphene.cut_flake( Triangle(15)  ) 
 
 # frequencies
 omegas_rpa = jnp.linspace( 0, 5, 40 )
@@ -43,7 +43,7 @@ polarizability = flake.get_polarizability_rpa(
     omegas_rpa,
     relaxation_rate = 1/10,
     polarization = 0, 
-    hungry = True )
+    hungry = 2 )
 absorption_rpa = jnp.abs( polarizability.imag * 4 * jnp.pi * omegas_rpa )
 # -
 
