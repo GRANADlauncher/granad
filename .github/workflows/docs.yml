@@ -24,20 +24,23 @@ jobs:
           pip install pymdown-extensions
           pip install mkdocstrings
           pip install mkdocstrings-python
-          pip install -e .
+          #pip install -e .
           
       - name: Check for Build Flag
         id: check-flag
         run: |
           echo "Commit Message: ${{ github.event.head_commit.message }}"
-          if [[ "${{ github.event.head_commit.message }}" == *"[build-docs]"* ]]; then
+          if [[ "${{ github.event.head_commit.message }}" =~ \[build-docs\] ]]; then
             echo "::set-output name=trigger::true"
+          else
+            echo "::set-output name=trigger::false"
           fi
+          echo "Trigger build: ${{ steps.check-flag.outputs.trigger }}"
 
       - name: Build MkDocs site
         if: steps.check-flag.outputs.trigger == 'true'
         run: mkdocs build
-
+        
       - name: Build and deploy to GitHub Pages
         if: steps.check-flag.outputs.trigger == 'true'
         uses: peaceiris/actions-gh-pages@v3
