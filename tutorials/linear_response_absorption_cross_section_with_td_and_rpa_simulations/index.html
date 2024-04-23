@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Linear response absorption cross section with td and rpa simulations - GRANAD</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Linear response absorption cross section with td and rpa simulations";
+        var mkdocs_page_input_path = "tutorials/linear_response_absorption_cross_section_with_td_and_rpa_simulations.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> GRANAD
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../about/">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../api/">API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../units/">Units</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../getting_started/">Getting started</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Linear response absorption cross section with td and rpa simulations</a>
+    <ul class="current">
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../rabi_oscillations_in_tls/">Rabi oscillations in tls</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">GRANAD</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Tutorials</li>
+      <li class="breadcrumb-item active">Linear response absorption cross section with td and rpa simulations</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h2 id="linear-response-absorption-cross-section-with-td-and-rpa-simulations">Linear response absorption cross section with TD and RPA simulations</h2>
+<p>We will calculate the optical absorption in the RPA and compare it to TD simulations with a weak external field.</p>
+<h2 id="rpa">RPA</h2>
+<p>First, we set up the RPA simulation. We will consider a small triangle such that the required simulation time stays in the seconds range.</p>
+<pre class="highlight"><code class="language-python">import jax.numpy as jnp
+from granad import Material2D, Triangle
+
+# get material
+graphene = Material2D.get( "graphene" )
+
+# cut a 15 Angström wide triangle from the lattice (can also be an arbitrary polygon)
+flake = graphene.cut_orbitals( Triangle(15)  ) 
+
+# frequencies
+omegas_rpa = jnp.linspace( 0, 5, 40 )</code></pre>
+<p>We obtain the polarizability for an external <span class="arithmatex">\(x\)</span> polarized field and from its imaginary part the absorption.</p>
+<pre class="highlight"><code class="language-python">polarizability = flake.get_polarizability_rpa(
+    omegas_rpa,
+    relaxation_rate = 1/10,
+    polarization = 0, 
+    hungry = True )
+absorption_rpa = jnp.abs( polarizability.imag * 4 * jnp.pi * omegas_rpa )</code></pre>
+<h2 id="td">TD</h2>
+<p>For the TD simulations, we specify a spectrally broad external illumination (i.e. a narrow pulse in time domain) to capture the system's response over a large frequency range.</p>
+<pre class="highlight"><code class="language-python">from granad import Pulse
+pulse = Pulse(
+    amplitudes=[1e-5, 0, 0], frequency=2.3, peak=5, fwhm=2
+)</code></pre>
+<p>We then compute the TD dipole moment and Fourier transform it.</p>
+<pre class="highlight"><code class="language-python">omegas, dipole_omega, pulse_omega =  flake.get_expectation_value_frequency_domain(
+        operator=flake.dipole_operator,  # the dipole moment is the expectation value of the dipole operator
+        end_time=40,
+        steps_time=1e5,
+        relaxation_rate=1/10,
+        illumination=pulse,
+        omega_min=0,
+        omega_max=5,
+        skip=100,    
+)</code></pre>
+<p>The polarizability is given by <span class="arithmatex">\(p / E\)</span> (we only take the <span class="arithmatex">\(x\)</span> - component).</p>
+<pre class="highlight"><code class="language-python">absorption_td = jnp.abs( -omegas * jnp.imag( dipole_omega[:,0] / pulse_omega[:,0] ) )</code></pre>
+<p>We can now compare the two results.</p>
+<pre class="highlight"><code class="language-python">import matplotlib.pyplot as plt
+plt.style.use('ggplot')
+plt.figure(figsize=(10, 6))
+plt.plot(omegas_rpa, absorption_rpa / jnp.max(absorption_rpa), 'o', linewidth=2, label = 'RPA')
+plt.plot(omegas, absorption_td / jnp.max(absorption_td), linewidth=2, ls = '--', label = 'TD' ) 
+plt.xlabel(r'$\hbar\omega$', fontsize=20)
+plt.ylabel(r'$\sigma(\omega)$', fontsize=25)
+plt.title('Absorption Spectrum as a Function of Photon Energy', fontsize=15)
+plt.legend()
+plt.grid(True)
+plt.show()</code></pre>
+<p><img alt="png" src="../linear_response_absorption_cross_section_with_td_and_rpa_simulations_files/linear_response_absorption_cross_section_with_td_and_rpa_simulations_15_0.png" /></p>
+<pre class="highlight"><code class="language-python"></code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../getting_started/" class="btn btn-neutral float-left" title="Getting started"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../rabi_oscillations_in_tls/" class="btn btn-neutral float-right" title="Rabi oscillations in tls">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../getting_started/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../rabi_oscillations_in_tls/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../javascripts/mathjax.js"></script>
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
