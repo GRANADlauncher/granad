@@ -351,7 +351,7 @@ class OrbitalList:
         self._hamiltonian, self._coulomb = self._hamiltonian_coulomb()
 
         self._eigenvectors, self._energies = jax.lax.linalg.eigh(self._hamiltonian)
-
+        
         self._initial_density_matrix = _numerics._density_matrix(
             self._energies,
             self.electrons,
@@ -552,9 +552,9 @@ class OrbitalList:
                 )
             raise TypeError
 
-        self.from_state = maybe_int_to_arr(from_state)
-        self.to_state = maybe_int_to_arr(to_state)
-        self.excited_electrons = maybe_int_to_arr(excited_electrons)
+        self.simulation_params.from_state = maybe_int_to_arr(from_state)
+        self.simulation_params.to_state = maybe_int_to_arr(to_state)
+        self.simulation_params.excited_electrons = maybe_int_to_arr(excited_electrons)
 
     @mutates
     def set_dipole_transition(self, orb_or_index1, orb_or_index2, arr):
@@ -576,7 +576,7 @@ class OrbitalList:
     @recomputes
     def homo(self):
         # TODO: hmmm
-        return jnp.diag(self._stationary_density_matrix).nonzero()[0][-1]
+        return (self.electrons * self.stationary_density_matrix_e).real.diagonal().round(2).nonzero()[0].item()
 
     @property
     def electrons(self):

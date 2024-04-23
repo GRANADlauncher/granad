@@ -39,7 +39,7 @@ print(atom)
 # We see that GRANAD assumes that every orbital is filled. But we want only the one of the levels filled. So, we set the electron number to 1.
 
 # +
-atom.electrons = 1
+atom.simulation_params.electrons = 1
 print(atom)
 # -
 
@@ -81,5 +81,5 @@ wave = Wave(amplitudes=[0.05, 0, 0], frequency=2)
 time, density_matrices = atom.get_density_matrix_time_domain(
     end_time=10, relaxation_rate=1, illumination=wave, use_rwa=True
 )
-atom.show_energy_occupations(density_matrices, time=time)
+atom.show_time_dependence(density_matrices, time=time)
 # -

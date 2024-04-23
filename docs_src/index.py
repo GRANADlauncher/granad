@@ -52,7 +52,7 @@ from granad import Materials, Triangle
 graphene = Materials.get( "graphene" )
 
 # cut a 15 Angström wide triangle from the lattice (can also be an arbitrary polygon)
-flake = graphene.cut_orbitals( Triangle(15)  ) 
+flake = graphene.cut_flake( Triangle(15)  ) 
 
 # frequencies
 omegas = jnp.linspace( 0, 5, 50 )

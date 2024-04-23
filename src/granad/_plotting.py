@@ -160,9 +160,10 @@ def show_energies(orbs):
 
 
 @_plot_wrapper
-def show_expectation_value_time(
+def show_time_dependence(
     orbs,
-    expectation_value,
+    density_matrices,
+    operator = None,
     time: jax.Array = None,
     indicate_eigenstate = True,
     ylabel = None,
@@ -175,7 +176,12 @@ def show_expectation_value_time(
     - `indicate_eigenstate`: whether to associate the i-th energy eigenstate to the i-th column of expectation_value
     - `thresh`: plotting threshold.  o_t is plotted if max(o_t) - min(o_t) > thresh
     """
-    time = time if time is not None else jnp.arange(expectation_values.shape[0])
+    if operator is not None:
+        expectation_value = orbs.get_expectation_value(operator, density_matrices)
+    else:
+        expectation_value = jnp.diagonal(density_matrices, axis1 = -1, axis2 = -2 )
+        
+    time = time if time is not None else jnp.arange(expectation_value.shape[0])
     fig, ax = plt.subplots(1, 1)
     for idx in jnp.nonzero(
         jnp.abs(jnp.amax(expectation_value, axis=0) - jnp.amin(expectation_value, axis=0)) > thresh
