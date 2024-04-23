@@ -31,12 +31,15 @@ jobs:
         run: |
           echo "Commit Message: ${{ github.event.head_commit.message }}"
           if [[ "${{ github.event.head_commit.message }}" == *"[build-docs]"* ]]; then
-          echo "::set-output name=trigger::true"
-          fi          
-      - name : Build MkDocs site
+            echo "::set-output name=trigger::true"
+          fi
+
+      - name: Build MkDocs site
         if: steps.check-flag.outputs.trigger == 'true'
-        run: mkdocs build        
+        run: mkdocs build
+
       - name: Build and deploy to GitHub Pages
+        if: steps.check-flag.outputs.trigger == 'true'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
