@@ -44,9 +44,8 @@ jobs:
         run: |
           chmod +x ./build_docs.sh
           ./build_docs.sh
-        env:          
-          PATH: $PATH:/home/runner/.local/bin
-
+        shell: bash
+        
       - name: Build MkDocs site
         if: env.TRIGGER_BUILD == 'true'
         run: mkdocs build
