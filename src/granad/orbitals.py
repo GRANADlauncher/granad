@@ -882,8 +882,7 @@ class OrbitalList:
         e_field = 14.39 * jnp.sum(point_charge * charge[:, None, None], axis=0)
         return e_field
 
-    @staticmethod
-    def get_expectation_value(operator, density_matrix):
+    def get_expectation_value(self, operator, density_matrix, induced = True):
         """
         Calculates the expectation value of an operator with respect to a given density matrix using tensor contractions specified for different dimensionalities of the input arrays.
 
@@ -901,10 +900,11 @@ class OrbitalList:
             (2, 3): "ij,kji->k",
             (2, 2): "ij,ji->",
         }
-        return jnp.einsum(
+        correction = self.stationary_density_matrix_x if induced == True else 0
+        return self.electrons * jnp.einsum(
             dims_einsum_strings[(operator.ndim, density_matrix.ndim)],
             operator,
-            density_matrix,
+            correction - density_matrix,
         )
 
     # TODO: uff, all of the methods below should be rewritten
@@ -920,18 +920,12 @@ class OrbitalList:
         """
 
         operator = kwargs.pop("operator", None)
-        correction = self.stationary_density_matrix
         time_axis, density_matrices = self.get_density_matrix_time_domain(
             *args, **kwargs
         )
-        try:
-            return time_axis, self.electrons * self.get_expectation_value(
-                correction - density_matrices.ys, operator
-            )
-        except AttributeError:
-            return time_axis, self.electrons * self.get_expectation_value(
-                correction - density_matrices, operator
-            )
+        return time_axis, self.get_expectation_value(
+            density_matrices, operator
+        )
 
     def get_expectation_value_frequency_domain(self, *args, **kwargs):
         """
@@ -944,9 +938,17 @@ class OrbitalList:
            Tuple[jax.Array, jax.Array, jax.Array]: Frequencies and corresponding expectation values, and optionally transformed electric field data.
         """
 
+        density_matrices = kwargs.pop("density_matrices", None)
+        time_axis = kwargs.pop("time", None)
         omega_min = kwargs.pop("omega_min", 0)
         omega_max = kwargs.pop("omega_max", 100)
-        time_axis, exp_val_td = self.get_expectation_value_time_domain(*args, **kwargs)
+
+        if density_matrices is None:
+            time_axis, exp_val_td = self.get_expectation_value_time_domain(*args, **kwargs)
+        else:
+            operator = kwargs.pop("operator", None)            
+            exp_val_td = self.get_expectation_value(density_matrices, operator)
+                        
         omega, exp_val_omega = _numerics.get_fourier_transform(time_axis, exp_val_td)
         mask = (omega >= omega_min) & (omega <= omega_max)
         try:
