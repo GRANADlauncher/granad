@@ -503,7 +503,7 @@ def rpa_polarizability_function(
     return _polarizability
 
 
-def rpa_susceptibility_function(orbs, relaxation_rate, coulomb_strength, hungry=True):
+def rpa_susceptibility_function(orbs, relaxation_rate, coulomb_strength, hungry=2):
     def _rpa_susceptibility(omega):
         x = sus(omega)
         return x @ jnp.linalg.inv(one - c @ x)
@@ -515,7 +515,7 @@ def rpa_susceptibility_function(orbs, relaxation_rate, coulomb_strength, hungry=
     return _rpa_susceptibility
 
 
-def bare_susceptibility_function(orbs, relaxation_rate, hungry=True):
+def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
 
     def _sum_subarrays(arr):
         """Sums subarrays in 1-dim array arr. Subarrays are defined by n x 2 array indices as [ [start1, end1], [start2, end2], ... ]"""
@@ -547,13 +547,20 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=True):
             eq = 2.0 * Sf / (omega - omega_grid_extended + 1j * relaxation_rate )
             return -jnp.sum(eq)
 
-        if hungry:
+        if hungry == 2:
             return jax.vmap(
                 jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0
-            )(sites, sites)
-        return jax.lax.map(
-            lambda i: jax.lax.map(lambda j: susceptibility_element(i, j), sites), sites
-        )
+            )(sites, sites)        
+        elif hungry == 1:
+            return jax.lax.map(
+                lambda i: jax.vmap(lambda j: susceptibility_element(i, j), (0,), 0)(sites), 
+                sites
+            )
+        else:
+            return jax.lax.map(
+                lambda i: jax.lax.map(lambda j: susceptibility_element(i, j), sites), 
+                sites
+            )
 
     # unpacking
     energies = orbs.energies.real

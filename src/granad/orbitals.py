@@ -1020,18 +1020,18 @@ class OrbitalList:
         relaxation_rate,
         polarization,
         coulomb_strength=1.0,
-        hungry=False,
+        hungry=0,
         phi_ext=None,
     ):
         """
         Calculates the random phase approximation (RPA) polarizability of the system at given frequencies under specified conditions.
 
         Parameters:
-           omegas (jax.Array): Frequencies at which to calculate polarizability. If given as an nxm array, this function will be applied vectorized to the batches given by omegas[i,:]
+           omegas (jax.Array): Frequencies at which to calculate polarizability. If given as an nxm array, this function will be applied vectorized to the batches given by the last axis in omegas.
            relaxation_rate (float): The relaxation time parameter.
            polarization (jax.Array): Polarization directions or modes.
            coulomb_strength (float): The strength of Coulomb interaction in the calculations.
-           hungry (bool): speed up the simulation up, taking more RAM.
+           hungry (int): speed up the simulation up, higher numbers (max 2) increase RAM usage.
            phi_ext (Optional[jax.Array]): External potential influences, if any.
 
         Returns:
@@ -1047,7 +1047,7 @@ class OrbitalList:
             return jnp.concatenate( [ jax.vmap(alpha)(omega) for omega in omegas ] )
 
     def get_susceptibility_rpa(
-            self, omegas, relaxation_rate, coulomb_strength=1.0, hungry=False
+            self, omegas, relaxation_rate, coulomb_strength=1.0, hungry=0
     ):
         """
         Computes the random phase approximation (RPA) susceptibility of the system over a range of frequencies.
@@ -1056,7 +1056,7 @@ class OrbitalList:
            omegas (jax.Array): The frequencies at which to compute susceptibility.
            relaxation_rate (float): The relaxation time affecting susceptibility calculations.
            coulomb_strength (float): The strength of Coulomb interactions considered in the calculations.
-           hungry (bool): speed up the simulation up, taking more RAM.
+           hungry (int): speed up the simulation up, higher numbers (max 2) increase RAM usage.
 
         Returns:
            jax.Array: The susceptibility values at the given frequencies.
