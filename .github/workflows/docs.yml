@@ -38,6 +38,10 @@ jobs:
           pip install nbconvert
           pip install ipykernel
           pip install -e .
+
+      - name: Setup kernel
+        if: env.TRIGGER_BUILD == 'true'
+        run: python -m ipykernel install --user --name base --display-name "base"
           
       - name: Execute notebook processing script
         if: env.TRIGGER_BUILD == 'true'
