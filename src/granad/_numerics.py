@@ -508,18 +508,12 @@ def rpa_susceptibility_function(orbs, relaxation_rate, coulomb_strength, hungry=
         x = sus(omega)
         return x @ jnp.linalg.inv(one - c @ x)
 
-    sus = bare_susceptibility_function(orbs, relaxation_rate, hungry)
-
-    # in highest hungry level, we cache the entire matrix in the enclosing scope
-    if hungry == 3:
-        sus = sus(None)
-        
+    sus = bare_susceptibility_function(orbs, relaxation_rate, hungry)        
     c = orbs.coulomb * coulomb_strength
     one = jnp.identity(orbs.hamiltonian.shape[0])
 
     return _rpa_susceptibility
 
-# TODO: find better way for hungry = 3
 def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
 
     def _sum_subarrays(arr):
@@ -549,18 +543,9 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
             )
             Sf1 = jnp.fft.hfft(b)[:-1]
             Sf = -Sf1[::-1] + Sf1
-            
-            if hungry == 3:
-                return Sf
-            
+                        
             eq = spin_degeneracy * Sf / (omega - omega_grid_extended + 1j * relaxation_rate )
             return -jnp.sum(eq)
-
-        if hungry == 3:
-            Sf_mat = jax.vmap(
-                jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0
-            )(sites, sites)
-            return lambda omega : -spin_degeneracy * jnp.sum(Sf_mat / (omega - omega_grid_extended + 1j * relaxation_rate ), axis = -1 )
 
         if hungry == 2:
             return jax.vmap(
