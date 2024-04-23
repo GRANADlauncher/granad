@@ -151,7 +151,7 @@ def show_energies(orbs):
         ax.scatter(
             jnp.arange(orbs.energies.size),
             orbs.energies,
-            c=jnp.diag(orbs.electrons * orbs.initial_density_matrix),
+            c=jnp.diag(orbs.electrons * orbs.initial_density_matrix_e),
         ),
         label="ground state occupation",
     )

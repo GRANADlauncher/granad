@@ -9,7 +9,7 @@ import jax
 import jax.numpy as jnp
 
 # TODO: hmmm
-from . import _numerics, _plotting, _watchdog
+from granad import _numerics, _plotting, _watchdog
 
 # TODO: clean this up, repair doc strings, some naming conventions are weird, e.g. position_operator should be get_position_operator, make einsum magic more versatile, rethink the "use private members in recompute" idea
 # TODO: HF for parameter estimation
@@ -126,7 +126,7 @@ def mutates(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
         self._recompute = True
-        return func(self, *args, **kwargs)
+        return func(self, *args, **kwargs)    
 
     return wrapper
 
@@ -143,12 +143,12 @@ def recomputes(func):
 
 
 def plotting_methods(cls):
+    # attach all plotting methods
     for name in dir(_plotting):
         method = getattr(_plotting, name)
         if callable(method) and name.startswith("show"):
-            setattr(cls, name, method)
+            setattr(cls, name, method)            
     return cls
-
 
 @plotting_methods
 class OrbitalList:
@@ -179,6 +179,12 @@ class OrbitalList:
         self.self_consistency_params = {}
         self.spin_degeneracy = 2.0
         self.electrons = len(self._list)
+        
+    def __getattr__(self, property_name):
+        if property_name.endswith("_x"):
+            return getattr(self, property_name[:-2])
+        elif property_name.endswith("_e"):
+            return self.transform_to_energy_basis( getattr(self, property_name[:-2]) )
 
     def __len__(self):
         return len(self._list)
@@ -382,6 +388,9 @@ class OrbitalList:
                 self._static_density_matrix,
                 **self.self_consistent_params,
             )
+
+        self._initial_density_matrix = self.transform_to_site_basis( self._initial_density_matrix )
+        self._stationary_density_matrix = self.transform_to_site_basis( self._stationary_density_matrix )
             
     def get_group_ids(self):
         """
@@ -590,17 +599,17 @@ class OrbitalList:
     @recomputes
     def coulomb(self):
         return self._coulomb
-
+    
     @property
     @recomputes
     def initial_density_matrix(self):
         return self._initial_density_matrix
-
+    
     @property
     @recomputes
     def stationary_density_matrix(self):
         return self._stationary_density_matrix
-
+    
     @property
     @recomputes
     def quadrupole_operator(self):
@@ -616,7 +625,7 @@ class OrbitalList:
         diag = jnp.einsum("ijk,jlk->il", dip, dip)
         diag = jnp.einsum("ij,kl->ijkl", diag, jnp.eye(term.shape[-1]))
         return 3 * term - diag
-
+    
     @property
     @recomputes
     def dipole_operator(self):
@@ -640,7 +649,7 @@ class OrbitalList:
             k = value.nonzero()[0]
             dipole_operator = dipole_operator.at[k, i, j].set(value[k])
         return dipole_operator + jnp.transpose(dipole_operator, (0, 2, 1)).conj()
-
+    
     @property
     @recomputes
     def velocity_operator(self):
@@ -653,12 +662,12 @@ class OrbitalList:
 
         if self._transitions is None:
             x_times_h = jnp.einsum("ij,iL->ijL", self._hamiltonian, self._positions)
-            h_times_x = jnp.einsum("ij,jL->ijL", self._hamiltonian, self._positions)
+            h_times = jnp.einsum("ij,jL->ijL", self._hamiltonian, self._positions)
         else:
             positions = self.dipole_operator
             x_times_h = jnp.einsum("kj,Lik->Lij", self._hamiltonian, positions)
-            h_times_x = jnp.einsum("ik,Lkj->Lij", self._hamiltonian, positions)
-        return -1j * (x_times_h - h_times_x)
+            h_times = jnp.einsum("ik,Lkj->Lij", self._hamiltonian, positions)
+        return -1j * (x_times_h - h_times)
 
     @property
     @recomputes
@@ -686,7 +695,7 @@ class OrbitalList:
         c = 3e8  # 137 (a.u.)
         factor = 1.6e-29 * charge / (3 * jnp.pi * eps_0 * hbar**2 * c**3)
         te = self.transition_energies
-        transition_dipole_moments = self.transform_to_energy_basis(self.dipole_operator)
+        transition_dipole_moments = self.dipole_operator_e
         return (
             (te * (te > self.eps)) ** 3
             * jnp.squeeze(transition_dipole_moments**2)
@@ -737,7 +746,7 @@ class OrbitalList:
         """
         if density_matrix is None:
             return jnp.diag(
-                self.transform_to_site_basis(self.initial_density_matrix)
+                self.initial_density_matrix
                 * self.electrons
             )
         else:
@@ -833,7 +842,7 @@ class OrbitalList:
         )
 
         # compute charge via occupations in site basis
-        charge = self.electrons * self.transform_to_site_basis(density_matrix).real
+        charge = self.electrons * density_matrix.real
 
         # induced field is a sum of point charges, i.e. \vec{r} / r^3
         e_field = 14.39 * jnp.sum(point_charge * charge[:, None, None], axis=0)
@@ -877,7 +886,7 @@ class OrbitalList:
         """
 
         operator = kwargs.pop("operator", None)
-        correction = self.transform_to_site_basis(self.stationary_density_matrix)
+        correction = self.stationary_density_matrix
         time_axis, density_matrices = self.get_density_matrix_time_domain(
             *args, **kwargs
         )
@@ -977,7 +986,7 @@ class OrbitalList:
         else:
             relaxation_function = _numerics.relaxation_time_approximation(
                 relaxation_rate,
-                self.transform_to_site_basis(self._stationary_density_matrix),
+                self.stationary_density_matrix,
             )
 
         # Verify that illumination is a callable
@@ -985,12 +994,6 @@ class OrbitalList:
             raise TypeError("Provide a function for e-field")
 
         # Initialize common variables
-        initial_density_matrix = self.transform_to_site_basis(
-            self._initial_density_matrix
-        )
-        stationary_density_matrix = self.transform_to_site_basis(
-            self._stationary_density_matrix
-        )
         coulomb_field_to_from = _numerics.get_coulomb_field_to_from(
             self.positions, self.positions, compute_only_at
         )
@@ -1002,8 +1005,8 @@ class OrbitalList:
             self.dipole_operator,
             self.electrons,
             self.velocity_operator,
-            initial_density_matrix,
-            stationary_density_matrix,
+            self.initial_density_matrix,
+            self.stationary_density_matrix,
             time_axis,
             illumination,
             relaxation_function,
@@ -1068,4 +1071,4 @@ class OrbitalList:
         sus = _numerics.rpa_polarizability_function(
             self, relaxation_rate, coulomb_strength, hungry
         )
-        return jax.lax.map(sus, omegas)
+        return jax.lax.map(sus, omegas)    

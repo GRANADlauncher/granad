@@ -565,7 +565,7 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
     # unpacking
     energies = orbs.energies.real
     eigenvectors = orbs.eigenvectors.real    
-    occupation = jnp.diag(orbs._initial_density_matrix).real * orbs.electrons / orbs.spin_degeneracy
+    occupation = jnp.diag(orbs.initial_density_matrix_e).real * orbs.electrons / orbs.spin_degeneracy
     spin_degeneracy = orbs.spin_degeneracy
     sites = jnp.arange(energies.size)
     freq_number = 2**12
