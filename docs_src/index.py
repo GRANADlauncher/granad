@@ -46,10 +46,10 @@
 
 # +
 import jax.numpy as jnp
-from granad import Materials, Triangle
+from granad import MaterialCatalog, Triangle
 
 # get material
-graphene = Materials.get( "graphene" )
+graphene = MaterialCatalog.get( "graphene" )
 
 # cut a 15 Angström wide triangle from the lattice (can also be an arbitrary polygon)
 flake = graphene.cut_flake( Triangle(15)  ) 

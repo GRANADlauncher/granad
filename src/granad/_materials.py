@@ -320,18 +320,18 @@ _metal_1d = (
     )
 )
 
-class Materials:
+class MaterialCatalog:
     _materials = {"graphene" : _graphene, "ssh" : _ssh, "metal_1d" : _metal_1d }
 
     @staticmethod
     def get(material):
-        return Materials._materials[material]
+        return MaterialCatalog._materials[material]
     
     @staticmethod
     def describe(material):
-        print(Materials._materials[material])
+        print(MaterialCatalog._materials[material])
     
     @staticmethod
     def available():
-        available_materials = "\n".join(Materials._materials.keys())
+        available_materials = "\n".join(MaterialCatalog._materials.keys())
         print(f"Available materials:\n{available_materials}")

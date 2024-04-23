@@ -52,20 +52,20 @@ print(my_second_orbital)
 # Materials are stuff you can cut orbitals from. We will see below how this works.
 
 # +
-from granad import Materials
-Materials.available()
+from granad import MaterialCatalog
+MaterialCatalog.available()
 # -
 
 # Let's inspect a material.
 
 # +
-Materials.describe("graphene")
+MaterialCatalog.describe("graphene")
 # -
 
 # There are parameters regarding the geometry, the type of the involved orbitals (the built-in graphene model contains only a single spin polarized pz orbital) , the position of orbitals in the unit cell and the interactions (currently, GRANAD supports hoppings and Coulomb interactions). Let's pick a concrete material.
 
 # +
-graphene = Materials.get("graphene")
+graphene = MaterialCatalog.get("graphene")
 # -
 
 ### OrbitalLists
