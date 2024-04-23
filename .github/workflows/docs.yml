@@ -41,8 +41,10 @@ jobs:
           
       - name: Execute notebook processing script
         if: env.TRIGGER_BUILD == 'true'
-        run: bash build_docs.sh
-        env:
+        run: |
+          chmod +x ./build_docs.sh
+          ./build_docs.sh
+        env:          
           PATH: $PATH:/home/runner/.local/bin
 
       - name: Build MkDocs site
