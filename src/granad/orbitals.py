@@ -157,7 +157,7 @@ class SimulationParams():
     excited_electrons : jax.Array = field(default_factory=lambda : jnp.array([0]))
     eps : float = 1e-5
     beta : float = jnp.inf
-    self_consistency_params : dict = {}
+    self_consistency_params : dict =  field(default_factory=dict)
     spin_degeneracy : int = 2.0
     electrons : Optional[int] = None
     
