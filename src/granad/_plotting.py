@@ -264,12 +264,13 @@ def show_induced_field_at(orbs, positions, x=None, y=None, z=None, density_matri
     ax.set_xlabel(plane[0])
     ax.set_ylabel(plane[1])
 
-def _display_lattice_cut(polygon_vertices, positions, selected_positions):
+def _display_lattice_cut(positions, selected_positions, polygon_vertices = None):
     fig, ax = plt.subplots(1, 1)
-    patch = plt.Polygon(
-        polygon_vertices[:-1], edgecolor="orange", facecolor="none", linewidth=2
-    )
-    ax.add_patch(patch)
+    if polygon_vertices is not None:
+        patch = plt.Polygon(
+            polygon_vertices[:-1], edgecolor="orange", facecolor="none", linewidth=2
+        )
+        ax.add_patch(patch)
     ax.set_xlim(-1, 1)
     ax.set_ylim(-1, 1)
     ax.set_aspect("equal", adjustable="datalim")
