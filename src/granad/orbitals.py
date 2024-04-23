@@ -580,11 +580,34 @@ class OrbitalList:
 
     @property
     def electrons(self):
-        electrons = self.simulation_params.electrons
-        if electrons is None:
+        if self.simulation_params.electrons is None:
             return len(self._list)
-        return electrons
+        return self.simulation_params.electrons
 
+    @property
+    def spin_degeneracy(self):
+        return self.simulation_params.spin_degeneracy
+
+    @property
+    def from_state(self):
+        return self.simulation_params.from_state
+    
+    @property
+    def to_state(self):
+        return self.simulation_params.to_state
+    
+    @property
+    def excited_electrons(self):
+        return self.simulation_params.excited_electrons
+
+    @property
+    def beta(self):
+        return self.simulation_params.beta
+
+    @property
+    def eps(self):
+        return self.simulation_params.eps
+    
     @property
     @recomputes
     def positions(self):
