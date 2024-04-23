@@ -34,6 +34,7 @@ jobs:
           echo "::set-output name=trigger::true"
           fi          
       - name : Build MkDocs site
+        if: steps.check-flag.outputs.trigger == 'true'
         run: mkdocs build        
       - name: Build and deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
