@@ -463,6 +463,9 @@ class OrbitalList:
         orb1, orb2 = self._maybe_indices_to_orbs((orb_or_index1, orb_or_index2))
         self._set_coupling(orb1, orb2, self._ensure_complex(val), self._coulomb_dict)
 
+    def index(self, orb):
+        return self._list.index(orb)
+        
     @mutates
     def append(self, other):
         """
@@ -722,7 +725,7 @@ class OrbitalList:
         return self._transform_basis(observable, self._eigenvectors.conj().T)
 
     @recomputes
-    def get_charge(density_matrix: None):
+    def get_charge(density_matrix = None):
         """
         Calculates the charge distribution from a given density matrix or from the initial density matrix if not specified.
 
