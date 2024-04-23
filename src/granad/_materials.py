@@ -18,7 +18,8 @@ def _cut_flake_1d( material, unit_cells, plot=False):
     orbital_positions = material._get_positions_in_lattice( orbital_positions_uc, grid )
     if plot:
         _display_lattice_cut( orbital_positions, orbital_positions )
-    
+
+    orbital_positions = jnp.unique( orbital_positions, axis = 0)        
     return material._get_orbital_list( orbital_positions, grid )
 
 # TODO clean this up
@@ -85,6 +86,7 @@ def _cut_flake_generic( material, grid_range ):
     orbital_positions_uc =  material._get_positions_in_uc()
     grid = material._get_grid( grid_range)
     orbital_positions = material._get_positions_in_lattice( orbital_positions_uc, grid )
+    orbital_positions = jnp.unique( orbital_positions, axis = 0)        
     return material._get_orbital_list( orbital_positions, grid )
     
 def _finalize(method):
@@ -151,7 +153,7 @@ class Material:
     def cut_flake( self ):
         pass
 
-    def add_orbital(self, position, tag, species):
+    def add_orbital(self, position, species, tag = ''):
         self.orbitals[species].append({'position': position, 'tag': tag})
         return self
 
