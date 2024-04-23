@@ -26,9 +26,15 @@ jobs:
           pip install mkdocstrings-python
           pip install -e .
           
-      - name: Build MkDocs site
-        run: mkdocs build  
-
+      - name: Check for Build Flag
+        id: check-flag
+        run: |
+          echo "Commit Message: ${{ github.event.head_commit.message }}"
+          if [[ "${{ github.event.head_commit.message }}" == *"[build-docs]"* ]]; then
+          echo "::set-output name=trigger::true"
+          fi          
+      - name : Build MkDocs site
+        run: mkdocs build        
       - name: Build and deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
