@@ -150,6 +150,18 @@ def plotting_methods(cls):
             setattr(cls, name, method)            
     return cls
 
+@dataclass
+class SimulationParams():
+    from_state : jax.Array = field(default_factory=lambda : jnp.array([0]))
+    to_state : jax.Array = field(default_factory=lambda : jnp.array([0]))
+    excited_electrons : jax.Array = field(default_factory=lambda : jnp.array([0]))
+    eps : float = 1e-5
+    beta : float = jnp.inf
+    self_consistency_params : dict = {}
+    spin_degeneracy : int = 2.0
+    electrons : Optional[int] = None
+    
+
 @plotting_methods
 class OrbitalList:
     """A list of orbitals."""
@@ -170,15 +182,7 @@ class OrbitalList:
         # flag for recomputing state
         self._recompute = True
 
-        # TODO: this is a bunch of stuff and must be better doable
-        self.from_state = jnp.array([0])
-        self.to_state = jnp.array([0])
-        self.excited_electrons = jnp.array([0])
-        self.eps = 1e-5
-        self.beta = jnp.inf
-        self.self_consistency_params = {}
-        self.spin_degeneracy = 2.0
-        self.electrons = len(self._list)
+        self.simulation_params = SimulationParams()
         
     def __getattr__(self, property_name):
         if property_name.endswith("_x"):
@@ -573,6 +577,13 @@ class OrbitalList:
     def homo(self):
         # TODO: hmmm
         return jnp.diag(self._stationary_density_matrix).nonzero()[0][-1]
+
+    @property
+    def electrons(self):
+        electrons = self.simulation_params.electrons
+        if electrons is None:
+            return len(self._list)
+        return electrons
 
     @property
     @recomputes
