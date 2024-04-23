@@ -18,72 +18,127 @@ def _plot_wrapper(plot_func):
 
     return wrapper
 
-
 @_plot_wrapper
-def show_2d(orbs, show_selected_tags=None, show_index=False):
-    """Shows a 2D scatter plot in the xy-plane of selected orbitals. Selections are made by a list
-    of tags.
-
-    - `show_selected_tags` : a list of strings
+def show_2d(orbs, show_tags=None, show_index=False, display = None):
     """
-    show_selected_tags = (
-        set((x.tag for x in orbs))
-        if show_selected_tags is None
-        else set(show_selected_tags)
-    )
+    Generates a 2D scatter plot representing the positions of orbitals in the xy-plane,
+    filtered by specified tags. Optionally colors points by eigenvector amplitudes.
+
+    Parameters:
+    - orbs (list): List of orbital objects, each with attributes 'tag' and 'position'.
+    - show_tags (list of str, optional): Tags used to filter orbitals for display.
+    - show_index (bool): If True, indexes of the orbitals will be shown on the plot.
+    - display: N-element array to display
+
+    Returns:
+    - None: A 2D scatter plot is displayed.
+    """
+    
+    # Determine which tags to display
+    if show_tags is None:
+        show_tags = {orb.tag for orb in orbs}
+    else:
+        show_tags = set(show_tags)
+
+    # Prepare data structures for plotting
     tags_to_pos, tags_to_idxs = defaultdict(list), defaultdict(list)
     for orb in orbs:
-        if orb.tag in show_selected_tags:
+        if orb.tag in show_tags:
             tags_to_pos[orb.tag].append(orb.position)
-            tags_to_idxs[orb.tag].append(orbs._list.index(orb))
+            tags_to_idxs[orb.tag].append(orbs.index(orb))
 
-    fig, ax = plt.subplots(1, 1)
-    for tag, positions in tags_to_pos.items():
-        positions = jnp.array(positions)
-        plt.scatter(x=positions[:, 0], y=positions[:, 1], label=tag)
-        if not show_index:
-            continue
-        for i, idx in enumerate(tags_to_idxs[tag]):
-            ax.annotate(
-                str(idx),
-                (
-                    positions[i, 0],
-                    positions[i, 1],
-                ),
-            )
-    plt.legend()
-    ax.axis("equal")
+    # Create plot
+    fig, ax = plt.subplots()
+    
+    if display is not None:
+        cmap = plt.cm.viridis
+        colors = jnp.abs(display) / jnp.abs(display).max()
+        scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap)
+        cbar = fig.colorbar(scatter, ax=ax)
+    else:
+        # Color by tags if no show_state is given
+        unique_tags = list(set(orb.tag for orb in orbs))
+        color_map = {tag: plt.cm.get_cmap('tab10')(i / len(unique_tags)) for i, tag in enumerate(unique_tags)}
+        for tag, positions in tags_to_pos.items():
+            positions = jnp.array(positions)
+            ax.scatter(positions[:, 0], positions[:, 1], label=tag, color=color_map[tag], edgecolor='white', alpha=0.7)
+        plt.legend(title='Orbital Tags')
 
+    # Optionally annotate points with their indexes
+    if show_index:
+        for orb in orbs:
+            pos = orb.position
+            idx = orbs.index(orb)
+            ax.annotate(str(idx), (pos[0], pos[1]), textcoords="offset points", xytext=(0,10), ha='center')
+
+    # Finalize plot settings
+    plt.title('Orbital Positions in the xy-plane')
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    ax.grid(True)
+    ax.axis('equal')
 
 @_plot_wrapper
-def show_charge_distribution_3d(orbs, density_matrix=None):
-    """Displays the ground state charge distribution of the stack in 3D
-
-    - `stack`: stack object
+def show_3d(orbs, show_tags=None, show_index=False, display = None):
     """
+    Generates a 3D scatter plot representing the positions of orbitals in 3D space,
+    filtered by specified tags. Optionally colors points by eigenvector amplitudes.
+
+    Parameters:
+    - orbs (list): List of orbital objects, each with attributes 'tag', 'position', and 'eigenvectors'.
+    - show_tags (list of str, optional): Tags used to filter orbitals for display.
+    - show_index (bool): If True, indexes of the orbitals will be shown on the plot.
+    - display: N-element array to display
+
+    Returns:
+    - None: A 3D scatter plot is displayed.
+    """
+    
+    # Determine which tags to display
+    if show_tags is None:
+        show_tags = {orb.tag for orb in orbs}
+    else:
+        show_tags = set(show_tags)
+
+    # Prepare data structures for plotting
+    tags_to_pos, tags_to_idxs = defaultdict(list), defaultdict(list)
+    for orb in orbs:
+        if orb.tag in show_tags:
+            tags_to_pos[orb.tag].append(orb.position)
+            tags_to_idxs[orb.tag].append(orbs.index(orb))
+
+    # Prepare 3D plot
     fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d")
-    charge = orbs.get_charge(density_matrix)
-    sp = ax.scatter(*zip(*orbs.positions[:, :2]), zs=orbs.positions[:, 2], c=charge)
-    plt.colorbar(sp)
+    ax = fig.add_subplot(111, projection='3d')
+    
+    if display is not None:
+        cmap = plt.cm.viridis
+        colors = jnp.abs(display) / jnp.abs(display).max()
+        scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], [orb.position[2] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, depthshade=True)
+        cbar = fig.colorbar(scatter, ax=ax)
+        cbar.set_label('Eigenvector Magnitude')
+    else:
+        # Color by tags if no show_state is given
+        unique_tags = list(set(orb.tag for orb in orbs))
+        color_map = {tag: plt.cm.get_cmap('tab10')(i / len(unique_tags)) for i, tag in enumerate(unique_tags)}
+        for tag, positions in tags_to_pos.items():
+            positions = jnp.array(positions)
+            ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2], label=tag, color=color_map[tag], edgecolor='white', alpha=0.7)
+        plt.legend(title='Orbital Tags')
 
+    # Optionally annotate points with their indexes
+    if show_index:
+        for orb in orbs:
+            pos = orb.position
+            idx = orbs.index(orb)
+            ax.text(pos[0], pos[1], pos[2], str(idx), color='black', size=10)
 
-@_plot_wrapper
-def show_charge_distribution_2d(orbs, density_matrix=None, plane: str = "xy"):
-    """Displays the ground state charge distribution of the stack in 2D
-
-    - `stack`: object representing system state
-    - `plane`: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'
-    """
-    indices = {"xy": [0, 1], "xz": [0, 2], "yz": [1, 2]}
-    fig, ax = plt.subplots(1, 1)
-    charge = orbs.get_charge(density_matrix)
-    sp = ax.scatter(*zip(*orbs.positions[:, indices[plane]]), c=charge)
-    ax.axis("equal")
-    ax.set_xlabel(plane[0])
-    ax.set_ylabel(plane[1])
-    plt.colorbar(sp)
-
+    # Finalize plot settings
+    ax.set_title('Orbital Positions in 3D')
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.grid(True)
 
 @_plot_wrapper
 def show_energies(orbs):
@@ -105,139 +160,49 @@ def show_energies(orbs):
 
 
 @_plot_wrapper
-def show_energy_occupations(
+def show_expectation_value_time(
     orbs,
-    density_matrices_or_solution,
+    expectation_value,
     time: jax.Array = None,
+    indicate_eigenstate = True,
+    ylabel = None,
     thresh: float = 1e-2,
 ):
-    """Depicts energy occupations as a function of time.
+    """Depicts an expectation value as a function of time.
 
-    - `stack`: a stack object
-    - `occupations`: list of energy occupations (complex arrays). The occupation at timestep n is given by `occupations[n]`.
+    - `expectation_value`: TxN array, where T => time
     - `time`: time axis
-    - `thresh`: plotting threshold. an occupation time series o_t is selected for plotting if it outgrows/outshrinks this bound. More exactly: o_t is plotted if max(o_t) - min(o_t) > thresh
+    - `indicate_eigenstate`: whether to associate the i-th energy eigenstate to the i-th column of expectation_value
+    - `thresh`: plotting threshold.  o_t is plotted if max(o_t) - min(o_t) > thresh
     """
-    if not isinstance(density_matrices_or_solution, jax.Array):
-        density_matrices_or_solution = density_matrices_or_solution.ys
-    if density_matrices_or_solution.ndim == 2:
-        occupations = density_matrices_or_solution
-    else:
-        occupations = jnp.diagonal(
-            density_matrices_or_solution, axis1=-1, axis2=-2
-        ).real
-    occupations *= orbs.electrons
-    time = time if time is not None else jnp.arange(occupations.shape[0])
+    time = time if time is not None else jnp.arange(expectation_values.shape[0])
     fig, ax = plt.subplots(1, 1)
     for idx in jnp.nonzero(
-        jnp.abs(jnp.amax(occupations, axis=0) - jnp.amin(occupations, axis=0)) > thresh
+        jnp.abs(jnp.amax(expectation_value, axis=0) - jnp.amin(expectation_value, axis=0)) > thresh
     )[0]:
-        ax.plot(time, occupations[:, idx], label=f"{float(orbs.energies[idx]):2.2f} eV")
+        ax.plot(time, expectation_value[:, idx], label=f"{float(orbs.energies[idx]):2.2f} eV")
 
     time_label = "time steps" if time.dtype == int else r"time [$\hbar$/eV]"
     ax.set_xlabel(time_label)
-    ax.set_ylabel("occupation of eigenstate")
-    plt.legend()
-
-
-# FIXME: also broken, is this actually needed?
-@_plot_wrapper
-def show_electric_field_space(
-    first: jax.Array,
-    second: jax.Array,
-    plane: str,
-    time: jax.Array,
-    field_func,
-    args: dict,
-    component: int = 0,
-    flag: int = 0,
-):
-    """Shows the external electric field on a spatial grid at a fixed point in time.
-
-    - `first`: grid coordinates. get passed directly as meshgrid(frist, second).
-    - `second`: grid coordinates. get passed directly as meshgrid(frist, second).
-    - `plane`: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'. E.g. 'xy' means: make a plot in xy-plane and use "first"-parameter as x-axis, "second"-parameter as y-axis
-    - `time`: time to evalute the field at
-    - `field_func`: a function taking in parameters as given by args and an additional argument "positions" that produces a closure that gives the electric field as function of time
-    - `args`: arguments to field_func as a dictionary, The "positions"-argument must be dropped.
-    - `component`: 0 => plot x, 1 => plot y, 2 => plot z
-    - `flag`: 0 => plot real, 1 => plot imag, 2 => plot abs
-    """
-    plane_indices = {
-        "xy": jnp.array([0, 1, 2]),
-        "xz": jnp.array([0, 2, 1]),
-        "yz": jnp.array([2, 0, 1]),
-    }
-    funcs = [
-        lambda field, t: field(t).real,
-        lambda field, t: field(t).imag,
-        lambda field, t: jnp.abs(field(t)),
-    ]
-
-    labels = ["Re(E)", "Im(E)", "|E|"]
-    first, second = jnp.meshgrid(first, second)
-    dim = first.size
-    pos = jnp.concatenate(
-        (
-            jnp.stack((first, second), axis=2).reshape(dim, 2),
-            jnp.expand_dims(jnp.zeros(dim), 1),
-        ),
-        axis=1,
-    )[:, plane_indices[plane]]
-    fig, ax = plt.subplots(1, 1)
-    fig.colorbar(
-        ax.contourf(
-            first,
-            second,
-            funcs[flag](field_func(**args, positions=pos), time)[component].reshape(
-                first.shape
-            ),
-        ),
-        label=labels[flag],
-    )
-    ax.set_xlabel(plane[0])
-    ax.set_ylabel(plane[1])
-
-
-# FIXME: also broken, is this actually needed?
-@_plot_wrapper
-def show_electric_field_time(time: jax.Array, field: jax.Array, flag: int = 0):
-    """Shows the external electric field with its (x,y,z)-components as a function of time at a fixed spatial point.
-
-    - `time`: array of points in time for field evaluation
-    - `field`: output of an electric field function
-    - `flag`: 0 => plot real, 1 => plot imag, 2 => plot abs
-    """
-    fig, ax = plt.subplots(1, 1)
-    funcs = [
-        lambda x: x.real,
-        lambda x: x.imag,
-        lambda x: jnp.abs(x),
-    ]
-    labels = ["Re(E)", "Im(E)", "|E|"]
-    ax.plot(time, funcs[flag](jnp.array([jnp.squeeze(field(t)) for t in time])))
-    ax.set_xlabel(r"time [$\hbar$/eV]")
-    ax.set_ylabel(labels[flag])
+    if ylabel is not None:
+        ax.set_ylabel(ylabel)
+    if indicate_eigenstate == True:
+        plt.legend()
 
 
 @_plot_wrapper
-def show_induced_field_at(orbs, positions, x=None, y=None, z=None, density_matrix=None):
+def show_induced_field(orbs, x=None, y=None, z=None, component = 0, density_matrix=None):
     """Displays the normalized logarithm of the absolute value of the induced field in 2D
 
-    - `rho`: density matrix
-    - `electrons`: number of electrons
-    - `eigenvectors`: eigenvectors of the corresponding stack (as stored in a stack object)
-    - `positions`: positions of the orbitals in the stack
-    - `first`: grid coordinates. get passed directly as meshgrid(frist, second).
-    - `second`: grid coordinates. get passed directly as meshgrid(frist, second).
-    - `plane`: which plane to use for field evaluation. one of 'xy', 'xz', 'yz'. E.g. 'xy' means: make a plot in xy-plane and use "first"-parameter as x-axis, "second"-parameter as y-axis
-    - `component`: 0 => plot x, 1 => plot y, 2 => plot z
-    - `norm` : constant to normalize the field
-    - `plot_stack`: if True, add a scatter plot indicating the positions of the orbitals in the stack
+    - `x`: 
+    - `y`: 
+    - `z`: 
+    - `component`: field component to display
+    - `density_matrix` : if not given, initial density_matrix 
     """
 
     density_matrix = (
-        density_matrix if density_matrix is not None else orbs.density_matrix
+        density_matrix if density_matrix is not None else orbs.initial_density_matrix
     )
     charge = density_matrix.diag().real
 
@@ -264,11 +229,11 @@ def show_induced_field_at(orbs, positions, x=None, y=None, z=None, density_matri
     ax.set_xlabel(plane[0])
     ax.set_ylabel(plane[1])
 
-def _display_lattice_cut(positions, selected_positions, polygon_vertices = None):
+def _display_lattice_cut(positions, selected_positions, polygon = None):
     fig, ax = plt.subplots(1, 1)
-    if polygon_vertices is not None:
+    if polygon is not None:
         patch = plt.Polygon(
-            polygon_vertices[:-1], edgecolor="orange", facecolor="none", linewidth=2
+            polygon[:-1], edgecolor="orange", facecolor="none", linewidth=2
         )
         ax.add_patch(patch)
     ax.set_xlim(-1, 1)
