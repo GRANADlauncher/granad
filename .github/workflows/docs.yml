@@ -34,8 +34,17 @@ jobs:
           pip install pymdown-extensions
           pip install mkdocstrings
           pip install mkdocstrings-python
+          pip install jupytext
+          pip install nbconvert
+          pip install ipykernel
           pip install -e .
           
+      - name: Execute notebook processing script
+        if: env.TRIGGER_BUILD == 'true'
+        run: bash build_docs.sh
+        env:
+          PATH: $PATH:/home/runner/.local/bin
+
       - name: Build MkDocs site
         if: env.TRIGGER_BUILD == 'true'
         run: mkdocs build
