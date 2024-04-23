@@ -728,6 +728,9 @@ class OrbitalList:
         orb1, orb2 = self._maybe_indices_to_orbs((orb_or_index1, orb_or_index2))
         self._set_coupling(orb1, orb2, self._ensure_complex(val), self._coulomb_dict)
 
+    def index(self, orb):
+        return self._list.index(orb)
+
     @mutates
     def append(self, other):
         """
@@ -987,7 +990,7 @@ class OrbitalList:
         return self._transform_basis(observable, self._eigenvectors.conj().T)
 
     @recomputes
-    def get_charge(density_matrix: None):
+    def get_charge(density_matrix = None):
         """
         Calculates the charge distribution from a given density matrix or from the initial density matrix if not specified.
 
@@ -1666,7 +1669,7 @@ def append(self, other):
 
 
 <h3 id="granad.orbitals.OrbitalList.get_charge" class="doc doc-heading">
-          <code class="highlight language-python">get_charge(density_matrix)</code>
+          <code class="highlight language-python">get_charge(density_matrix=None)</code>
 
 </h3>
 
@@ -1689,7 +1692,9 @@ def append(self, other):
         <ul class="first simple">
             <li>
               <b><code>density_matrix</code></b>
-                  (<code><span title="jax.Array">Array</span></code>)
+                  (<code><span title="jax.Array">Array</span></code>, default:
+                      <code>None</code>
+)
               –
               <div class="doc-md-description">
                 <p>The density matrix to use for calculating charge.</p>
@@ -1726,7 +1731,7 @@ def append(self, other):
           <details class="quote">
             <summary>Source code in <code>src/granad/orbitals.py</code></summary>
             <pre class="highlight"><code class="language-python">@recomputes
-def get_charge(density_matrix: None):
+def get_charge(density_matrix = None):
     """
     Calculates the charge distribution from a given density matrix or from the initial density matrix if not specified.
 
