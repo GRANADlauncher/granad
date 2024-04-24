@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# ## Linear response absorption cross section with TD and RPA simulations
+# # Linear response absorption cross section with TD and RPA simulations
 #
 
 # We will calculate the optical absorption in the RPA and compare it to TD simulations with a weak external field.
