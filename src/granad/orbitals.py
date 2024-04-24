@@ -148,7 +148,7 @@ def plotting_methods(cls):
 class SimulationParams():
     from_state : jax.Array = field(default_factory=lambda : jnp.array([0]))
     to_state : jax.Array = field(default_factory=lambda : jnp.array([0]))
-    excited_electrons : jax.Array = field(default_factory=lambda : jnp.array([0]))
+    excited_electrons : jax.Array = field(default_factory=lambda : jnp.array([0]))    
     eps : float = 1e-5
     beta : float = jnp.inf
     self_consistency_params : dict =  field(default_factory=dict)
@@ -160,7 +160,7 @@ class SimulationParams():
 class OrbitalList:
     """A list of orbitals."""
 
-    def __init__(self, orbs, _hopping_dict=None, _coulomb_dict=None):
+    def __init__(self, orbs, _hopping_dict=None, _coulomb_dict=None, _transitions_dict=None):
         # couplings are dicts mapping orbital pairs to couplings
         self._hopping_dict = (
             _hopping_dict if _hopping_dict is not None else _SortedTupleDict()
@@ -168,7 +168,8 @@ class OrbitalList:
         self._coulomb_dict = (
             _coulomb_dict if _coulomb_dict is not None else _SortedTupleDict()
         )
-        self._transitions = _SortedTupleDict()
+        self._transitions_dict =_transitions_dict if _transitions_dict is not None else _SortedTupleDict()
+
 
         # contains all high-level simulation information
         self._list = list(orbs) if orbs is not None else []
@@ -220,11 +221,15 @@ class OrbitalList:
             new_hopping_dict.update(other._hopping_dict)
             new_coulomb_dict = self._coulomb_dict.copy()
             new_coulomb_dict.update(other._coulomb_dict)
+            new_transitions_dict = self._transitions_dict.copy()
+            new_transitions_dict.update(other._transitions_dict)
+            
 
         return OrbitalList(
             (self._list + list(other)).copy(),
             _SortedTupleDict(new_hopping_dict),
             _SortedTupleDict(new_coulomb_dict),
+            _SortedTupleDict(new_transitions_dict),
         )
 
     @mutates
@@ -501,6 +506,23 @@ class OrbitalList:
             orb.position += translation_vector
 
     @mutates
+    def set_position(self, tag, position):
+        """
+        Sets the position of all orbitals with a specific tag.
+
+        Parameters:
+            tag (str): The tag to match orbitals.
+            translation_vector (jax.Array): The vector by which to translate the orbital positions.
+
+        Notes:
+            This operation mutates the positions of the matched orbitals.
+        """
+        orbs = [orb for orb in self._list if orb.tag == tag]
+        for orb in orbs:
+            orb.position = position
+
+            
+    @mutates
     def make_self_consistent(self, sc_params):
         """
         Configures the list for self-consistent field calculations.
@@ -509,6 +531,10 @@ class OrbitalList:
             sc_params (dict): Parameters for self-consistency.
         """
         self.self_consistency_params = sc_params
+
+    @mutates
+    def set_electrons( self, number ):
+        self.simulation_params.electrons = number 
 
     @mutates
     def set_excitation(self, from_state, to_state, excited_electrons):
@@ -551,7 +577,7 @@ class OrbitalList:
             arr (jax.Array): The 3-element array containing dipole transition elements.
         """
         orb1, orb2 = self._maybe_indices_to_orbs((orb_or_index1, orb_or_index2))
-        self._transitions[(orb_or_index1, orb_or_index2)] = jnp.array(arr).astype(
+        self._transitions_dict[(orb_or_index1, orb_or_index2)] = jnp.array(arr).astype(
             complex
         )
 
@@ -657,7 +683,7 @@ class OrbitalList:
             dipole_operator = dipole_operator.at[i, :, :].set(
                 jnp.diag(self._positions[:, i] / 2)
             )
-        for orbital_combination, value in self._transitions.items():
+        for orbital_combination, value in self._transitions_dict.items():
             i, j = self._list.index(orbital_combination[0]), self._list.index(
                 orbital_combination[1]
             )
@@ -675,7 +701,7 @@ class OrbitalList:
            jax.Array: A tensor representing the velocity operator, computed as a differential of position and Hamiltonian.
         """
 
-        if self._transitions is None:
+        if self._transitions_dict is None:
             x_times_h = jnp.einsum("ij,iL->ijL", self._hamiltonian, self._positions)
             h_times = jnp.einsum("ij,jL->ijL", self._hamiltonian, self._positions)
         else:
@@ -981,6 +1007,7 @@ class OrbitalList:
            coulomb_strength (float): Strength of Coulomb interactions.
            solver (diffrax.Solver): The differential equation solver to use.
            stepsize_controller (diffrax.StepSizeController): The controller for the solver's step size.
+           initial_density_matrix (Union[jax.Array,None]): if given, used as initial density matrix instead
 
         Returns:
            Tuple[jax.Array, jax.Array]: The time axis and the simulated density matrices at specified time intervals.
