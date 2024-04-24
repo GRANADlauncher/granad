@@ -1,5 +1,5 @@
 from collections import Counter
-from dataclasses import dataclass, field, fields, replace
+from dataclasses import dataclass, field, replace
 from functools import wraps
 from pprint import pformat
 from typing import Callable, Optional, Union
@@ -32,7 +32,14 @@ class Orbital:
                               optional and may be None.
         atom_name (Optional[str]): The name of the atom this orbital belongs to, can be None if not applicable.
         group_id (int): A group identifier for the orbital, automatically assigned by a Watchdog class
-                        default factory method.
+                        default factory method. For example, all pz orbitals in a single graphene flake get the same 
+                        group_id.
+
+    Key Functionality:
+        The most important attributes of an orbtial are
+         
+        group_id (automatically generated, not recommended to be set it by the user)
+        tag (user-defined or predefined for existing materials)
     """
     position: jax.Array = field(default_factory=lambda : jnp.array([0, 0, 0]), hash=False, compare=False)
     layer_index: Optional[int] = None
@@ -145,20 +152,79 @@ def plotting_methods(cls):
     return cls
 
 @dataclass
-class SimulationParams():
+class SimulationParams:
+    """
+    A data class for storing parameters necessary for running a simulation involving electronic states and transitions.
+
+    Attributes:
+        from_state (jax.Array): An array where each element is the index of an electronic state from which
+                                electrons are excited. Defaults to an array containing a single zero.
+        to_state (jax.Array): An array where each element is the index of an electronic state to which
+                              electrons are excited. Defaults to an array containing a single zero.
+        excited_electrons (jax.Array): An array where each element indicates the number of electrons excited
+                                       between the corresponding states in `from_state` and `to_state`.
+                                       Defaults to an array containing a single zero.
+        eps (float): Numerical precision used for identifying degenerate eigenstates. Defaults to 1e-5.
+        beta (float): Inverse temperature parameter (1/kT) used in thermodynamic calculations. Set to
+                      `jax.numpy.inf` by default, implying zero temperature.
+        self_consistency_params (dict): A dictionary to hold additional parameters required for self-consistency
+                                        calculations within the simulation. Defaults to an empty dictionary.
+        spin_degeneracy (float): Factor to account for the degeneracy of spin states in the simulation. Typically
+                               set to 2, considering spin up and spin down. 
+        electrons (Optional[int]): The total number of electrons in the structure. If not provided, it is assumed
+                                   that the system's electron number needs to be calculated or is managed elsewhere.
+
+    Note:
+        This object should not be created directly, but is rather used to encapsulate (ephemeral) internal state
+        of OrbitalList.
+    """
     from_state : jax.Array = field(default_factory=lambda : jnp.array([0]))
     to_state : jax.Array = field(default_factory=lambda : jnp.array([0]))
     excited_electrons : jax.Array = field(default_factory=lambda : jnp.array([0]))    
     eps : float = 1e-5
     beta : float = jnp.inf
     self_consistency_params : dict =  field(default_factory=dict)
-    spin_degeneracy : int = 2.0
+    spin_degeneracy : float = 2.0
     electrons : Optional[int] = None
     
 
 @plotting_methods
 class OrbitalList:
-    """A list of orbitals."""
+    """
+    A class that encapsulates a list of orbitals, providing an interface similar to a standard Python list,
+    while also maintaining additional functionalities for coupling orbitals and managing their relationships.
+
+    The class stores orbitals in a wrapped Python list and handles the coupling of orbitals using dictionaries,
+    where the keys are tuples of orbital identifiers (orb_id), and the values are the couplings (either a float
+    or a function representing the coupling strength or mechanism between the orbitals).
+
+    The class also stores simulation parameters like the number of electrons and temperature in a dataclass.
+    
+    The class computes physical observables (energies etc) lazily on the fly, when they are needed. If there is 
+    a basis (either site or energy) to reasonably associate with a quantity, the class exposes quantity_x as an attribute
+    for the site basis and quantity_e as an attribute for the energy basis. By default, all quantities are in site basis, so
+    quantity_x == quantity.
+
+    The class exposes simulation methods.
+     
+    Attributes:
+        orbitals (list): The underlying list that stores the orbitals.
+        couplings (dict): A dictionary where keys are tuples of orbital identifiers and values are the couplings
+                          (either float values or functions).
+
+    Key Functionalities:
+        - **Orbital Identification**: Orbitals can be identified either by their group_id, a direct
+          reference to the orbital object itself, or via a user-defined tag.
+        - **Index Access**: Orbitals can be accessed and managed by their index in the list, allowing for
+          list-like manipulation (addition, removal, access).
+        - **Coupling Definition**: Allows for the definition and adjustment of couplings between pairs of orbitals,
+          identified by a tuple of their respective identifiers. These couplings can dynamically represent the
+          interaction strength or be a computational function that defines the interaction.
+
+    Note:
+        The coupling values can be dynamically modified. When two orbital lists are added, their couplings are merged, 
+        and their simulation parameters are wiped.
+    """
 
     def __init__(self, orbs, _hopping_dict=None, _coulomb_dict=None, _transitions_dict=None):
         # couplings are dicts mapping orbital pairs to couplings
@@ -490,18 +556,24 @@ class OrbitalList:
         self._list.append(other)
 
     @mutates
-    def shift_by_vector(self, tag, translation_vector):
+    def shift_by_vector(self, tag_or_group_id, translation_vector):
         """
         Shifts all orbitals with a specific tag by a given vector.
 
         Parameters:
-            tag (str): The tag to match orbitals.
+            tag_or_group_id (str or int or list[int]): The tag, group_id to match orbitals.
             translation_vector (jax.Array): The vector by which to translate the orbital positions.
 
         Notes:
             This operation mutates the positions of the matched orbitals.
         """
-        orbs = [orb for orb in self._list if orb.tag == tag]
+        if isinstance(tag_or_group_id, str):            
+            orbs = [orb for orb in self._list if orb.tag == tag_or_group_id]
+        elif isinstance(tag_or_group_id, int):
+            orbs = [orb for orb in self._list if orb.group_id == tag_or_group_id]
+        else:
+            orbs = [orb for orb in self._list if orb.group_id in tag_or_group_id]
+            
         for orb in orbs:
             orb.position += jnp.array(translation_vector)
 
@@ -512,7 +584,7 @@ class OrbitalList:
 
         Parameters:
             tag (str): The tag to match orbitals.
-            translation_vector (jax.Array): The vector by which to translate the orbital positions.
+            position (jax.Array): The vector at which to move the orbitals
 
         Notes:
             This operation mutates the positions of the matched orbitals.
