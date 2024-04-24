@@ -4,12 +4,6 @@ import jax.numpy as jnp
 jax.config.update("jax_enable_x64", True)
 import diffrax
 
-# TODO: write somewhere that the einsum convention used is: site indices are small, electric field component indices are big
-# TODO basis conversion is duplicated at least three times here :///
-# TODO: decouple rpa from the OrbitalList by just passing (a lot of) arguments
-# TODO: think about public / private
-
-
 def fraction_periodic(signal, threshold=1e-2):
 
     # signal is periodic => abs(signal) is periodic
@@ -25,8 +19,6 @@ def fraction_periodic(signal, threshold=1e-2):
     # approximate admixture of periodic signal
     return (deviation < threshold).sum() / len(signal)
 
-
-# TODO: does this work as intended?
 def get_fourier_transform(t_linspace, function_of_time, return_omega_axis=True):
     # Compute the FFT along the first axis
     function_of_omega = (
@@ -188,7 +180,7 @@ def _density_aufbau(
     return jnp.diag(occupation) / electrons
 
 
-# TODO: this needs more clarity, and basis trafo is essentially duplicated here
+# TODO: basis trafo
 def _get_self_consistent(
     hamiltonian,
     coulomb,
@@ -343,7 +335,6 @@ def get_coulomb_field_to_from(source_positions, target_positions, compute_only_a
     # Calculate and return the contributions
     coulomb_field_to_from = distance_vector * one_over_distance_cubed[:, :, None]
 
-    # TODO: could probably be baked into the calculation
     if compute_only_at is not None:
         coulomb_field_to_from_masked = jnp.zeros_like(contributions)
         coulomb_field_to_from_masked.at[compute_only_at].set(
@@ -396,7 +387,7 @@ def get_diamagnetic(q, m, velocity_operator, vector_potential):
     return jnp.diag(q**2 / m * 0.5 * jnp.sum(vector_potential**2, axis=1))
 
 
-# TODO: return valid solution objects
+# TODO: wrap the result somehow?
 def integrate_master_equation(
     hamiltonian,
     coulomb,
@@ -471,7 +462,6 @@ def integrate_master_equation(
 
     dt = time_axis[1] - time_axis[0]
     if use_old_method:
-        # TODO: here, we essentially do rk first order
         kernel = lambda r, t: (r + dt * rhs(t, r, 0), r)
         _, density_matrices = jax.lax.scan(kernel, initial_density_matrix, time_axis)
         return density_matrices[::skip]

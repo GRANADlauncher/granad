@@ -8,11 +8,7 @@ import diffrax
 import jax
 import jax.numpy as jnp
 
-# TODO: hmmm
 from granad import _numerics, _plotting, _watchdog
-
-# TODO: clean this up, repair doc strings, some naming conventions are weird, e.g. position_operator should be get_position_operator, make einsum magic more versatile, rethink the "use private members in recompute" idea
-# TODO: HF for parameter estimation
 
 @dataclass
 class Orbital:
@@ -70,7 +66,6 @@ class Orbital:
     def __str__(self):
         return pformat(vars(self), sort_dicts=False)
 
-    # TODO: bla bla bla ... this should be shorter but im too tired
     def __eq__(self, other):
         if not isinstance(other, Orbital):
             return NotImplemented
@@ -94,7 +89,6 @@ class Orbital:
         return not self == other
 
 
-# TODO: inheritance :///, typecheck keys
 class _SortedTupleDict(dict):
 
     def __getitem__(self, key):
@@ -200,7 +194,6 @@ class OrbitalList:
     def __repr__(self):
         return repr(self._list)
 
-    # TODO: hmmm
     def __str__(self):
         info = f"List with {len(self)} orbitals, {self.electrons} electrons."
         excited = f"{self.excited_electrons} electrons excited from {self.from_state} to {self.to_state}."
@@ -215,7 +208,6 @@ class OrbitalList:
     def __iter__(self):
         return iter(self._list)
 
-    # TODO: uff, addition, or, in general, mutation should wipe all attributes except for coupling
     def __add__(self, other):
         if not self._are_orbs(other):
             raise TypeError
@@ -261,12 +253,10 @@ class OrbitalList:
     def _set_coupling(self, orb_or_group_id1, orb_or_group_id2, val_or_func, coupling):
         coupling[(orb_or_group_id1, orb_or_group_id2)] = val_or_func
 
-    # TODO: we may want to differentiate through this, also this is private so better not wrap return val into container
     def _hamiltonian_coulomb(self):
 
         def fill_matrix(matrix, coupling_dict):
 
-            # TODO: there should be an internal
             dummy = jnp.arange(len(self))
             triangle_mask = dummy[:, None] >= dummy
 
@@ -295,7 +285,7 @@ class OrbitalList:
 
             return matrix + matrix.conj().T - jnp.diag(jnp.diag(matrix))
 
-        # TODO: oh noes rounding again, but don't know what to do else
+        # TODO: rounding
         positions = self._get_positions()
         distances = jnp.round(
             jnp.linalg.norm(positions - positions[:, None], axis=-1), 6
@@ -321,7 +311,6 @@ class OrbitalList:
             return func_or_val + 0.0j
         raise TypeError
 
-    # TODO: bla bla bla ... incredibly verbose, but couldn't think of anything better yet
     def _maybe_orbs_to_group_ids(self, maybe_orbs):
         def convert(maybe_orb):
             # TODO: check if this is really a group_id
@@ -344,7 +333,6 @@ class OrbitalList:
         
     def _build(self):
 
-        # TODO: uff
         assert len(self) > 0
         self._positions = self._get_positions()
 
@@ -373,7 +361,6 @@ class OrbitalList:
             self.beta,
         )
 
-        # TODO: uff
         if self.self_consistency_params:
             (
                 self._hamiltonian,
@@ -497,7 +484,6 @@ class OrbitalList:
             raise ValueError
         self._list.append(other)
 
-    # TODO: remove this once better position handling is done
     @mutates
     def shift_by_vector(self, tag, translation_vector):
         """
@@ -514,7 +500,6 @@ class OrbitalList:
         for orb in orbs:
             orb.position += translation_vector
 
-    # TODO: validate
     @mutates
     def make_self_consistent(self, sc_params):
         """
@@ -525,7 +510,6 @@ class OrbitalList:
         """
         self.self_consistency_params = sc_params
 
-    # TODO: uff
     @mutates
     def set_excitation(self, from_state, to_state, excited_electrons):
         """
@@ -571,11 +555,9 @@ class OrbitalList:
             complex
         )
 
-    # TODO: bla bla bla
     @property
     @recomputes
     def homo(self):
-        # TODO: hmmm
         return (self.electrons * self.stationary_density_matrix_e).real.diagonal().round(2).nonzero()[0].item()
 
     @property
@@ -623,7 +605,6 @@ class OrbitalList:
     def energies(self):
         return self._energies
 
-    # TODO: uff decorator inception, also should return copies to avoid weirdness
     @property
     @recomputes
     def hamiltonian(self):
@@ -804,7 +785,6 @@ class OrbitalList:
         gaussians = jnp.exp(-((self._energies - omega) ** 2) / 2 * broadening**2)
         return prefactor * jnp.sum(gaussians)
 
-    # TODO: make compatbile with orbital
     @recomputes
     def get_ldos(self, omega: float, site_index: int, broadening: float = 0.1):
         """
@@ -907,7 +887,6 @@ class OrbitalList:
             correction - density_matrix,
         )
 
-    # TODO: uff, all of the methods below should be rewritten
     def get_expectation_value_time_domain(self, *args, **kwargs):
         """
         Calculates the time-domain expectation value of an operator, corrected for induced effects based on the stationary density matrix.
@@ -1055,7 +1034,7 @@ class OrbitalList:
             skip,
         )
 
-    # TODO: uff, again verbose
+    # TODO: decouple rpa numerics from orbital datataype
     def get_polarizability_rpa(
         self,
         omegas,            

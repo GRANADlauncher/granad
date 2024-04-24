@@ -2,8 +2,6 @@ from functools import wraps
 
 import jax.numpy as jnp
 
-
-# TODO: this is kind of messy
 def _rotate_vertices(vertices, angle_degrees):
     angle_radians = jnp.radians(angle_degrees)
     rotation_matrix = jnp.array(

@@ -22,7 +22,6 @@ def _cut_flake_1d( material, unit_cells, plot=False):
     orbital_positions = jnp.unique( orbital_positions, axis = 0)        
     return material._get_orbital_list( orbital_positions, grid )
 
-# TODO clean this up
 def _cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 2):
     def _prune_neighbors(
             positions, minimum_neighbor_number, remaining_old=jnp.inf
