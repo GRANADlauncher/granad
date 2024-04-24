@@ -503,7 +503,7 @@ class OrbitalList:
         """
         orbs = [orb for orb in self._list if orb.tag == tag]
         for orb in orbs:
-            orb.position += translation_vector
+            orb.position += jnp.array(translation_vector)
 
     @mutates
     def set_position(self, tag, position):
@@ -584,7 +584,7 @@ class OrbitalList:
     @property
     @recomputes
     def homo(self):
-        return (self.electrons * self.stationary_density_matrix_e).real.diagonal().round(2).nonzero()[0].item()
+        return (self.electrons * self.stationary_density_matrix_e).real.diagonal().round(2).nonzero()[0][-1].item()
 
     @property
     def electrons(self):
