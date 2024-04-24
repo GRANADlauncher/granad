@@ -234,5 +234,5 @@ plt.show()
 # We have correctly identified periodicity and thus the density matrix density_matrices[-1] can be taken as a steady state for epi calculation
 
 # +
-print(flake.get_epi( density_matrices[-1], omega = 1.0 ))
+print(flake.get_epi( flake.transform_to_energy_basis(density_matrices[-1]), omega = 1.0 ))
 # -
