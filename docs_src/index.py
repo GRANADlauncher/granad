@@ -24,20 +24,10 @@
 
 # ### Installation
 #
-# If you want to just install the package, run
 
 # + {"cell_type": "markdown"}
 # ```bash
 # pip install git+https://github.com/GRANADlauncher/granad.git
-# ```
-
-# The documentations is built automatically by executing
-
-# + {"cell_type": "markdown"}
-# ```bash
-# git clone https://github.com/GRANADlauncher/granad.git
-# cd granad
-# bash install.sh
 # ```
 
 # ### Quickstart
