@@ -28,7 +28,6 @@
 # 
 # Geometries can be visualized in 2D or 3D.
 
-#
 # +
 from granad import Wave, Orbital, OrbitalList, MaterialCatalog, Rectangle
 
@@ -88,3 +87,5 @@ help(flake.show_2d)
 # +
 flake.show_2d( display = flake.eigenvectors[:, 0] ) # the ground state is the
 # -
+
+# Additionally, if you supply the keyword argument name = "MY-PLOT-NAME.pdf" to any plotting function, the plot will not be displayed, but instead saved to disk in the directory you invoked Python.
