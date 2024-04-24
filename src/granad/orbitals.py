@@ -806,12 +806,12 @@ class OrbitalList:
         return prefactor * jnp.sum(weight * gaussians)
 
     @recomputes
-    def get_epi(self, rho: jax.Array, omega: float, epsilon: float = None) -> float:
+    def get_epi(self, density_matrix_stat: jax.Array, omega: float, epsilon: float = None) -> float:
         """
         Calculates the energy-based plasmonicity index (EPI) for a given density matrix and frequency.
 
         Parameters:
-           rho (jax.Array): The density matrix to consider for EPI calculation.
+           density_matrix_stat (jax.Array): The density matrix to consider for EPI calculation.
            omega (float): The frequency to evaluate the EPI at.
            epsilon (float, optional): The small imaginary part to stabilize the calculation, defaults to internal epsilon if not provided.
         
@@ -819,15 +819,15 @@ class OrbitalList:
            float: The EPI.
         """
 
-        epsilon = self.params.eps if epsilon is None else epsilon
-        rho_without_diagonal = jnp.abs(rho - jnp.diag(jnp.diag(rho)))
-        rho_normalized = rho_without_diagonal / jnp.linalg.norm(rho_without_diagonal)
+        epsilon = epsilon if epsilon is not None else self.eps
+        density_matrix_stat_without_diagonal = jnp.abs(density_matrix_stat - jnp.diag(jnp.diag(density_matrix_stat)))
+        density_matrix_stat_normalized = density_matrix_stat_without_diagonal / jnp.linalg.norm(density_matrix_stat_without_diagonal)
         te = self.transition_energies
         excitonic_transitions = (
-            rho_normalized / (te * (te > self.eps) - omega + 1j * epsilon) ** 2
+            density_matrix_stat_normalized / (te * (te > self.eps) - omega + 1j * epsilon) ** 2
         )
-        return 1 - jnp.sum(jnp.abs(excitonic_transitions * rho_normalized)) / (
-            jnp.linalg.norm(rho_normalized) * jnp.linalg.norm(excitonic_transitions)
+        return 1 - jnp.sum(jnp.abs(excitonic_transitions * density_matrix_stat_normalized)) / (
+            jnp.linalg.norm(density_matrix_stat_normalized) * jnp.linalg.norm(excitonic_transitions)
         )
 
     @recomputes
@@ -862,7 +862,7 @@ class OrbitalList:
         e_field = 14.39 * jnp.sum(point_charge * charge[:, None, None], axis=0)
         return e_field
 
-    def get_expectation_value(self, operator, density_matrix, induced = True):
+    def get_expectation_value(self, *, operator, density_matrix, induced = True):
         """
         Calculates the expectation value of an operator with respect to a given density matrix using tensor contractions specified for different dimensionalities of the input arrays.
 
@@ -876,7 +876,7 @@ class OrbitalList:
 
         dims_einsum_strings = {
             (3, 2): "ijk,kj->i",
-            (3, 3): "ijk,lkj->il",
+            (3, 3): "ijk,lkj->li",
             (2, 3): "ij,kji->k",
             (2, 2): "ij,ji->",
         }
@@ -899,12 +899,16 @@ class OrbitalList:
         """
 
         operator = kwargs.pop("operator", None)
+        return_density = kwargs.pop("return_density", False)
         time_axis, density_matrices = self.get_density_matrix_time_domain(
             *args, **kwargs
         )
-        return time_axis, self.get_expectation_value(
-            density_matrices, operator
+        expectation_value = self.get_expectation_value(
+            density_matrix = density_matrices, operator = operator
         )
+        if return_density == True:
+            return time_axis, expecation_value, density_matrices
+        return time_axis, expectation_value        
 
     def get_expectation_value_frequency_domain(self, *args, **kwargs):
         """
@@ -926,7 +930,7 @@ class OrbitalList:
             time_axis, exp_val_td = self.get_expectation_value_time_domain(*args, **kwargs)
         else:
             operator = kwargs.pop("operator", None)            
-            exp_val_td = self.get_expectation_value(density_matrices, operator)
+            exp_val_td = self.get_expectation_value(density_matrix = density_matrices, operator = operator)
                         
         omega, exp_val_omega = _numerics.get_fourier_transform(time_axis, exp_val_td)
         mask = (omega >= omega_min) & (omega <= omega_max)
@@ -957,6 +961,7 @@ class OrbitalList:
         coulomb_strength=1.0,
         solver=diffrax.Dopri5(),
         stepsize_controller=diffrax.PIDController(rtol=1e-10, atol=1e-10),
+        initial_density_matrix : Optional[jax.Array] = None,
     ):
         """
         Simulates the time evolution of the density matrix for a given system under specified conditions and external fields.
@@ -1012,6 +1017,7 @@ class OrbitalList:
         coulomb_field_to_from = _numerics.get_coulomb_field_to_from(
             self.positions, self.positions, compute_only_at
         )
+        initial_density_matrix = self.initial_density_matrix if initial_density_matrix is None else initial_density_matrix
 
         # TODO: not very elegant: we just dump every argument in there by default
         return time_axis[::skip], _numerics.integrate_master_equation(
@@ -1020,7 +1026,7 @@ class OrbitalList:
             self.dipole_operator,
             self.electrons,
             self.velocity_operator,
-            self.initial_density_matrix,
+            initial_density_matrix,
             self.stationary_density_matrix,
             time_axis,
             illumination,
@@ -1033,6 +1039,7 @@ class OrbitalList:
             use_old_method,
             skip,
         )
+            
 
     # TODO: decouple rpa numerics from orbital datataype
     def get_polarizability_rpa(

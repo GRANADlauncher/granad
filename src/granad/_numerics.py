@@ -5,7 +5,23 @@ jax.config.update("jax_enable_x64", True)
 import diffrax
 
 def fraction_periodic(signal, threshold=1e-2):
+    """
+    Estimates the fraction of a periodic component in a given signal by analyzing the deviation of the cumulative mean from its median value. The periodicity is inferred based on the constancy of the cumulative mean of the absolute value of the signal.
 
+    Parameters:
+        signal (jax.Array): A 1D array representing the signal of interest.
+        threshold (float, optional): A threshold value to determine the significance level of deviation from periodicity. Defaults to 0.01.
+
+    Returns:
+        float: A ratio representing the fraction of the signal that is considered periodic, based on the specified threshold.
+
+    Example:
+        >>> import jax.numpy as jnp
+        >>> signal = jnp.array([0.1, 0.2, 0.1, 0.2, 0.1, 0.2])
+        >>> print(fraction_periodic(signal))
+        0.995
+    """
+    
     # signal is periodic => abs(signal) is periodic
     cum_sum = jnp.abs(signal).cumsum()
 
@@ -17,7 +33,7 @@ def fraction_periodic(signal, threshold=1e-2):
     deviation = jnp.abs(med - cum_mean) / med
 
     # approximate admixture of periodic signal
-    return (deviation < threshold).sum() / len(signal)
+    return (deviation < threshold).sum().item() / len(signal)
 
 def get_fourier_transform(t_linspace, function_of_time, return_omega_axis=True):
     # Compute the FFT along the first axis
