@@ -58,13 +58,35 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../cutting/">Cutting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../defining_materials/">Defining Materials</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../electric_fields/">Electric Fields</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Getting started</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#orbitals">Orbitals</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#materials">Materials</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#orbitallists">OrbitalLists</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#a-first-simulation">A first simulation</a>
+    </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../linear_response_absorption_cross_section_with_td_and_rpa_simulations/">Linear response absorption cross section with td and rpa simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../linear_response/">Linear response</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../rabi_oscillations_in_tls/">Rabi oscillations in tls</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../list-based_simulations_/">List-based Simulations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../plotting/">Plotting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../rabi_oscillations/">Rabi Oscillations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../rpa_simulation_options/">RPA simulation options</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../time-domain_simulations/">Time-Domain simulations</a>
                   </li>
               </ul>
       </div>
@@ -91,7 +113,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h2 id="getting-started">Getting started</h2>
+                <h1 id="getting-started">Getting started</h1>
 <p>We introduce the basics of GRANAD and do a quick simulation.</p>
 <h2 id="orbitals">Orbitals</h2>
 <p>At its core, GRANAD is all about orbitals. Let's create one at the origin and inspect it.</p>
@@ -132,9 +154,9 @@
 </code></pre></div>
 <p>This is all there is to know about orbitals!</p>
 <h2 id="materials">Materials</h2>
-<p>Materials are stuff you can cut orbitals from. We will see below how this works.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">Materials</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">Materials</span><span class="o">.</span><span class="n">available</span><span class="p">()</span>
+<p>Materials are stuff you can cut orbitals from. You can define one yourself or import a prebuilt one. We will use the latter option.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">available</span><span class="p">()</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>Available materials:
 graphene
@@ -142,7 +164,7 @@ ssh
 metal_1d
 </code></pre></div>
 <p>Let's inspect a material.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">Materials</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>Material: graphene
   Lattice Constant: 2.46 Å
@@ -154,11 +176,11 @@ metal_1d
     Position: (0, 0), Tag: sublattice_1, Species: pz
     Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
   Interactions:
-    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0.0, 2.66], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fadae7eda80&gt;)
-    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fadae7ee200&gt;)
+    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0.0, 2.66], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fb00fc81f80&gt;)
+    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fb00fc82700&gt;)
 </code></pre></div>
 <p>There are parameters regarding the geometry, the type of the involved orbitals (the built-in graphene model contains only a single spin polarized pz orbital) , the position of orbitals in the unit cell and the interactions (currently, GRANAD supports hoppings and Coulomb interactions). Let's pick a concrete material.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">graphene</span> <span class="o">=</span> <span class="n">Materials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">graphene</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 <h2 id="orbitallists">OrbitalLists</h2>
 <p>OrbitalLists are the last class you need to know. Unsurprisingly, an OrbitalList is a list of orbitals. You can create one yourself from the two orbitals you created above</p>
@@ -180,10 +202,9 @@ For now, we will use a built-in shape: an equilateral triangle with a side lengt
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">triangle</span> <span class="o">=</span> <span class="n">Triangle</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
 <p>Now, our shape is ready and we can start cutting. To make sure that we are satisfied with what we get, we plot the flake. By default, GRANAD cuts any "dangling" atoms.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">my_first_flake</span> <span class="o">=</span> <span class="n">graphene</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span><span class="n">triangle</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">my_first_flake</span> <span class="o">=</span> <span class="n">graphene</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span><span class="n">triangle</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_flake</span><span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../getting_started_files/getting_started_17_0.png" /></p>
 <div class="language-text highlight"><pre><span></span><code>List with 26 orbitals, 26 electrons.
 [0] electrons excited from [0] to [0].
 group id 3 : 26 orbitals
@@ -238,8 +259,8 @@ group id 3 : 26 orbitals
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../../units/" class="btn btn-neutral float-left" title="Units"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../linear_response_absorption_cross_section_with_td_and_rpa_simulations/" class="btn btn-neutral float-right" title="Linear response absorption cross section with td and rpa simulations">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../electric_fields/" class="btn btn-neutral float-left" title="Electric Fields"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../linear_response/" class="btn btn-neutral float-right" title="Linear response">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -262,10 +283,10 @@ group id 3 : 26 orbitals
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../../units/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../electric_fields/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../linear_response_absorption_cross_section_with_td_and_rpa_simulations/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../linear_response/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
