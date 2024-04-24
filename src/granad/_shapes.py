@@ -16,10 +16,10 @@ def _rotate_vertices(vertices, angle_degrees):
 def _edge_type(vertex_func):
     @wraps(vertex_func)
     def wrapper(*args, **kwargs):
+        shift = kwargs.pop( "shift", [0,0])
         vertices = vertex_func(
             *args, **{key: val for key, val in kwargs.items() if key != "armchair"}
         )
-        shift = kwargs.pop( "shift", [0,0])
         if "armchair" in kwargs and kwargs["armchair"] == True:
             vertices = _rotate_vertices(vertices, 90)
         return vertices + jnp.array( shift )
