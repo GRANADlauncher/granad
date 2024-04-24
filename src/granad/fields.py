@@ -12,11 +12,10 @@ def Wave(
 
         - `amplitudes`: electric field amplitudes in xyz-components
         - `frequency`: frequency
-        - `positions`: position for evaluation
 
     **Returns:**
 
-    -compiled closure that computes the electric field as a functon of time
+    Function that computes the electric field as a functon of time
     """
     static_part = jnp.array(amplitudes)
     return lambda t: (jnp.exp(1j * frequency * t) * static_part)
@@ -32,13 +31,12 @@ def Ramp(
 
         - `amplitudes`: electric field amplitudes in xyz-components
         - `frequency`: frequency
-        - `positions`: positions for evaluation
         - `ramp_duration`: specifies how long does the electric field ramps up
         - `time_ramp`: specifies time at which the field starts to ramp up
 
     **Returns:**
 
-    -compiled closure that computes the electric field as a functon of time
+    Function that computes the electric field as a functon of time
     """
     static_part = jnp.array(amplitudes)
     p = 0.99
@@ -60,7 +58,6 @@ def Pulse(
 
         - `amplitudes`: electric field amplitudes in xyz-components
         - `frequency`: frequency of the electric field
-        - `positions`: positions where the electric field is evaluated
         - `peak`: time where the pulse reaches its peak
         - `fwhm`: full width at half maximum
 
