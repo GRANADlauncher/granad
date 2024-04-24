@@ -171,7 +171,9 @@ def show_time_dependence(
 ):
     """Depicts an expectation value as a function of time.
 
-    - `expectation_value`: TxN array, where T => time
+
+    - `density_matrices`: TxNxN array, if no operator is given, diagonal elements will be plotted
+    - `operator`: if given, show its time-dependent expectation value
     - `time`: time axis
     - `indicate_eigenstate`: whether to associate the i-th energy eigenstate to the i-th column of expectation_value
     - `thresh`: plotting threshold.  o_t is plotted if max(o_t) - min(o_t) > thresh
