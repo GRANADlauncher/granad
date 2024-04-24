@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # Rabi Oscillations in TLS
+# # Rabi Oscillations
 #
 # We study Rabi oscillations as in the paper [Revising quantum optical phenomena in adatoms coupled to graphene nanoantennas](https://www.degruyter.com/document/doi/10.1515/nanoph-2022-0154/html).
 
@@ -25,9 +25,6 @@
 # +
 import jax.numpy as jnp
 import matplotlib
-matplotlib.use('TkAgg')  
-# matplotlib.use('Agg')  
-
 from granad import Wave, Orbital, OrbitalList, MaterialCatalog, Triangle
 
 lower_level = Orbital(tag="atom")
@@ -55,6 +52,8 @@ time, density_matrices = atom.get_density_matrix_time_domain(
 atom.show_time_dependence(density_matrices, time=time)
 # -
 
+### Coupling to a Flake
+
 # We combine the TLS with a graphene flake in the top position above an atom.
 
 # +
@@ -65,7 +64,7 @@ flake_with_atom.set_electrons( flake_with_atom.electrons - 1 )
 pz_orbital = flake_with_atom[8]
 top = pz_orbital.position + jnp.array([0, 0, 1])
 flake_with_atom.set_position(tag="atom", position=top)
-# flake_with_atom.show_3d(show_index=True)
+flake_with_atom.show_3d(show_index=True)
 # -
 
 # We set the couplings

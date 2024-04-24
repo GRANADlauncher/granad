@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # A detailed look at Time-Domain simulations
+# # Time-Domain simulations
 #
 
 ### Performance Tips
@@ -83,7 +83,7 @@ print(p_omega.shape)
 
 ### Options
 
-# The time evolution relies on [diffrax](https://docs.kidger.site/diffrax)diffrax. You can pass [solvers](usage/how-to-choose-a-solver/) directly to any function calling the time domain evolution. By default, we use 5-th order Runge Kutta with adaptive step size, where the relative and absolute tolerance are set to 1e-10.
+# The time evolution relies on [diffrax](https://docs.kidger.site/diffrax). You can pass [solvers](https://docs.kidger.site/diffrax/usage/how-to-choose-a-solver/) directly to any function calling the time domain evolution. By default, we use 5-th order Runge Kutta with adaptive step size, where the relative and absolute tolerance are set to 1e-10.
 
 # +
 omegas, p_omega_8 = flake.get_expectation_value_frequency_domain(

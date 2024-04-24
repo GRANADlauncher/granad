@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # Modifying and defining materials
+# # Defining Materials
 #
 # We talk about how to modify built-in materials and define custom ones.
 
@@ -22,7 +22,7 @@
 
 # +
 from granad import MaterialCatalog, Material, Hexagon
-help(Material)
+print(Material.__doc__)
 # -
 
 # So, the Material class essentially defines a small language we can use to specify a material. The Hubbard model would look like this
@@ -92,7 +92,7 @@ graphene_haldane.add_interaction("hopping", participants = ('pz', 'pz'), paramet
 print(graphene_haldane)
 # -
 
-# The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to set this with a ya material class now, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes
+# The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes
 
 # +
 hexagon =  Hexagon(30, armchair = False)
@@ -105,6 +105,7 @@ for orb_1 in [orb for orb in flake_topological if orb.tag == 'sublattice_1']:
 # We now display the edge state
 
 # +
+import jax.numpy as jnp
 idx = jnp.argwhere(jnp.abs(flake_topological.energies) < 1e-2)[0].item()
 flake_topological.show_2d( display = flake_topological.eigenvectors[:, idx]  )
 # -

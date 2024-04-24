@@ -103,7 +103,7 @@ print(my_first_flake)
 # To get a feeling of the setup, we first inspect the energies of the flake
 
 # +
-# my_first_flake.show_energies()
+my_first_flake.show_energies()
 # -
 
 # Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix $\rho(t)$ of a system by integrating a nonlinear master equation. As a result, it is possible to track the evolution of the physical observable associated with a Hermitian operator $A$ by computing $a(t) = Tr[\rho(t) A]$. Optical properties in particular are largely determined by the polarization or dipole operator $\hat{P}$ and they are usually expressed in frequency domain. To this end, GRANAD offers a way to compute the Fourier transform $a(\omega)$ directly after time propagation. We will look at an example tracking the time evolution of the dipole operator below, where the computation proceeds in two steps:
