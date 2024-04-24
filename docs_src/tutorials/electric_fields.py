@@ -19,6 +19,7 @@
 #
 # The built-in electric fields are just callables, dependent on time.
 #
+
 # +
 import jax
 import jax.numpy as jnp
@@ -35,7 +36,7 @@ wave = Wave( [1, 0, 0], 1  )
 print(wave(0))
 # -
 
-# A quick way to visualize them is to plot their and imaginary part. JAX offers the vmap function that vectorizes the application.
+# A quick way to visualize them is to plot their real and imaginary part. JAX offers the vmap function that vectorizes the application.
 
 # +
 time = jnp.linspace(0, 2 * 2 * jnp.pi, 100)
