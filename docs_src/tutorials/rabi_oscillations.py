@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # Rabi Oscillations
+# # 7. Rabi Oscillations
 #
 # We study Rabi oscillations as in the paper [Revising quantum optical phenomena in adatoms coupled to graphene nanoantennas](https://www.degruyter.com/document/doi/10.1515/nanoph-2022-0154/html).
 

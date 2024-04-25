@@ -15,7 +15,7 @@
 # # Cutting
 #
 
-### Cutting
+### 4. Cutting
 #
 # Any material defines a cutting function, but they differ by dimensionality. To see why, let's inspect
 

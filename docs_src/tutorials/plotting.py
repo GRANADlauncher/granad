@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # Plotting
+# # 3. Plotting
 #
 # We take a look at built-in plotting functions. 
 #

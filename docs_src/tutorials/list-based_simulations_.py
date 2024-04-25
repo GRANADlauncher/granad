@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # List-based Simulations 
+# # 2. List-based Simulations 
 #
 # We detail the main datatype of GRANAD.
 
@@ -226,7 +226,7 @@ atoms.set_electrons( atoms.electrons - 1)
 # updated_stack = stack_with_atom + atoms
 # -
 
-# This will fail, because stack_with_atom already contains the atom contained in atoms. Admittedly, this is weird, but I had like two weeks to make this.
+# This will fail, because stack_with_atom already contains the atom contained in atoms. Admittedly, this is weird.
 
 # If you are interested in the simulation parameters
 

@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # Time-Domain simulations
+# # 6. Time-Domain simulations
 #
 
 ### Performance Tips
@@ -117,7 +117,7 @@ plt.show()
 
 # $$-i \omega p(\omega) = j(\omega)$$
 
-# The current operator is, a bit confusingly, called velocity operator in GRANAD, since atomic units are used, where q = 1 and $$j = q v$$. 
+# The current operator is, a bit confusingly, called velocity operator in GRANAD, since atomic units are used, where q = 1 and $j = q v$. 
 
 # +
 omegas, j_omega = flake.get_expectation_value_frequency_domain(

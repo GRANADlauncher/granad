@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # Defining Materials
+# # 9. Defining Materials
 #
 # We talk about how to modify built-in materials and define custom ones.
 

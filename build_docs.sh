@@ -18,31 +18,10 @@ mkdir -p "$target_dir"
 for filename in $file_list; do
     echo "Processing $filename..."
 
-    # Find the first line starting with "# ##"
-    pattern_line=$(grep -m 1 '^# #' "$filename")
-
-    # Check if the pattern was found
-    if [ -z "$pattern_line" ]; then
-        echo "Pattern '# #' not found in $filename."
-        continue
-    fi
-
-    # Extract words following "# ##", convert them to lowercase, and replace spaces with underscores
-    new_name=$(echo "$pattern_line" | sed 's/^# # //' | tr '[:upper:]' '[:lower:]' | tr ' ' '_').py
-    new_path="$source_dir/${new_name}"
-
-    # Rename the file if the new name does not conflict with an existing file
-    if [ -e "$new_path" ]; then
-        echo "$new_path already exists. Not renaming $filename."
-    else
-        mv "$filename" "$new_path"
-        echo "Renamed $filename to $new_path"
-    fi
-
     # If single file mode, convert this file to a notebook and markdown
     if [ "$single_file_mode" = true ]; then
-        base_name=$(basename "$new_path" .py)
-        jupytext --to notebook --execute "$new_path" -o "$target_dir/$base_name.ipynb"
+        base_name=$(basename "$filename" .py)
+        jupytext --to notebook --execute "$filename" -o "$target_dir/$base_name.ipynb"
         jupyter nbconvert --to markdown --TagRemovePreprocessor.enabled=True --TagRemovePreprocessor.remove_cell_tags='["remove_cell"]' "$target_dir/$base_name.ipynb"
     fi
 done
