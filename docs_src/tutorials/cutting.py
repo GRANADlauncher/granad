@@ -12,10 +12,10 @@
 #     name: base
 # ---
 
-# # Cutting
+# # 4. Cutting
 #
 
-### 4. Cutting
+### Cutting
 #
 # Any material defines a cutting function, but they differ by dimensionality. To see why, let's inspect
 
@@ -35,7 +35,7 @@ help(cut_flake_1d)
 # So we just need to specify the number of unit cells. 
 
 # +
-flake = ssh.cut_flake( unit_cells = 20, plot = True)
+flake = ssh.cut_flake( unit_cells = 40, plot = False)
 # -
 
 # You may notice this is the configuration with edge states in the band gap
