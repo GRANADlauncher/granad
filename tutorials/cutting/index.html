@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Cutting - GRANAD</title>
+    <title>4. Cutting - GRANAD</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,7 +13,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Cutting";
+        var mkdocs_page_name = "4. Cutting";
         var mkdocs_page_input_path = "tutorials/cutting.md";
         var mkdocs_page_url = null;
       </script>
@@ -58,9 +58,9 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Cutting</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">4. Cutting</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#4-cutting">4. Cutting</a>
+    <li class="toctree-l2"><a class="reference internal" href="#cutting">Cutting</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#shapes">Shapes</a>
     </li>
@@ -100,7 +100,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Tutorials</li>
-      <li class="breadcrumb-item active">Cutting</li>
+      <li class="breadcrumb-item active">4. Cutting</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -109,8 +109,8 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="cutting">Cutting</h1>
-<h2 id="4-cutting">4. Cutting</h2>
+                <h1 id="4-cutting">4. Cutting</h1>
+<h2 id="cutting">Cutting</h2>
 <p>Any material defines a cutting function, but they differ by dimensionality. To see why, let's inspect</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">ssh</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ssh&quot;</span><span class="p">)</span>
@@ -159,9 +159,8 @@ cut_flake_1d(material, unit_cells, plot=False)
         material&#39;s grid.
 </code></pre></div>
 <p>So we just need to specify the number of unit cells. </p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">ssh</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">unit_cells</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">ssh</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">unit_cells</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../cutting_files/cutting_6_0.png" /></p>
 <p>You may notice this is the configuration with edge states in the band gap</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
 </span></code></pre></div>
