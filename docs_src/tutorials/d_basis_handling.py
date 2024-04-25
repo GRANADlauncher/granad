@@ -21,12 +21,13 @@
 # By default, GRANAD uses the site basis. You can explicitly force a quantity to be given in energy basis by appending "_e" to it.
 
 # +
-from granad import Material
+import jax.numpy as jnp
+from granad import MaterialCatalog
 
 chain  = MaterialCatalog.get("metal_1d")
 flake = chain.cut_flake( unit_cells = 10 )
 site_occupations = flake.initial_density_matrix.diagonal() # site basis
-site_occupations = flake.initial_density_matrix_e.diagonal() # energy basis
+energy_occupations = flake.initial_density_matrix_e.diagonal() # energy basis
 # -
 
 # Additionally, should you be unsure, the site basis is always given by appending "_x".
