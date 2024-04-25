@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Getting started - GRANAD</title>
+    <title>1. Getting started - GRANAD</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,7 +13,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Getting started";
+        var mkdocs_page_name = "1. Getting started";
         var mkdocs_page_input_path = "tutorials/getting_started.md";
         var mkdocs_page_url = null;
       </script>
@@ -60,11 +60,11 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../cutting/">Cutting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../defining_materials/">Defining Materials</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../defining_materials/">9. Defining Materials</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../electric_fields/">Electric Fields</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../electric_fields/">5. Electric Fields</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Getting started</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">1. Getting started</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#orbitals">Orbitals</a>
     </li>
@@ -76,17 +76,15 @@
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../linear_response/">Linear response</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../linear_response/">8. Linear response</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../list-based_simulations_/">List-based Simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../list-based_simulations_/">2. List-based Simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../plotting/">Plotting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../plotting/">3. Plotting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../rabi_oscillations/">Rabi Oscillations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../rabi_oscillations/">7. Rabi Oscillations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../rpa_simulation_options/">RPA simulation options</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../time-domain_simulations/">Time-Domain simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../time-domain_simulations/">6. Time-Domain simulations</a>
                   </li>
               </ul>
       </div>
@@ -104,7 +102,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Tutorials</li>
-      <li class="breadcrumb-item active">Getting started</li>
+      <li class="breadcrumb-item active">1. Getting started</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -113,7 +111,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="getting-started">Getting started</h1>
+                <h1 id="1-getting-started">1. Getting started</h1>
 <p>We introduce the basics of GRANAD and do a quick simulation.</p>
 <h2 id="orbitals">Orbitals</h2>
 <p>At its core, GRANAD is all about orbitals. Let's create one at the origin and inspect it.</p>
@@ -176,8 +174,8 @@ metal_1d
     Position: (0, 0), Tag: sublattice_1, Species: pz
     Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
   Interactions:
-    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0.0, 2.66], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fb00fc81f80&gt;)
-    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fb00fc82700&gt;)
+    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0.0, 2.66], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f3eb2cc1f80&gt;)
+    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f3eb2cc2700&gt;)
 </code></pre></div>
 <p>There are parameters regarding the geometry, the type of the involved orbitals (the built-in graphene model contains only a single spin polarized pz orbital) , the position of orbitals in the unit cell and the interactions (currently, GRANAD supports hoppings and Coulomb interactions). Let's pick a concrete material.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">graphene</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
@@ -259,8 +257,8 @@ group id 3 : 26 orbitals
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../electric_fields/" class="btn btn-neutral float-left" title="Electric Fields"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../linear_response/" class="btn btn-neutral float-right" title="Linear response">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../electric_fields/" class="btn btn-neutral float-left" title="5. Electric Fields"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../linear_response/" class="btn btn-neutral float-right" title="8. Linear response">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>

@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Defining Materials - GRANAD</title>
+    <title>9. Defining Materials - GRANAD</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,7 +13,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Defining Materials";
+        var mkdocs_page_name = "9. Defining Materials";
         var mkdocs_page_input_path = "tutorials/defining_materials.md";
         var mkdocs_page_url = null;
       </script>
@@ -60,7 +60,7 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../cutting/">Cutting</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Defining Materials</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">9. Defining Materials</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#defining-a-custom-material">Defining a custom material</a>
     </li>
@@ -68,21 +68,19 @@
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../electric_fields/">Electric Fields</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../electric_fields/">5. Electric Fields</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../getting_started/">Getting started</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../getting_started/">1. Getting started</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../linear_response/">Linear response</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../linear_response/">8. Linear response</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../list-based_simulations_/">List-based Simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../list-based_simulations_/">2. List-based Simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../plotting/">Plotting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../plotting/">3. Plotting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../rabi_oscillations/">Rabi Oscillations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../rabi_oscillations/">7. Rabi Oscillations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../rpa_simulation_options/">RPA simulation options</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../time-domain_simulations/">Time-Domain simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../time-domain_simulations/">6. Time-Domain simulations</a>
                   </li>
               </ul>
       </div>
@@ -100,7 +98,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Tutorials</li>
-      <li class="breadcrumb-item active">Defining Materials</li>
+      <li class="breadcrumb-item active">9. Defining Materials</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -109,7 +107,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="defining-materials">Defining Materials</h1>
+                <h1 id="9-defining-materials">9. Defining Materials</h1>
 <p>We talk about how to modify built-in materials and define custom ones.</p>
 <h2 id="defining-a-custom-material">Defining a custom material</h2>
 <p>Let's first look at the Material class itself</p>
@@ -269,8 +267,8 @@ cut_flake_generic(material, grid_range)
     Position: (0, 0), Tag: sublattice_1, Species: pz
     Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
   Interactions:
-    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0, 1.0, 0.1j], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f7781c9d620&gt;)
-    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f778a892700&gt;)
+    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0, 1.0, 0.1j], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f4b803772e0&gt;)
+    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f4b80f6a700&gt;)
 </code></pre></div>
 <p>The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">hexagon</span> <span class="o">=</span>  <span class="n">Hexagon</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
@@ -295,7 +293,7 @@ cut_flake_generic(material, grid_range)
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../cutting/" class="btn btn-neutral float-left" title="Cutting"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../electric_fields/" class="btn btn-neutral float-right" title="Electric Fields">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../electric_fields/" class="btn btn-neutral float-right" title="5. Electric Fields">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
