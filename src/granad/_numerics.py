@@ -554,27 +554,34 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
             eq = spin_degeneracy * Sf / (omega - omega_grid_extended + 1j * relaxation_rate )
             return -jnp.sum(eq)
 
-        if hungry == 4:
-            return jax.pmap(
-                jax.pmap(susceptibility_element, (0, None)), (None, 0))(sites, sites)                    
+        funcs = [
+            jax.vmap( jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0 ),
+            lambda s_1, s_2 : jax.lax.map( lambda i: jax.vmap(lambda j: susceptibility_element(i, j), (0,), 0)(s_1), s_2)            ,
+            lambda s_1, s_2 : jax.lax.map(lambda i: jax.lax.map(lambda j: susceptibility_element(i, j), s_1),  s_2 )            
+        ]
         
-        if hungry == 3:
-            return jax.pmap(jax.vmap(susceptibility_element, (0, None), 0), (None, 0))(sites, sites)        
+        if hungry > 2:
+            batch_size = len(sites) // len(jax.devices())
+            sharded_sites = sites.reshape(num_devices, batch_size)
+            parallel_compute = jax.pmap(jax.vmap(jax.vmap(compute, in_axes=(None, 0)), in_axes=(0, None)))
+            return jax.pmap( funcs[ hungry - 3 ] )(sites, sites)
+        return funcs[hungry]
         
-        if hungry == 2:
-            return jax.vmap(
-                jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0
-            )(sites, sites)        
-        elif hungry == 1:
-            return jax.lax.map(
-                lambda i: jax.vmap(lambda j: susceptibility_element(i, j), (0,), 0)(sites), 
-                sites
-            )
-        else:
-            return jax.lax.map(
-                lambda i: jax.lax.map(lambda j: susceptibility_element(i, j), sites), 
-                sites
-            )
+        #jax.pmap(jax.vmap(susceptibility_element, (0, None), 0), (None, 0))(sites, sites)
+        # if hungry == 2:
+        #     return jax.vmap(
+        #         jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0
+        #     )(sites, sites)        
+        # elif hungry == 1:
+        #     return jax.lax.map(
+        #         lambda i: jax.vmap(lambda j: susceptibility_element(i, j), (0,), 0)(sites), 
+        #         sites
+        #     )
+        # else:
+        #     return jax.lax.map(
+        #         lambda i: jax.lax.map(lambda j: susceptibility_element(i, j), sites), 
+        #         sites
+        #     )
     
 
     # unpacking
