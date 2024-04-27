@@ -967,30 +967,7 @@ class OrbitalList:
 
         # induced field is a sum of point charges, i.e. \vec{r} / r^3
         e_field = 14.39 * jnp.sum(point_charge * charge[:, None, None], axis=0)
-        return e_field
-
-    def get_expectation_value_from_files(self, chunk_name, operator ):
-
-        # Get a list of all files in the directory
-        files = os.listdir(chunk_name)
-
-        # Filter and sort the files numerically based on the part of the filename before '.npz'
-        sorted_files = sorted([file for file in files if file.endswith('.npz')],
-                              key=lambda x: int(x.split('.')[0]))
-        
-        time_axis_res, expectation_value_res = [], []
-        for res_file in sorted_files:
-            file_path = os.path.join(chunk_name, res_file)
-            data = jnp.load( file_path )
-
-            time_axis = data['time_axis']
-            density_matrices = data['density_matrices']            
-            expectation_value = self.get_expectation_value( density_matrix = density_matrices, operator = operator )
-            time_axis_res.append( time_axis )
-            expectation_value_res.append( expectation_value )
-
-        return jnp.concatenate(time_axis_res), jnp.concatenate( expectation_value_res )            
-        
+        return e_field        
     
     def get_expectation_value(self, *, operator, density_matrix, induced = True):
         """
@@ -1055,15 +1032,11 @@ class OrbitalList:
         time_axis = kwargs.pop("time", None)
         omega_min = kwargs.pop("omega_min", 0)
         omega_max = kwargs.pop("omega_max", 100)
-        chunk_name = kwargs.pop("chunk_name", None)
-
-        if chunk_name is not None:
-            operator = kwargs.pop("operator", None)            
-            time_axis, exp_val_td = self.get_expectation_value_from_files( chunk_name, operator )
+        
         if density_matrices is not None:
             operator = kwargs.pop("operator", None)            
             exp_val_td = self.get_expectation_value(density_matrix = density_matrices, operator = operator)
-        if density_matrices is None and chunk_name is None:
+        if density_matrices is None:
             time_axis, exp_val_td = self.get_expectation_value_time_domain(*args, **kwargs)
                         
         omega, exp_val_omega = _numerics.get_fourier_transform(time_axis, exp_val_td)
@@ -1096,8 +1069,6 @@ class OrbitalList:
         solver=diffrax.Dopri5(),
         stepsize_controller=diffrax.PIDController(rtol=1e-10, atol=1e-10),
         initial_density_matrix : Optional[jax.Array] = None,
-        chunk_size : int = 1,
-        chunk_name : Optional[str] =  None
     ):
         """
         Simulates the time evolution of the density matrix for a given system under specified conditions and external fields.
@@ -1156,36 +1127,26 @@ class OrbitalList:
         )
         initial_density_matrix = self.initial_density_matrix if initial_density_matrix is None else initial_density_matrix
 
-        if chunk_name is not None:
-            os.mkdir(f"{chunk_name}")
-
-        for chunk, time_axis in enumerate(jnp.split(time_axis, chunk_size)):
-            # TODO: not very elegant: we just dump every argument in there by default
-            density_matrices = _numerics.integrate_master_equation(
-                self._hamiltonian,
-                coulomb_strength * self._coulomb,
-                self.dipole_operator,
-                self.electrons,
-                self.velocity_operator,
-                initial_density_matrix,
-                self.stationary_density_matrix,
-                time_axis,
-                illumination,
-                relaxation_function,
-                coulomb_field_to_from,
-                include_induced_contribution,
-                use_rwa,
-                solver,
-                stepsize_controller,
-                use_old_method,
-                skip,
-            )
-            time_axis = time_axis[::skip]
-            if chunk_name is not None:
-                path_name = os.path.join(chunk_name, str(chunk) + '.npz')
-                with open(f'{path_name}', 'wb') as f:
-                    jnp.savez(f, density_matrices = density_matrices, time_axis = time_axis )
-        return time_axis, density_matrices
+        # TODO: not very elegant: we just dump every argument in there by default
+        return time_axis[::skip], _numerics.integrate_master_equation(
+            self._hamiltonian,
+            coulomb_strength * self._coulomb,
+            self.dipole_operator,
+            self.electrons,
+            self.velocity_operator,
+            initial_density_matrix,
+            self.stationary_density_matrix,
+            time_axis,
+            illumination,
+            relaxation_function,
+            coulomb_field_to_from,
+            include_induced_contribution,
+            use_rwa,
+            solver,
+            stepsize_controller,
+            use_old_method,
+            skip,
+        )
             
 
     # TODO: decouple rpa numerics from orbital datataype
