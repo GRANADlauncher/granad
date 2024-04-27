@@ -556,13 +556,10 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
 
         if hungry == 4:
             return jax.pmap(
-                jax.pmap(susceptibility_element, (0, None), 0), (None, 0), 0
-            )(sites, sites)                    
+                jax.pmap(susceptibility_element, (0, None)), (None, 0))(sites, sites)                    
         
         if hungry == 3:
-            return jax.pmap(
-                jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0
-            )(sites, sites)        
+            return jax.pmap(jax.vmap(susceptibility_element, (0, None), 0), (None, 0))(sites, sites)        
         
         if hungry == 2:
             return jax.vmap(
