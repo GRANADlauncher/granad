@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # 9. Defining Materials
+# # Defining Materials
 #
 # We talk about how to modify built-in materials and define custom ones.
 
@@ -110,5 +110,38 @@ idx = jnp.argwhere(jnp.abs(flake_topological.energies) < 1e-2)[0].item()
 flake_topological.show_2d( display = flake_topological.eigenvectors[:, idx]  )
 # -
 
+
+### Handling non-periodic dimensions
+
+# Say you want to have a custom ssh chain with 2 atoms in the unit cell, but displace one of the atoms in y-direction. You do this by including a second basis vector in y-direction and give the atom you want to displace a non-vanishing y-coordinate. To not get a 2D lattice, you have to specify explicitly which direction(s) you want to be periodically repeated.
+
+# +
+_ssh_modified = (
+    Material("ssh")
+    .lattice_constant(2.46)
+    .lattice_basis([
+        [1, 0, 0],
+        [0, 1, 0],
+    ],
+    periodic = [0]) # THIS IS THE LINE    
+    .add_orbital_species("pz", l=1, atom='C')
+    .add_orbital(position=(0,0), tag="sublattice_1", species="pz")
+    .add_orbital(position=(0.8,0.1), tag="sublattice_2", species="pz")
+    .add_interaction(
+        "hopping",
+        participants=("pz", "pz"),
+        parameters=[0.0, 1 + 0.2, 1 - 0.2],
+    )
+    .add_interaction(
+        "coulomb",
+        participants=("pz", "pz"),
+        parameters=[16.522, 8.64, 5.333],
+        expression=lambda d: 14.399 / d
+    )
+)
+flake = _ssh_modified.cut_flake( unit_cells = 10)
+flake.show_2d()
+flake.show_energies()
+# -
 
 

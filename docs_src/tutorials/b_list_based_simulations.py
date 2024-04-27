@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # 2. List-based Simulations 
+# # List-based Simulations 
 #
 # We detail the main datatype of GRANAD.
 

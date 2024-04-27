@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # 6. Time-Domain simulations
+# # Time-Domain simulations
 #
 
 ### Performance Tips
@@ -111,7 +111,7 @@ plt.show()
 
 # We will look at the third example. The continuity equation relates the dipole moment and the (longitudinal) current
 
-# $$\nabla j = \partial_t \rho = \partial_t \nabla P \implies j = \partial_t P$$
+# $$\nabla j = -\partial_t \rho = -\partial_t \nabla P \implies j = -\partial_t P$$
 
 # In Fourier space, we can write equivalently
 

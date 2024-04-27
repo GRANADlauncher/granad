@@ -83,7 +83,7 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
         if minimum_neighbor_number <= 0:
             return positions
         distances = jnp.round(
-            jnp.linalg.norm(positions - positions[:, None], axis=-1), 4
+            jnp.linalg.norm(positions[:, material.periodic] - positions[:, None, material.periodic], axis=-1), 4
         )
         minimum = jnp.unique(distances)[1]
         mask = (distances <= minimum).sum(axis=0) > minimum_neighbor_number
@@ -343,7 +343,7 @@ class Material:
         self.species[name] = (n,l,m,s,atom)
         return self
 
-    def add_interaction(self, interaction_type, participants, parameters, expression = lambda x : 0j):
+    def add_interaction(self, interaction_type, participants, parameters = None, expression = lambda x : 0j):
         """
         Adds an interaction between orbitals specified by an interaction type and participants.
 
@@ -356,14 +356,13 @@ class Material:
         Returns:
             Material: Returns self to enable method chaining.
         """
-        self.interactions[interaction_type][participants] =  (parameters, lambda x : expression(x) + 0j)
+        self.interactions[interaction_type][participants] =  (parameters if parameters is not None else [], lambda x : expression(x) + 0j)
         return self
 
     def _get_positions_in_uc( self, species = None ):
         if species is None:
             return jnp.array( [x["position"] for orb in list(self.orbitals.values()) for x in orb] )
-        else:
-            return jnp.array( [orb_group['position'] for s in species for orb_group in self.orbitals[s] ] )
+        return jnp.array( [orb_group['position'] for s in species for orb_group in self.orbitals[s] ] )
 
     def _get_positions_in_lattice(self, uc_positions, grid):
         shift = jnp.array(uc_positions) @ self._lattice_basis
@@ -386,14 +385,20 @@ class Material:
     def _couplings_to_function(
         self, couplings, outside_fun, species
     ):
+        if len(couplings) == 0:
+            return outside_fun
+        
         couplings = jnp.array(couplings) + 0.0j        
         grid = self._get_grid( [ (0, len(couplings)) for i in range(self.dim) ] )
-        fractional_positions = self._get_positions_in_uc( species )
-        positions = self._get_positions_in_lattice(fractional_positions, grid )
+        pos_uc_1 = self._get_positions_in_uc( (species[0],) )
+        pos_uc_2 = self._get_positions_in_uc( (species[1],) )
+        positions_1 = self._get_positions_in_lattice(pos_uc_1, grid )
+        positions_2 = self._get_positions_in_lattice(pos_uc_2, grid )
         
         distances = jnp.unique(
-            jnp.round(jnp.linalg.norm(positions - positions[:, None, :], axis=2), 8)
+            jnp.round(jnp.linalg.norm(positions_1 - positions_2[:, None, :], axis=2), 8)
         )[: len(couplings)]
+        
 
         def inner(d):
             return jax.lax.cond(
@@ -402,7 +407,6 @@ class Material:
                 outside_fun,
                 d,
             )
-
         return inner
 
     def _set_couplings(self, setter_func, interaction_type):
@@ -447,6 +451,81 @@ class Material:
         self._set_couplings(orbital_list.set_groups_hopping, "hopping")
         self._set_couplings(orbital_list.set_groups_coulomb, "coulomb")
         return orbital_list        
+
+_MoS2 = (
+    Material("MoS2")
+    .lattice_constant(3.16)  # Approximate lattice constant of monolayer MoS2
+    .lattice_basis([
+        [1, 0, 0],
+        [-0.5, jnp.sqrt(3)/2, 0],  # Hexagonal lattice
+        [0, 0, 1],
+    ], periodic = [0,1])
+    .add_orbital_species("d_molybdenum", l=2, atom='Mo')
+    .add_orbital_species("p_sulfur", l=1, atom='S')
+    .add_orbital(position=(0, 0, 0), tag="sublattice_molybdenum", species="d_molybdenum")
+    .add_orbital(position=(1/3, 2/3, -1.5), tag="sublattice_sulfur_top", species="p_sulfur")
+    .add_orbital(position=(1/3, 2/3, 1.5), tag="sublattice_sulfur_bottom", species="p_sulfur")
+    .add_interaction(
+        "hopping",
+        participants=("d_molybdenum", "p_sulfur"),
+        parameters=[-3.352]  # Hypothetical hopping parameter
+    )
+    .add_interaction(
+        "hopping",
+        participants=("p_sulfur", "p_sulfur"),
+        parameters=[-2., 0.1, 0.1]  # Hypothetical hopping parameter
+    )
+    .add_interaction(
+        "hopping",
+        participants=("d_molybdenum", "d_molybdenum"),
+        parameters=[0.201, 0.2175]  # Hypothetical hopping parameter
+    )
+    .add_interaction(
+        "coulomb",
+        participants=("d_molybdenum", "p_sulfur"),
+        expression = lambda d: 14.399/(d+1)
+    )
+    .add_interaction(
+        "coulomb",
+        participants=("p_sulfur", "p_sulfur"),
+        expression = lambda d: 14.399/(d+1)
+    )
+    .add_interaction(
+        "coulomb",
+        participants=("d_molybdenum", "d_molybdenum"),
+        expression = lambda d: 14.399/(d+1)
+    )
+)
+
+    
+_hBN = (
+    Material("hBN")
+    .lattice_constant(2.50)  # Approximate lattice constant of hBN
+    .lattice_basis([
+        [1, 0, 0],
+        [-0.5, jnp.sqrt(3)/2, 0],  # Hexagonal lattice
+    ])
+    .add_orbital_species("pz_boron", l=1, atom='B')
+    .add_orbital_species("pz_nitrogen", l=1, atom='N')
+    .add_orbital(position=(0, 0), tag="sublattice_boron", species="pz_boron")
+    .add_orbital(position=(-1/3, -2/3), tag="sublattice_nitrogen", species="pz_nitrogen")
+    .add_interaction(
+        "hopping",
+        participants=("pz_boron", "pz_boron"),
+        parameters=[2.46, -0.04],  # Hypothetical hopping parameter
+    )
+    .add_interaction(
+        "hopping",
+        participants=("pz_nitrogen", "pz_nitrogen"),
+        parameters=[-2.55, -0.04],  # Hypothetical hopping parameter
+    )
+    .add_interaction(
+        "hopping",
+        participants=("pz_boron", "pz_nitrogen"),
+        parameters=[-2.16],  # Hypothetical hopping parameter
+    )
+)
+
     
 _graphene = (
     Material("graphene")
@@ -515,7 +594,7 @@ _metal_1d = (
 )
 
 class MaterialCatalog:
-    _materials = {"graphene" : _graphene, "ssh" : _ssh, "metal_1d" : _metal_1d }
+    _materials = {"graphene" : _graphene, "ssh" : _ssh, "metal_1d" : _metal_1d, "MoS2" : _MoS2, "hBN" : _hBN }
 
     @staticmethod
     def get(material):

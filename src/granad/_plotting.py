@@ -66,7 +66,7 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None):
 
     # Optionally annotate points with their indexes
     if show_index:
-        for orb in orbs:
+        for orb in [orb for orb in orbs if orb.tag in show_tags]:
             pos = orb.position
             idx = orbs.index(orb)
             ax.annotate(str(idx), (pos[0], pos[1]), textcoords="offset points", xytext=(0,10), ha='center')
@@ -128,7 +128,7 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None):
 
     # Optionally annotate points with their indexes
     if show_index:
-        for orb in orbs:
+        for orb in [orb for orb in orbs if orb.tag in show_tags]:
             pos = orb.position
             idx = orbs.index(orb)
             ax.text(pos[0], pos[1], pos[2], str(idx), color='black', size=10)

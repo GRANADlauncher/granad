@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # 10. Basis Handling
+# # Basis Handling
 #
 # We talk about how to switch between site and energy basis.
 
@@ -35,6 +35,15 @@ energy_occupations = flake.initial_density_matrix_e.diagonal() # energy basis
 # +
 print(jnp.all(flake.initial_density_matrix_x == flake.initial_density_matrix))
 # -
+
+# There is also a built-in function for basis transformation
+
+# +
+print(jnp.all(flake.transform_to_energy_basis(flake.hamiltonian) == flake.hamiltonian_e))
+# -
+
+# This is usually only useful when transforming arrays of density matrices, because they are just returned from an orbital list and don't belong to its attributes, so you can't simply append _e.
+
 
 # Displaying transition dipole moments
 

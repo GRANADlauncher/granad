@@ -12,7 +12,7 @@
 #     name: base
 # ---
 
-# # 1. Getting started
+# # Getting started
 #
 # We introduce the basics of GRANAD and do a quick simulation.
 
