@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>1. Getting started - GRANAD</title>
+    <title>Getting started - GRANAD</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,7 +13,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "1. Getting started";
+        var mkdocs_page_name = "Getting started";
         var mkdocs_page_input_path = "tutorials/a_getting_started.md";
         var mkdocs_page_url = null;
       </script>
@@ -58,7 +58,7 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul class="current">
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">1. Getting started</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Getting started</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#orbitals">Orbitals</a>
     </li>
@@ -70,23 +70,23 @@
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">2. List-based Simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">3. Plotting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">10. Basis Handling</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">Basis Handling</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">5. Electric Fields</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">4. Cutting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">Cutting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">6. Time-Domain simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">Time-Domain simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">7. Rabi Oscillations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">Rabi Oscillations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">8. Linear response</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">9. Defining Materials</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
                   </li>
               </ul>
       </div>
@@ -104,7 +104,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Tutorials</li>
-      <li class="breadcrumb-item active">1. Getting started</li>
+      <li class="breadcrumb-item active">Getting started</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -113,7 +113,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="1-getting-started">1. Getting started</h1>
+                <h1 id="getting-started">Getting started</h1>
 <p>We introduce the basics of GRANAD and do a quick simulation.</p>
 <h2 id="orbitals">Orbitals</h2>
 <p>At its core, GRANAD is all about orbitals. Let's create one at the origin and inspect it.</p>
@@ -162,6 +162,8 @@
 graphene
 ssh
 metal_1d
+MoS2
+hBN
 </code></pre></div>
 <p>Let's inspect a material.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
@@ -176,8 +178,8 @@ metal_1d
     Position: (0, 0), Tag: sublattice_1, Species: pz
     Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
   Interactions:
-    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0.0, 2.66], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f126ee6df80&gt;)
-    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f126ee6e700&gt;)
+    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0.0, 2.66], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff338dbeac0&gt;)
+    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff338dbec00&gt;)
 </code></pre></div>
 <p>There are parameters regarding the geometry, the type of the involved orbitals (the built-in graphene model contains only a single spin polarized pz orbital) , the position of orbitals in the unit cell and the interactions (currently, GRANAD supports hoppings and Coulomb interactions). Let's pick a concrete material.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">graphene</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
@@ -260,7 +262,7 @@ group id 3 : 26 orbitals
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../../units/" class="btn btn-neutral float-left" title="Units"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../b_list_based_simulations/" class="btn btn-neutral float-right" title="2. List-based Simulations">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../b_list_based_simulations/" class="btn btn-neutral float-right" title="List-based Simulations">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>

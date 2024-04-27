@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>10. Basis Handling - GRANAD</title>
+    <title>Basis Handling - GRANAD</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,7 +13,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "10. Basis Handling";
+        var mkdocs_page_name = "Basis Handling";
         var mkdocs_page_input_path = "tutorials/d_basis_handling.md";
         var mkdocs_page_url = null;
       </script>
@@ -58,29 +58,29 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">1. Getting started</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">2. List-based Simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">3. Plotting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">10. Basis Handling</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Basis Handling</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#default-basis">Default basis</a>
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">5. Electric Fields</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">4. Cutting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">Cutting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">6. Time-Domain simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">Time-Domain simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">7. Rabi Oscillations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">Rabi Oscillations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">8. Linear response</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">9. Defining Materials</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
                   </li>
               </ul>
       </div>
@@ -98,7 +98,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Tutorials</li>
-      <li class="breadcrumb-item active">10. Basis Handling</li>
+      <li class="breadcrumb-item active">Basis Handling</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -107,7 +107,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="10-basis-handling">10. Basis Handling</h1>
+                <h1 id="basis-handling">Basis Handling</h1>
 <p>We talk about how to switch between site and energy basis.</p>
 <h2 id="default-basis">Default basis</h2>
 <p>By default, GRANAD uses the site basis. You can explicitly force a quantity to be given in energy basis by appending "_e" to it.</p>
@@ -124,24 +124,30 @@
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>True
 </code></pre></div>
+<p>There is also a built-in function for basis transformation</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">transform_to_energy_basis</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">hamiltonian</span><span class="p">)</span> <span class="o">==</span> <span class="n">flake</span><span class="o">.</span><span class="n">hamiltonian_e</span><span class="p">))</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>True
+</code></pre></div>
+<p>This is usually only useful when transforming arrays of density matrices, because they are just returned from an orbital list and don't belong to its attributes, so you can't simply append _e.</p>
 <p>Displaying transition dipole moments</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">plt</span><span class="o">.</span><span class="n">matshow</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator_e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">plt</span><span class="o">.</span><span class="n">matshow</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator_e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </span></code></pre></div>
-<p><img alt="png" src="../d_basis_handling_files/d_basis_handling_6_0.png" /></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>
-</span></code></pre></div>
+<p><img alt="png" src="../d_basis_handling_files/d_basis_handling_9_0.png" /></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>
 </span></code></pre></div>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>
+</span></code></pre></div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>
 </span></code></pre></div>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../c_plotting/" class="btn btn-neutral float-left" title="3. Plotting"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../e_electric_fields/" class="btn btn-neutral float-right" title="5. Electric Fields">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../c_plotting/" class="btn btn-neutral float-left" title="Plotting"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../e_electric_fields/" class="btn btn-neutral float-right" title="Electric Fields">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>

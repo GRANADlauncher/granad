@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>9. Defining Materials - GRANAD</title>
+    <title>Defining Materials - GRANAD</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,7 +13,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "9. Defining Materials";
+        var mkdocs_page_name = "Defining Materials";
         var mkdocs_page_input_path = "tutorials/j_defining_materials.md";
         var mkdocs_page_url = null;
       </script>
@@ -58,29 +58,31 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">1. Getting started</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">2. List-based Simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">3. Plotting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">10. Basis Handling</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">Basis Handling</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">5. Electric Fields</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">4. Cutting</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">Cutting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">6. Time-Domain simulations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">Time-Domain simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">7. Rabi Oscillations</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">Rabi Oscillations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">8. Linear response</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">9. Defining Materials</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Defining Materials</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#defining-a-custom-material">Defining a custom material</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#modifying-existing-materials">Modifying existing materials</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#handling-non-periodic-dimensions">Handling non-periodic dimensions</a>
     </li>
     </ul>
                   </li>
@@ -100,7 +102,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Tutorials</li>
-      <li class="breadcrumb-item active">9. Defining Materials</li>
+      <li class="breadcrumb-item active">Defining Materials</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -109,7 +111,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="9-defining-materials">9. Defining Materials</h1>
+                <h1 id="defining-materials">Defining Materials</h1>
 <p>We talk about how to modify built-in materials and define custom ones.</p>
 <h2 id="defining-a-custom-material">Defining a custom material</h2>
 <p>Let's first look at the Material class itself</p>
@@ -269,8 +271,8 @@ cut_flake_generic(material, grid_range)
     Position: (0, 0), Tag: sublattice_1, Species: pz
     Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
   Interactions:
-    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0, 1.0, 0.1j], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f8733e5b380&gt;)
-    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f873baf6700&gt;)
+    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0, 1.0, 0.1j], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fd4baa89080&gt;)
+    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fd4c2766c00&gt;)
 </code></pre></div>
 <p>The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">hexagon</span> <span class="o">=</span>  <span class="n">Hexagon</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
@@ -286,15 +288,44 @@ cut_flake_generic(material, grid_range)
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">flake_topological</span><span class="o">.</span><span class="n">show_2d</span><span class="p">(</span> <span class="n">display</span> <span class="o">=</span> <span class="n">flake_topological</span><span class="o">.</span><span class="n">eigenvectors</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>  <span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../j_defining_materials_files/j_defining_materials_17_0.png" /></p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>
+<h2 id="handling-non-periodic-dimensions">Handling non-periodic dimensions</h2>
+<p>Say you want to have a custom ssh chain with 2 atoms in the unit cell, but displace one of the atoms in y-direction. You do this by including a second basis vector in y-direction and give the atom you want to displace a non-vanishing y-coordinate. To not get a 2D lattice, you have to specify explicitly which direction(s) you want to be periodically repeated.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">_ssh_modified</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="n">Material</span><span class="p">(</span><span class="s2">&quot;ssh&quot;</span><span class="p">)</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="o">.</span><span class="n">lattice_constant</span><span class="p">(</span><span class="mf">2.46</span><span class="p">)</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="o">.</span><span class="n">lattice_basis</span><span class="p">([</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>        <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="p">],</span>
+</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">periodic</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="c1"># THIS IS THE LINE    </span>
+</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="o">.</span><span class="n">add_orbital_species</span><span class="p">(</span><span class="s2">&quot;pz&quot;</span><span class="p">,</span> <span class="n">l</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">atom</span><span class="o">=</span><span class="s1">&#39;C&#39;</span><span class="p">)</span>
+</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="o">.</span><span class="n">add_orbital</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;sublattice_1&quot;</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="s2">&quot;pz&quot;</span><span class="p">)</span>
+</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="o">.</span><span class="n">add_orbital</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,</span><span class="mf">0.1</span><span class="p">),</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;sublattice_2&quot;</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="s2">&quot;pz&quot;</span><span class="p">)</span>
+</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    <span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="s2">&quot;hopping&quot;</span><span class="p">,</span>
+</span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>        <span class="n">participants</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;pz&quot;</span><span class="p">,</span> <span class="s2">&quot;pz&quot;</span><span class="p">),</span>
+</span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>        <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">],</span>
+</span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="p">)</span>
+</span><span id="__span-8-17"><a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>    <span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span>
+</span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>        <span class="s2">&quot;coulomb&quot;</span><span class="p">,</span>
+</span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>        <span class="n">participants</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;pz&quot;</span><span class="p">,</span> <span class="s2">&quot;pz&quot;</span><span class="p">),</span>
+</span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>        <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">16.522</span><span class="p">,</span> <span class="mf">8.64</span><span class="p">,</span> <span class="mf">5.333</span><span class="p">],</span>
+</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>        <span class="n">expression</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="mf">14.399</span> <span class="o">/</span> <span class="n">d</span>
+</span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>    <span class="p">)</span>
+</span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="p">)</span>
+</span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">_ssh_modified</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">unit_cells</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>
+</span><span id="__span-8-25"><a id="__codelineno-8-25" name="__codelineno-8-25" href="#__codelineno-8-25"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_2d</span><span class="p">()</span>
+</span><span id="__span-8-26"><a id="__codelineno-8-26" name="__codelineno-8-26" href="#__codelineno-8-26"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
 </span></code></pre></div>
+<p><img alt="png" src="../j_defining_materials_files/j_defining_materials_20_0.png" /></p>
+<p><img alt="png" src="../j_defining_materials_files/j_defining_materials_20_1.png" /></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>
 </span></code></pre></div>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../i_linear_response/" class="btn btn-neutral float-left" title="8. Linear response"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../i_linear_response/" class="btn btn-neutral float-left" title="Linear response"><span class="icon icon-circle-arrow-left"></span> Previous</a>
     </div>
 
   <hr/>
