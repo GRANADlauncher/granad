@@ -562,10 +562,10 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
         
         if hungry > 2:
             batch_size = len(sites) // len(jax.devices())
-            sharded_sites = sites.reshape(num_devices, batch_size)
-            parallel_compute = jax.pmap(jax.vmap(jax.vmap(compute, in_axes=(None, 0)), in_axes=(0, None)))
-            return jax.pmap( funcs[ hungry - 3 ] )(sites, sites)
-        return funcs[hungry]
+            sharded_sites = sites.reshape(len(jax.devices(), batch_size)
+            parallel_compute = jax.pmap(jax.vmap(jax.vmap(funcs[ hungry - 3 ], in_axes=(None, 0)), in_axes=(0, None)))
+            return jax.pmap( parallel_compute )(sites, sites)
+        return funcs[hungry](sites, sites)
         
         #jax.pmap(jax.vmap(susceptibility_element, (0, None), 0), (None, 0))(sites, sites)
         # if hungry == 2:
