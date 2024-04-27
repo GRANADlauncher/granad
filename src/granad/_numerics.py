@@ -183,6 +183,7 @@ def _density_aufbau(
         )
 
     homo = jnp.array(jnp.ceil(electrons / spin_degeneracy), int) - 1
+
     # determine where and how often this energy occurs
     flags, degeneracy = _flags(homo)
     # compute electrons at the fermi level
@@ -192,7 +193,7 @@ def _density_aufbau(
     occupation = _occupation(flags, spin_degeneracy, remaining_electrons / degeneracy)
     # excited states
     occupation = jax.lax.fori_loop(0, to_state.size, _body_fun, occupation)
-
+    
     return jnp.diag(occupation) / electrons
 
 
@@ -553,6 +554,16 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
             eq = spin_degeneracy * Sf / (omega - omega_grid_extended + 1j * relaxation_rate )
             return -jnp.sum(eq)
 
+        if hungry == 4:
+            return jax.pmap(
+                jax.pmap(susceptibility_element, (0, None), 0), (None, 0), 0
+            )(sites, sites)                    
+        
+        if hungry == 3:
+            return jax.pmap(
+                jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0
+            )(sites, sites)        
+        
         if hungry == 2:
             return jax.vmap(
                 jax.vmap(susceptibility_element, (0, None), 0), (None, 0), 0
@@ -567,6 +578,7 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
                 lambda i: jax.lax.map(lambda j: susceptibility_element(i, j), sites), 
                 sites
             )
+    
 
     # unpacking
     energies = orbs.energies.real
