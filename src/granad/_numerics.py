@@ -463,9 +463,10 @@ def integrate_master_equation(
             + coulomb_potential
         )
 
-        return -1j * (
-            h_total @ density_matrix - density_matrix @ h_total
-        ) + relaxation_function(density_matrix)
+        h_times_d = h_total @ density_matrix
+        hermitian_term = -1j * (h_times_d  - h_times_d.conj().T)
+        
+        return hermitian_term + relaxation_function(density_matrix)
 
     # TODO: more transparent
     _get_electric_potential = get_electric_potential
