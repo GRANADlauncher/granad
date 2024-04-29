@@ -272,8 +272,8 @@ cut_flake_generic(material, grid_range)
     Position: (0, 0), Tag: sublattice_1, Species: pz
     Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
   Interactions:
-    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0, 1.0, 0.1j], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff19a4d7d80&gt;)
-    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff19e0bec00&gt;)
+    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0, 1.0, 0.1j], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f74bacebf60&gt;)
+    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f74c3b5ec00&gt;)
 </code></pre></div>
 <p>The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">hexagon</span> <span class="o">=</span>  <span class="n">Hexagon</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
