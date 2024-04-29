@@ -2,7 +2,6 @@ site_name: "GRANAD"
 
 theme:
   name: "readthedocs"
-  logo: images/logo.png
   features:
     - content.code.copy
 

@@ -1,4 +1,3 @@
-![Logo](/docs/images/logo.png)
 # Welcome to GRANAD
 
 GRANAD (GRAphene Nanoflakes with ADatoms) is a tight-binding simulation utility geared towards the exploration of systems at the intersection of solid state physics and quantum optics. Here, we experiment with new stuff.
