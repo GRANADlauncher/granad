@@ -842,7 +842,7 @@ class OrbitalList:
         """
         return self._transform_basis(observable, self._eigenvectors)
 
-    def transform_to_energy_basis(self, observable):#
+    def transform_to_energy_basis(self, observable):
         """
         Transforms an observable to the energy basis using the conjugate transpose of the system's eigenvectors.
 
