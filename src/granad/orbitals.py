@@ -1,5 +1,5 @@
 import os
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass, field, replace
 from functools import wraps
 from pprint import pformat
@@ -1212,3 +1212,41 @@ class OrbitalList:
         eri = self.coulomb[None, None]
         overlap = overlap if overlap is not None else jnp.eye(self.hamiltonian.shape[0])
         return _rhf( self.hamiltonian, eri, overlap, self.electrons )
+
+    @property
+    def atoms( self ):
+        atoms_pos = defaultdict(list)
+        for orb in self._list:
+            atoms_pos[orb.atom_name] += [[str(x) for x in orb.position]]
+        return atoms_pos
+    
+    def to_xyz( self, name : str = None ):
+        atoms = self.atoms
+        number_of_atoms = sum( [len(x) for x in atoms.values()] )
+        str_rep = str(number_of_atoms) + "\n\n"
+        
+        for atom, positions in atoms.items():
+            for pos in positions:
+                str_rep += f'{atom} {" ".join(pos)}\n'
+
+        if name is None:
+            return str_rep
+
+        with open( name, "w" ) as f:
+            f.writelines(str_rep)
+
+    # TODO: this far too simplistic
+    @classmethod
+    def from_xyz( cls, name : str ):
+        orbs, group_id = [], _watchdog._Watchdog.next_value()        
+        with open(name, 'r') as f:
+            for line in f:
+                processed = line.strip().split()
+                if len(processed) <= 1:
+                    continue                
+                atom_name, x, y, z = processed
+                
+                orbs.append( Orbital( group_id = group_id,
+                                      atom_name = atom_name,
+                                      position = [float(x), float(y), float(z)] )  )
+        return cls( orbs )
