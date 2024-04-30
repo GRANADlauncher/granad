@@ -86,6 +86,8 @@
     </li>
     </ul>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
+                  </li>
               </ul>
       </div>
     </div>
@@ -271,8 +273,8 @@ cut_flake_generic(material, grid_range)
     Position: (0, 0), Tag: sublattice_1, Species: pz
     Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
   Interactions:
-    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0, 1.0, 0.1j], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fb36c86be20&gt;)
-    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fb36e4eac00&gt;)
+    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0, 1.0, 0.1j], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f03c0ef8e00&gt;)
+    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7f03d1ddede0&gt;)
 </code></pre></div>
 <p>The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">hexagon</span> <span class="o">=</span>  <span class="n">Hexagon</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
@@ -326,6 +328,7 @@ cut_flake_generic(material, grid_range)
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../i_linear_response/" class="btn btn-neutral float-left" title="Linear response"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../xyz/" class="btn btn-neutral float-right" title="Exporting and Importing">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -350,6 +353,8 @@ cut_flake_generic(material, grid_range)
     
       <span><a href="../i_linear_response/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
+    
+      <span><a href="../xyz/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>
