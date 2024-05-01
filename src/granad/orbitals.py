@@ -1064,7 +1064,6 @@ class OrbitalList:
         saturation_functional: Callable[[float], float] = lambda x: 1
         / (1 + jnp.exp(-1e6 * (2.0 - x))),
         use_old_method: bool = False,
-        include_induced_contribution: bool = False,
         use_rwa=False,
         compute_at=None,
         coulomb_strength=1.0,
@@ -1084,9 +1083,8 @@ class OrbitalList:
            relaxation_rate (Union[float, jax.Array]): The relaxation rates to be applied: if constant, the phenomenological term is applied, if an NxN array, the saturated lindblad model is applied.
            saturation_functional (Callable[[float], float]): A function defining the saturation behavior, defaults to smoothed-out step function.
            use_old_method (bool): Flag to use the old RK method.
-           include_induced_contribution (bool): Whether to include induced contributions in the simulation.
            use_rwa (bool): Whether to apply the rotating wave approximation.
-           compute_at (Optional[any]): Specific orbital indices at which the induced field computation is performed.
+           compute_at (Optional[any]): Specific orbital indices at which the induced field computation is performed. If None, no induced fields are computed.
            coulomb_strength (float): Strength of Coulomb interactions.
            solver (diffrax.Solver): The differential equation solver to use.
            stepsize_controller (diffrax.StepSizeController): The controller for the solver's step size.
@@ -1140,7 +1138,6 @@ class OrbitalList:
             illumination,
             relaxation_function,
             coulomb_field_to_from,
-            include_induced_contribution,
             use_rwa,
             solver,
             stepsize_controller,
@@ -1213,6 +1210,49 @@ class OrbitalList:
         overlap = overlap if overlap is not None else jnp.eye(self.hamiltonian.shape[0])
         return _rhf( self.hamiltonian, eri, overlap, self.electrons )
 
+    # @classmethod
+    # def to_hdf5( cls, filename : str):
+    #     with h5py.File('my_data.h5', 'r') as f:
+    #         # Load arrays
+    #         loaded_arrays = {name: np.array(f[name]) for name in arrays}
+
+    #         # Load dataclass dictionaries
+    #         loaded_dataclass_dicts = []
+            
+    #     for idx in range(len(dataclass_dicts)):
+    #         group = f[f'dataclass_{idx}']
+    #         loaded_dict = {key: group[key][()] for key in group}
+    #         # Convert bytes to str if necessary (for Python 3 compatibility)
+    #         loaded_dict = {k: v.decode() if isinstance(v, bytes) else v for k, v in loaded_dict.items()}
+    #         loaded_dataclass_dicts.append(loaded_dict)
+    #         return
+
+    # def to_hdf5( self, filename : str ):
+    #     arrays = {
+    #         "hamiltonian" : self.hamiltonian,
+    #         "coulomb" : self.coulomb,
+    #         "initial_density_matrix" : self.initial_density_matrix,
+    #         "positions" : self.positions,
+    #         "eigenvectors" : self.eigenvectors,
+    #         "static_density_matrix" : self.static_density_matrix,
+    #         "energies" : self.energies,
+    #     }
+
+    #     dataclass_dicts = [asdict(orb) for orb in self]
+        
+    #     # Open an HDF5 file
+    #     with h5py.File('my_data.h5', 'w') as f:
+    #         # Store each array in the file
+    #         for name, array in arrays.items():
+    #             f.create_dataset(name, data=array)
+
+    #         # Store dataclass dictionaries
+    #         # We store each as a separate group with datasets for each field
+    #         for idx, dclass in enumerate(dataclass_dicts):
+    #             group = f.create_group(f'dataclass_{idx}')
+    #             for key, value in dclass.items():
+    #                 group.create_dataset(key, data=np.string_(value) if isinstance(value, str) else value)
+    
     @property
     def atoms( self ):
         atoms_pos = defaultdict(list)

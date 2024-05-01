@@ -454,7 +454,6 @@ def integrate_master_equation(
     illumination,
     relaxation_function,
     coulomb_field_to_from,
-    include_induced_contribution,
     use_rwa,
     solver,
     stepsize_controller,
