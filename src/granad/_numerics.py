@@ -442,8 +442,6 @@ def setup_rhs( is_vec_pot, add_induced, use_rwa, relax_fun, illu_fun ):
 
     return rhs
 
-from memory_profiler import profile
-@profile
 def integrate_master_equation(
     hamiltonian,
     coulomb,
