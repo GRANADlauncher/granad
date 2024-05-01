@@ -15,11 +15,6 @@ def fraction_periodic(signal, threshold=1e-2):
     Returns:
         float: A ratio representing the fraction of the signal that is considered periodic, based on the specified threshold.
 
-    Example:
-        >>> import jax.numpy as jnp
-        >>> signal = jnp.array([0.1, 0.2, 0.1, 0.2, 0.1, 0.2])
-        >>> print(fraction_periodic(signal))
-        0.995
     """
     
     # signal is periodic => abs(signal) is periodic
@@ -197,7 +192,7 @@ def _density_aufbau(
     return jnp.diag(occupation) / electrons
 
 
-# TODO: basis trafo
+# TODO: DRY: abstract out basis trafo
 def _get_self_consistent(
     hamiltonian,
     coulomb,
@@ -283,7 +278,72 @@ def _get_self_consistent(
     )
 
 
-def relaxation_time_approximation(relaxation_rate, stationary_density_matrix):
+def get_coulomb_field_to_from(source_positions, target_positions, compute_at=None):
+    """
+    Calculate the contributions of point charges located at `source_positions`
+    on points at `target_positions`.
+
+    **Args:**
+    - source_positions (array): An (n_source, 3) array of source positions.
+    - target_positions (array): An (n_target, 3) array of target positions.
+
+    **Returns:**
+    - array: An (n_source, n_target, 3) array where each element is the contribution
+          of a source at a target position.
+    """
+    if compute_at is None:
+        return None
+
+    # Calculate vector differences between each pair of source and target positions
+    distance_vector = target_positions[:, None, :] - source_positions
+    # Compute the norm of these vectors
+    norms = jnp.linalg.norm(distance_vector, axis=-1)
+    # Safe division by the cube of the norm
+    one_over_distance_cubed = jnp.where(norms > 0, 1 / norms**3, 0)
+    # Calculate the contributions
+    coulomb_field_to_from = distance_vector * one_over_distance_cubed[:, :, None]
+    # final array
+    coulomb_field_to_from_final = jnp.zeros_like(contributions)        
+    # include only contributions where desired
+    coulomb_field_to_from_final.at[compute_only_at].set(
+        contributions[compute_only_at]
+    )
+    
+    return coulomb_field_to_from_final
+
+#COMPLEXTIY: the following functions have quadratic complexity and are used inside the time propagation
+def induced_electric_field(propagator, charge):
+    # sum up up all charges weighted like \sum_r q_r r/|r-r'|
+    # read: field to i from j
+    return jnp.einsum("ijK,j->iK", propagator, charge)
+
+def mean_field( channel, rho ):
+    return jnp.diag(channel @ rho.diagonal())
+
+def electric_potential(dipole_operator, electric_field):
+    return jnp.einsum("Kij,iK->ij", dipole_operator, electric_field.real)
+
+def electric_potential_rwa(dipole_operator, electric_field):
+    # the missing real part is crucial here! the RPA (for real dipole moments) makes the fields complex
+    total_field_potential = jnp.einsum("Kij,iK->ij", dipole_operator, electric_field)
+
+    # Get the indices for the lower triangle, excluding the diagonal
+    lower_indices = jnp.tril_indices(total_field_potential.shape[0], -1)
+
+    # Replace elements in the lower triangle with their complex conjugates
+    return total_field_potential.at[lower_indices].set(
+        jnp.conj(total_field_potential[lower_indices])
+    )
+
+def paramagnetic(q, velocity_operator, vector_potential):
+    # ~ A p
+    return -q * jnp.einsum("Kij, iK -> ij", velocity_operator, vector_potential)
+
+def diamagnetic(q, m, velocity_operator, vector_potential):
+    # ~ A^2
+    return jnp.diag(q**2 / m * 0.5 * jnp.sum(vector_potential**2, axis=1))
+
+def decoherence_time(relaxation_rate):
     """Function for modelling dissipation according to the relaxation approximation.
 
         - `relaxation_time`: relaxation time
@@ -292,10 +352,10 @@ def relaxation_time_approximation(relaxation_rate, stationary_density_matrix):
 
     -compiled closure that is needed for computing the dissipative part of the lindblad equation
     """
-    return lambda r: -(r - stationary_density_matrix) * relaxation_rate
+    return lambda r, rs: -(r - rs) * relaxation_rate
 
-
-def lindblad_saturation_functional(eigenvectors, gamma, saturation, electrons, static):
+# TODO: I probably broke this, also this has cubic complexity
+def saturation_lindblad(eigenvectors, gamma, saturation, electrons, static):
     """Function for modelling dissipation according to the saturated lindblad equation as detailed in https://link.aps.org/doi/10.1103/PhysRevA.109.022237.
 
         - `stack`: object representing the state of the system
@@ -310,7 +370,7 @@ def lindblad_saturation_functional(eigenvectors, gamma, saturation, electrons, s
     gamma_matrix = gamma.astype(complex)
     saturation_vmapped = jax.vmap(saturation, 0, 0)
 
-    def inner(r):
+    def inner(r, rs):
         # convert rho to energy basis
         r = eigenvectors.conj().T @ r @ eigenvectors - static
 
@@ -329,82 +389,61 @@ def lindblad_saturation_functional(eigenvectors, gamma, saturation, electrons, s
 
     return inner
 
+#COMPLEXTIY: this function has one (!) cubic part in it, which is H @ rho
+def setup_rhs( is_vec_pot, add_induced, use_rwa, relax_fun, illu_fun ):
+    
+    # the external potential can be one of the following:
+    # 1. E \cdot P in the dipole gauge
+    # 2. E \cdot P in the dipole gauge + RPA
+    # 3. ~pA - A^2 in the coulomb gauge    
+    phi_ext = lambda t, p: electric_potential(p, illu_fun(t).reshape(1,3))
+    
+    if use_rwa == True:
+        phi_ext = lambda t, p : electric_potential_rwa(p, illu_fun(t).reshape(1,3))
+        
+    if is_vec_pot == True:
+        phi_ext = lambda t, j: paramagnetic(1, j, illu_fun(t)) + diamagnetic(1, 1, j, illu_fun(t))
 
-def get_coulomb_field_to_from(source_positions, target_positions, compute_only_at=None):
-    """
-    Calculate the contributions of point charges located at `source_positions`
-    on points at `target_positions`.
+    # the induced potential is either discarded or given by sum(charges * coulomb_terms)
+    phi_ind = lambda p, prop, rho : 0.0
+    if add_induced == True:
+        phi_ind = lambda p, prop, rho: phi_ext( p, induced_electric_field( prop, -rho.diagonal() ) )
 
-    **Args:**
-    - source_positions (array): An (n_source, 3) array of source positions.
-    - target_positions (array): An (n_target, 3) array of target positions.
+    # the non hermitian term is an input 
+    non_hermitian_term = relax_fun
 
-    **Returns:**
-    - array: An (n_source, n_target, 3) array where each element is the contribution
-          of a source at a target position.
-    """
-    # Calculate vector differences between each pair of source and target positions
-    distance_vector = target_positions[:, None, :] - source_positions
-    # Compute the norm of these vectors
-    norms = jnp.linalg.norm(distance_vector, axis=-1)
-    # Safe division by the cube of the norm
-    one_over_distance_cubed = jnp.where(norms > 0, 1 / norms**3, 0)
-    # Calculate and return the contributions
-    coulomb_field_to_from = distance_vector * one_over_distance_cubed[:, :, None]
+    # we are now ready to define the rhs: it takes only arrays as arguments (enclosing the arrays in its scope leaks memory, likely related to JAX and probably this issue https://github.com/patrick-kidger/diffrax/issues/142)
+    @jax.jit
+    def rhs( time, density_matrix, args ):
+        print("RHS compiled")
 
-    if compute_only_at is not None:
-        coulomb_field_to_from_masked = jnp.zeros_like(contributions)
-        coulomb_field_to_from_masked.at[compute_only_at].set(
-            contributions[compute_only_at]
+        # we unpack all arguments, p_or_j is either dipole operator or velocity operator, depending on the gauge we choose
+        hamiltonian, coulomb, stationary_density_matrix, electrons, dipole_operator, p_or_j, propagator = args
+
+        # effective density matrix that enters charge and mf computations
+        d_eff = (density_matrix - stationary_density_matrix) * electrons
+        
+        # the hamiltonian is given by
+        # 1. "bare", static mf hamiltonian
+        # 2. external potential
+        # 3. mean field contributions (coulomb channel, but exchange also possible)
+        # 4. induced contributions
+        h_total = (
+            hamiltonian
+            + phi_ext(time, p_or_j)
+            + mean_field(coulomb, d_eff)  
+            + phi_ind(dipole_operator, propagator, d_eff)
         )
-        coulomb_field_to_from = coulomb_field_to_from_masked
 
-    return coulomb_field_to_from
+        # this computes the commutator [H, r]. Since (Hr)^{\dagger} = rH, we only need to do one matrix multiplication
+        h_times_d = h_total @ density_matrix
+        hermitian_term = -1j * (h_times_d  - h_times_d.conj().T)        
+        return hermitian_term + non_hermitian_term(density_matrix, stationary_density_matrix)
 
+    return rhs
 
-# These are the functions used in the RHS
-def get_induced_electric_field(coulomb_field_to_from, charge):
-    # sum up up all charges weighted like \sum_r q_r r/|r-r'|
-    # read: field to i from j
-    return jnp.einsum("ijK,j->iK", coulomb_field_to_from, charge)
-
-
-def get_induced_charge(density_matrix, stationary_density_matrix, electrons):
-    return -jnp.diag(density_matrix - stationary_density_matrix) * electrons
-
-
-def get_coulomb_potential(coulomb, induced_charge):
-    return -jnp.diag(coulomb @ induced_charge)
-
-
-def get_electric_potential(dipole_operator, electric_field):
-    return jnp.einsum("Kij,iK->ij", dipole_operator, electric_field.real)
-
-
-# TODO: meh
-def get_electric_potential_rwa(dipole_operator, electric_field):
-    total_field_potential = jnp.einsum("Kij,iK->ij", dipole_operator, electric_field)
-
-    # Get the indices for the lower triangle, excluding the diagonal
-    lower_indices = jnp.tril_indices(total_field_potential.shape[0], -1)
-
-    # Replace elements in the lower triangle with their complex conjugates
-    return total_field_potential.at[lower_indices].set(
-        jnp.conj(total_field_potential[lower_indices])
-    )
-
-
-def get_paramagnetic(q, velocity_operator, vector_potential):
-    # ~ A p
-    return -q * jnp.einsum("Kij, iK -> ij", velocity_operator, vector_potential)
-
-
-def get_diamagnetic(q, m, velocity_operator, vector_potential):
-    # ~ A^2
-    return jnp.diag(q**2 / m * 0.5 * jnp.sum(vector_potential**2, axis=1))
-
-
-# TODO: wrap the result somehow?
+from memory_profiler import profile
+@profile
 def integrate_master_equation(
     hamiltonian,
     coulomb,
@@ -425,66 +464,32 @@ def integrate_master_equation(
     skip,
 ):
 
-    # the rhs is composed of a sequence of function calls
-    def rhs(time, density_matrix, args):
+    # a space dependent illumination indicates we should use a vector potential
+    is_vector_potential = illumination(0).ndim != 1
+    
+    # vector potential couples to j, electric field couples to p
+    p_or_j = velocity_operator if is_vector_potential else dipole_operator
+    
+    # these arguments will be passed to the rhs function on every integration call
+    args = (hamiltonian, coulomb, stationary_density_matrix, electrons, dipole_operator, p_or_j, coulomb_field_to_from)
 
-        external_field = illumination(time)
+    # if there is a propagator, we need to add induced fields
+    add_induced = coulomb_field_to_from is not None
+    
+    # this sets up the rhs of the von Neumann equation
+    rhs = setup_rhs( is_vector_potential, add_induced, use_rwa, relaxation_function, illumination )
 
-        # the only difference between the two approaches is the external potential
-        if is_vector_potential == True:
-            paramagnetic = get_paramagnetic(q, velocity_operator, external_field)
-            diamagnetic = get_diamagnetic(q, m, velocity_operator, external_field)
-            external_potential = paramagnetic + diamagnetic
-        else:
-            external_potential = _get_electric_potential(
-                dipole_operator, external_field.reshape(1, 3)
-            )
-
-        induced_charge = get_induced_charge(
-            density_matrix, stationary_density_matrix, electrons
-        )
-
-        coulomb_potential = get_coulomb_potential(coulomb, induced_charge)
-
-        # TODO: meh
-        induced_field_potential = 0.0
-        if include_induced_contribution:
-            induced_electric_field = get_induced_electric_field(
-                coulomb_field_from_to, induced_charge
-            )
-            induced_field_potential = _get_electric_potential(
-                dipole_operator, induced_electric_field
-            )
-
-        h_total = (
-            hamiltonian
-            + external_potential
-            + induced_field_potential
-            + coulomb_potential
-        )
-
-        h_times_d = h_total @ density_matrix
-        hermitian_term = -1j * (h_times_d  - h_times_d.conj().T)
-        
-        return hermitian_term + relaxation_function(density_matrix)
-
-    # TODO: more transparent
-    _get_electric_potential = get_electric_potential
-    if use_rwa:
-        _get_electric_potential = get_electric_potential_rwa
-
-    q, m = 1, 1
-    is_vector_potential = True
-    if illumination(0).ndim == 1:
-        is_vector_potential = False
-
+    # integration step
     dt = time_axis[1] - time_axis[0]
+
+    # first order RK
     if use_old_method:
-        kernel = lambda r, t: (r + dt * rhs(t, r, 0), r)
+        kernel = lambda r, t: (r + dt * rhs(t, r, args), r) 
         _, density_matrices = jax.lax.scan(kernel, initial_density_matrix, time_axis)
         return density_matrices[::skip]
 
-    term = diffrax.ODETerm(rhs)
+    # diffrax coolness
+    term = diffrax.ODETerm(rhs)    
     solution = diffrax.diffeqsolve(
         term,
         solver,
@@ -494,7 +499,9 @@ def integrate_master_equation(
         y0=initial_density_matrix,
         saveat=diffrax.SaveAt(ts=time_axis[::skip]),
         stepsize_controller=stepsize_controller,
+        args = args
     )
+    
     return solution.ys
 
 

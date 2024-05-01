@@ -370,7 +370,6 @@ class OrbitalList:
         coulomb = fill_matrix(
             jnp.zeros((len(self), len(self))).astype(complex), self._coulomb_dict
         )
-
         return hamiltonian, coulomb
 
     def _get_positions(self):
@@ -402,7 +401,7 @@ class OrbitalList:
                 return maybe_index
             return "You have passed something that is neither an orbital nor an index"
         return [convert(x) for x in maybe_indices]
-        
+
     def _build(self):
 
         assert len(self) > 0
@@ -410,6 +409,8 @@ class OrbitalList:
 
         self._hamiltonian, self._coulomb = self._hamiltonian_coulomb()
 
+        # TODO: there is something weird happening here!
+        
         self._eigenvectors, self._energies = jax.lax.linalg.eigh(self._hamiltonian)
         
         self._initial_density_matrix = _numerics._density_matrix(
@@ -1015,6 +1016,7 @@ class OrbitalList:
         )
         if return_density == True:
             return time_axis, expecation_value, density_matrices
+        jax.clear_caches()
         return time_axis, expectation_value        
 
     def get_expectation_value_frequency_domain(self, *args, **kwargs):
@@ -1064,7 +1066,7 @@ class OrbitalList:
         use_old_method: bool = False,
         include_induced_contribution: bool = False,
         use_rwa=False,
-        compute_only_at=None,
+        compute_at=None,
         coulomb_strength=1.0,
         solver=diffrax.Dopri5(),
         stepsize_controller=diffrax.PIDController(rtol=1e-10, atol=1e-10),
@@ -1084,7 +1086,7 @@ class OrbitalList:
            use_old_method (bool): Flag to use the old RK method.
            include_induced_contribution (bool): Whether to include induced contributions in the simulation.
            use_rwa (bool): Whether to apply the rotating wave approximation.
-           compute_only_at (Optional[any]): Specific orbital indices at which the induced field computation is performed.
+           compute_at (Optional[any]): Specific orbital indices at which the induced field computation is performed.
            coulomb_strength (float): Strength of Coulomb interactions.
            solver (diffrax.Solver): The differential equation solver to use.
            stepsize_controller (diffrax.StepSizeController): The controller for the solver's step size.
@@ -1100,37 +1102,35 @@ class OrbitalList:
         time_axis = jnp.linspace(start_time, end_time, steps_time)
         skip = skip if skip is not None else 1
 
-        # Determine relaxation function based on the input type
-        if relaxation_rate is None:
-            relaxation_function = lambda r: 0.0
+        # relaxation rate can be
+        # 1. nothing => 0.0
+        # 2. number => decoherence_time
+        # 3. array => lindblad
+        # 4. callable => custom function of signature arr, arr => arr
+        relaxation_rate = relaxation_rate if relaxation_rate is not None else 0.0        
+        # TODO: check leak
+        if callable(relaxation_rate):
+            relaxation_function = relaxation_rate
         elif isinstance(relaxation_rate, jax.Array):
-            relaxation_function = _numerics.lindblad_saturation_functional(
-                self._eigenvectors,
-                relaxation_rate,
-                saturation_functional,
-                self.electrons,
-                self._stationary_density_matrix,
-            )
+            relaxation_function = _numerics.saturation_lindblad( self.eigenvectors, relaxation_rate, saturation_functional, self.electrons )
         else:
-            relaxation_function = _numerics.relaxation_time_approximation(
-                relaxation_rate,
-                self.stationary_density_matrix,
-            )
-
+            relaxation_function = _numerics.decoherence_time( relaxation_rate )            
+        
         # Verify that illumination is a callable
         if not callable(illumination):
             raise TypeError("Provide a function for e-field")
 
-        # Initialize common variables
+        # coulomb field propagator, if any
         coulomb_field_to_from = _numerics.get_coulomb_field_to_from(
-            self.positions, self.positions, compute_only_at
+            self.positions, self.positions, compute_at
         )
+
+        # we start with the flake dm if nothing else is supplied
         initial_density_matrix = self.initial_density_matrix if initial_density_matrix is None else initial_density_matrix
 
-        # TODO: not very elegant: we just dump every argument in there by default
         return time_axis[::skip], _numerics.integrate_master_equation(
-            self._hamiltonian,
-            coulomb_strength * self._coulomb,
+            self.hamiltonian,
+            coulomb_strength * self.coulomb,
             self.dipole_operator,
             self.electrons,
             self.velocity_operator,
