@@ -146,7 +146,10 @@
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span>
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">density_matrices</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>(10000, 26, 26)
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+
+
+(10000, 26, 26)
 </code></pre></div>
 <p>Now, we have density matrices in time domain. The first axis is time, the last two axis correspond to the dimension of the one particle Hilbert space. Let's compute expectation values for the dipole operator by hand</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value</span><span class="p">(</span> <span class="n">density_matrix</span> <span class="o">=</span> <span class="n">density_matrices</span><span class="p">,</span> <span class="n">operator</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span> <span class="p">)</span>
@@ -231,7 +234,9 @@
 </span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
 </span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </span></code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_32_0.png" /></p>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+</code></pre></div>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_32_1.png" /></p>
 <p>The dipole moment doesn't look periodic, so the system is likely not in a steady state. We can push the system further in time by supplying</p>
 <ol>
 <li>the time we ended the simulation as start time</li>
@@ -250,7 +255,9 @@
 </span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">time</span><span class="p">,</span> <span class="n">time_new</span><span class="p">]),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">p</span><span class="p">,</span> <span class="n">p_new</span><span class="p">])</span> <span class="p">)</span>
 </span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </span></code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_35_0.png" /></p>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+</code></pre></div>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_35_1.png" /></p>
 <p>We can repeat this process until we have visual confirmation of the steady state:</p>
 <ol>
 <li>continue simulation with end_time increased and the initial density matrix set to the last density matrix</li>
@@ -271,12 +278,6 @@ fraction_periodic(signal, threshold=0.01)
 
     Returns:
         float: A ratio representing the fraction of the signal that is considered periodic, based on the specified threshold.
-
-    Example:
-        &gt;&gt;&gt; import jax.numpy as jnp
-        &gt;&gt;&gt; signal = jnp.array([0.1, 0.2, 0.1, 0.2, 0.1, 0.2])
-        &gt;&gt;&gt; print(fraction_periodic(signal))
-        0.995
 </code></pre></div>
 <p>In our case, the signal to check for periodicity is the dipole moment: once it is periodic, we have hit a steady state. We can define a custom function to test this</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">def</span> <span class="nf">is_steady</span><span class="p">(</span> <span class="n">density_matrices</span> <span class="p">):</span>
@@ -305,7 +306,16 @@ fraction_periodic(signal, threshold=0.01)
 </span><span id="__span-11-17"><a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>
 </span><span id="__span-11-18"><a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="nb">print</span><span class="p">(</span> <span class="n">is_steady</span><span class="p">(</span><span class="n">density_matrices</span><span class="p">)</span> <span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>True
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+
+
+RHS compiled
+
+
+RHS compiled
+
+
+True
 </code></pre></div>
 <p>Now, we plot</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value</span><span class="p">(</span> <span class="n">operator</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">,</span> <span class="n">density_matrix</span> <span class="o">=</span> <span class="n">density_matrices</span> <span class="p">)</span>

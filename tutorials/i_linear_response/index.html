@@ -154,6 +154,8 @@
 </span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="n">skip</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>    
 </span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="p">)</span>
 </span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+</code></pre></div>
 <p>The polarizability is given by <span class="arithmatex">\(p / E\)</span> (we only take the <span class="arithmatex">\(x\)</span> - component).</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">absorption_td</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span> <span class="o">-</span><span class="n">omegas</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">imag</span><span class="p">(</span> <span class="n">dipole_omega</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">pulse_omega</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span> <span class="p">)</span>
 </span></code></pre></div>
