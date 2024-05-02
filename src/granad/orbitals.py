@@ -153,6 +153,14 @@ def plotting_methods(cls):
     return cls
 
 @dataclass
+class SimulationResult:
+    time_axis : Optional[jax.Array] = None
+    omega_axis : Optional[jax.Array] = None
+    illumination_omega : Optional[jax.Array] = None
+    final_density_matrix : Optional[jax.Array] = None
+    postprocessed_operators : Optional[dict] = field(default_factory=dict)
+
+@dataclass
 class SimulationParams:
     """
     A data class for storing parameters necessary for running a simulation involving electronic states and transitions.
@@ -995,74 +1003,23 @@ class OrbitalList:
             correction - density_matrix,
         )
 
-    def get_expectation_value_time_domain(self, *args, **kwargs):
-        """
-        Calculates the time-domain expectation value of an operator, corrected for induced effects based on the stationary density matrix.
-
-        Parameters:
-        The same as for get_density_matrix_time_domain, except operator
-
-        Returns:
-           Tuple[jax.Array, jax.Array]: A tuple containing the time axis and the calculated expectation values over time.
-        """
-
-        operator = kwargs.pop("operator", None)
-        return_density = kwargs.pop("return_density", False)
-        time_axis, density_matrices = self.get_density_matrix_time_domain(
-            *args, **kwargs
-        )
-        expectation_value = self.get_expectation_value(
-            density_matrix = density_matrices, operator = operator
-        )
-        if return_density == True:
-            return time_axis, expecation_value, density_matrices
-        jax.clear_caches()
-        return time_axis, expectation_value        
-
-    def get_expectation_value_frequency_domain(self, *args, **kwargs):
-        """
-        Computes the frequency-domain expectation values by transforming time-domain data obtained from expectation values calculations.
-
-        Parameters:
-        The same as for get_density_matrix_time_domain, except omega_min, omega_max and the operator.
-
-        Returns:
-           Tuple[jax.Array, jax.Array, jax.Array]: Frequencies and corresponding expectation values, and optionally transformed electric field data.
-        """
-
-        density_matrices = kwargs.pop("density_matrices", None)
-        time_axis = kwargs.pop("time", None)
-        omega_min = kwargs.pop("omega_min", 0)
-        omega_max = kwargs.pop("omega_max", 100)
-        
-        if density_matrices is not None:
-            operator = kwargs.pop("operator", None)            
-            exp_val_td = self.get_expectation_value(density_matrix = density_matrices, operator = operator)
-        if density_matrices is None:
-            time_axis, exp_val_td = self.get_expectation_value_time_domain(*args, **kwargs)
-                        
-        omega, exp_val_omega = _numerics.get_fourier_transform(time_axis, exp_val_td)
-        mask = (omega >= omega_min) & (omega <= omega_max)
-        try:
-            electric_field = jax.vmap(kwargs["illumination"])(time_axis)
-            field_omega = _numerics.get_fourier_transform(
-                time_axis, electric_field, return_omega_axis=False
-            )
-            return omega[mask], exp_val_omega[mask], field_omega[mask]
-        except KeyError:
-            return omega[mask], exp_val_omega[mask]
-
+    # TODO: facadify, currently this is disgusting
     @recomputes
-    def get_density_matrix_time_domain(
+    def evolve(
         self,
+        *,
         end_time: float,
         illumination: Callable[[float], jax.Array],
-        start_time: Optional[float] = None,
-        steps_time: Optional[int] = None,
-        skip: Optional[int] = None,
+        max_mem_gb : float = 0.5,
+        start_time: Optional[float] = 0.0,
+        dt: Optional[float] = 1e-4,
+        grid: Optional[Union[int, jax.Array]] = None,
         relaxation_rate: Union[float, jax.Array] = None,
-        saturation_functional: Callable[[float], float] = lambda x: 1
-        / (1 + jnp.exp(-1e6 * (2.0 - x))),
+        saturation_functional: Optional[Callable[[float], float]] = None,
+        postprocess : Optional[Callable] = None,
+        operators : Optional[dict] = None,
+        omega_max : Optional[float] = None,
+        omega_min : Optional[float] = None,
         use_old_method: bool = False,
         use_rwa=False,
         compute_at=None,
@@ -1071,41 +1028,44 @@ class OrbitalList:
         stepsize_controller=diffrax.PIDController(rtol=1e-10, atol=1e-10),
         initial_density_matrix : Optional[jax.Array] = None,
     ):
+
         """
         Simulates the time evolution of the density matrix for a given system under specified conditions and external fields.
-        
+
         Parameters:
-           end_time (float): The end time for the simulation.
-           illumination (Callable[[float], jax.Array]): A function that returns the electric field at a given time.
-           start_time (Optional[float]): The start time for the simulation, defaults to zero.
-           steps_time (Optional[int]): The number of time steps to simulate, defaults to int(end_time * 1000)
-           skip (Optional[int]): The interval at which to record results, defaults to 1, i.e. record every density matrix.
-           relaxation_rate (Union[float, jax.Array]): The relaxation rates to be applied: if constant, the phenomenological term is applied, if an NxN array, the saturated lindblad model is applied.
-           saturation_functional (Callable[[float], float]): A function defining the saturation behavior, defaults to smoothed-out step function.
-           use_old_method (bool): Flag to use the old RK method.
-           use_rwa (bool): Whether to apply the rotating wave approximation.
-           compute_at (Optional[any]): Specific orbital indices at which the induced field computation is performed. If None, no induced fields are computed.
-           coulomb_strength (float): Strength of Coulomb interactions.
-           solver (diffrax.Solver): The differential equation solver to use.
-           stepsize_controller (diffrax.StepSizeController): The controller for the solver's step size.
-           initial_density_matrix (Union[jax.Array,None]): if given, used as initial density matrix instead
+            end_time (float): The end time for the simulation.
+            illumination (Callable[[float], jax.Array]): A function that returns the electric field at a given time.
+            max_mem_gb (float): Maximum memory allocated to a single density matrix batch in RAM, defaults to 0.5 GB.
+            start_time (Optional[float]): The start time for the simulation, defaults to 0.0.
+            dt (Optional[float]): The integration step size, defaults to 0.0001.
+            grid (Optional[Union[int, jax.Array]]): Specifies how to subsample density matrices. If integer, determines the frequency of samples; if an array, explicitly states the times at which to sample.
+            relaxation_rate (Union[float, jax.Array]): The relaxation rates to be applied: if constant, the phenomenological term is applied; if an NxN array, the saturated Lindblad model is applied.
+            saturation_functional (Optional[Callable[[float], float]]): A function defining the saturation behavior. If None, uses a default smoothed-out step function.
+            postprocess (Optional[Callable]): A function with the signature f(density_matrix, operator) -> result, for additional processing of results. If None, expectation values will be computed.
+            operators (Optional[dict]): A dictionary mapping operator names to their matrix representations, e.g., {"dipole": flake.dipole_operator}. If not provided, density matrices are returned as-is.
+            omega_max (Optional[float]): Upper frequency limit for Fourier transform of results.
+            omega_min (Optional[float]): Lower frequency limit for Fourier transform of results.
+            use_old_method (bool): Flag to use the old RK method.
+            use_rwa (bool): Whether to apply the rotating wave approximation.
+            compute_at (Optional[any]): Specific orbital indices at which the induced field computation is performed. If None, no induced fields are computed.
+            coulomb_strength (float): Strength of Coulomb interactions.
+            solver (diffrax.Solver): The differential equation solver to use.
+            stepsize_controller (diffrax.StepSizeController): The controller for the solver's step size.
+            initial_density_matrix (Optional[jax.Array]): If given, used as initial density matrix.
 
         Returns:
-           Tuple[jax.Array, jax.Array]: The time axis and the simulated density matrices at specified time intervals.
+            SimulationResult
         """
 
-        # Time axis creation
-        start_time = float(start_time) if start_time is not None else 0.0
-        steps_time = int(steps_time) if steps_time is not None else int(end_time * 1000)
-        time_axis = jnp.linspace(start_time, end_time, steps_time)
-        skip = skip if skip is not None else 1
+        staturation_functional = saturation_functional if saturation_functional is not None else lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x)))
 
         # relaxation rate can be
         # 1. nothing => 0.0
         # 2. number => decoherence_time
         # 3. array => lindblad
         # 4. callable => custom function of signature arr, arr => arr
-        relaxation_rate = relaxation_rate if relaxation_rate is not None else 0.0        
+        relaxation_rate = relaxation_rate if relaxation_rate is not None else 0.0
+        
         # TODO: check leak
         if callable(relaxation_rate):
             relaxation_function = relaxation_rate
@@ -1125,14 +1085,55 @@ class OrbitalList:
 
         # we start with the flake dm if nothing else is supplied
         initial_density_matrix = self.initial_density_matrix if initial_density_matrix is None else initial_density_matrix
+        
 
-        return time_axis[::skip], _numerics.integrate_master_equation(
+        ## batching time
+        # if grid is an array, sample these times, else subsample time axis
+        time_axis = grid
+        if not isinstance(grid, jax.Array):
+            steps_time = jnp.ceil( (end_time - start_time) / dt ).astype(int)
+            time_axis = jnp.linspace(start_time, end_time, steps_time)[::grid]
+        # number of rhos in a single RAM batch 
+        size = (self.initial_density_matrix.size * self.initial_density_matrix.itemsize) / 1e9
+        matrices_per_batch = jnp.floor( max_mem_gb / size  ).astype(int).item()
+        assert matrices_per_batch > 0, "Density matrix exceeds allowed max memory."
+        # batch time axis accordingly
+        splits = jnp.ceil(time_axis.size /  matrices_per_batch ).astype(int).item()
+        time_axis = jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] )
+
+        ## unpacking operators        
+        # we default to computing expecation values in postprocessing
+        postprocess = postprocess if postprocess is not None else lambda ops, dms : jnp.einsum('oij,tji->to', ops, self.electrons * (self.stationary_density_matrix - dms))
+        # if ops are given, turn them into a flat list containing NxN matrices
+        ops = operators if operators is not None else {}
+        no_operators = len(ops) == 0
+        ops_flattened = []
+        dims = [0]
+        keys = []
+        for name, op in ops.items():
+            if op.ndim == 2:        
+                ops_flattened.append(op)
+            elif op.ndim == 3:
+                for inner_op in op:
+                    ops_flattened.append(inner_op)
+            else:
+                raise ValueError
+            dims.append( dims[-1] + op.ndim )
+            keys.append( name )
+        # no operators specified => just return the density matrices
+        if no_operators:
+            postprocess = lambda dummy,r : r
+            ops_flattened = [0] # dummy value
+        ops = jnp.stack( ops_flattened )
+
+        ## integrate
+        final_density_matrix, ops = _numerics.integrate_master_equation(
             self.hamiltonian,
-            coulomb_strength * self.coulomb,
+            self.coulomb,
             self.dipole_operator,
             self.electrons,
             self.velocity_operator,
-            initial_density_matrix,
+            self.initial_density_matrix,
             self.stationary_density_matrix,
             time_axis,
             illumination,
@@ -1142,9 +1143,31 @@ class OrbitalList:
             solver,
             stepsize_controller,
             use_old_method,
-            skip,
+            dt,    
+            ops,
+            postprocess
         )
-            
+
+        ## preparing output        
+        # undo split
+        time_axis = jnp.concatenate(time_axis)
+        # operator dict
+        postprocessed_operators = {}        
+        # fourier trafo
+        omega_axis, illumination_omega = None, None
+        if omega_max is not None and omega_min is not None:
+            omega_axis, ops = _numerics.get_fourier_transform(time_axis, ops, omega_max, omega_min)
+            illumination_omega = _numerics.get_fourier_transform(time_axis, jax.vmap(illumination)(time_axis), omega_max, omega_min, return_omega_axis = False)        
+        # regroup operators according to original dimensions
+        for i, name in enumerate(keys):
+            postprocessed_operators[name] = ops[:, dims[i]:dims[i+1]]            
+        res = SimulationResult(time_axis = time_axis,
+                               final_density_matrix = final_density_matrix,
+                               illumination_omega = illumination_omega,
+                               omega_axis = omega_axis,
+                               postprocessed_operators = postprocessed_operators
+                               )        
+        return res
 
     # TODO: decouple rpa numerics from orbital datataype
     def get_polarizability_rpa(

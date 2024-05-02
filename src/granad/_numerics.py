@@ -30,7 +30,7 @@ def fraction_periodic(signal, threshold=1e-2):
     # approximate admixture of periodic signal
     return (deviation < threshold).sum().item() / len(signal)
 
-def get_fourier_transform(t_linspace, function_of_time, return_omega_axis=True):
+def get_fourier_transform(t_linspace, function_of_time, omega_max = jnp.inf, omega_min = -jnp.inf, return_omega_axis=True):
     # Compute the FFT along the first axis
     function_of_omega = (
         jnp.fft.fft(function_of_time, axis=0) / function_of_time.shape[0]
@@ -41,10 +41,12 @@ def get_fourier_transform(t_linspace, function_of_time, return_omega_axis=True):
     N = function_of_time.shape[0]  # number of points in t_linspace
     omega_axis = 2 * jnp.pi * jnp.fft.fftfreq(N, d=delta_t)
 
+    mask = (omega_axis >= omega_min) & (omega_axis <= omega_max)
+    
     if return_omega_axis:
-        return omega_axis, function_of_omega
+        return omega_axis[mask], function_of_omega[mask]
     else:
-        return function_of_omega
+        return function_of_omega[mask]
 
 
 def fermi(e, beta, mu):
@@ -442,6 +444,28 @@ def setup_rhs( is_vec_pot, add_induced, use_rwa, relax_fun, illu_fun ):
 
     return rhs
 
+# TODO: rework this, especially the billions of arguments I just did this to make really sure no memory leaks
+def integrator_diffrax( postprocess, term, solver, stepsize_controller, xs ):
+    i, rho_0, ts, dt, ops, args = xs
+    dms = diffrax.diffeqsolve( term,
+                            solver,
+                            t0=ts[i].min(),
+                            t1=ts[i].max(),
+                            dt0=dt,
+                            y0=rho_0,
+                            saveat=diffrax.SaveAt(ts=ts[i]),
+                            stepsize_controller=stepsize_controller,
+                            args = args
+                            ).ys
+
+    return (i + 1, dms[-1], ts, dt, ops, args), postprocess(ops, dms)
+
+def integrator_old( postprocess, rhs, xs ):
+    i, rho_0, ts, dt, ops, args = xs
+    kernel = lambda r, t: (r + dt * rhs(t, r, args), r) 
+    _, density_matrices = jax.lax.scan(kernel, initial_density_matrix, ts[i])
+    return (i + 1, density_matrices[-1], ts, dt, ops, args), postprocess(ops, density_matrices)    
+
 def integrate_master_equation(
     hamiltonian,
     coulomb,
@@ -458,9 +482,11 @@ def integrate_master_equation(
     solver,
     stepsize_controller,
     use_old_method,
-    skip,
+    dt,
+    ops,
+    postprocess,
+    _return_rhs = False,
 ):
-
     # a space dependent illumination indicates we should use a vector potential
     is_vector_potential = illumination(0).ndim != 1
     
@@ -475,32 +501,27 @@ def integrate_master_equation(
     
     # this sets up the rhs of the von Neumann equation
     rhs = setup_rhs( is_vector_potential, add_induced, use_rwa, relaxation_function, illumination )
-
-    # integration step
-    dt = time_axis[1] - time_axis[0]
-
-    # first order RK
-    if use_old_method:
-        kernel = lambda r, t: (r + dt * rhs(t, r, args), r) 
-        _, density_matrices = jax.lax.scan(kernel, initial_density_matrix, time_axis)
-        return density_matrices[::skip]
-
-    # diffrax coolness
-    term = diffrax.ODETerm(rhs)    
-    solution = diffrax.diffeqsolve(
-        term,
-        solver,
-        t0=time_axis[0],
-        t1=time_axis[-1],
-        dt0=dt,
-        y0=initial_density_matrix,
-        saveat=diffrax.SaveAt(ts=time_axis[::skip]),
-        stepsize_controller=stepsize_controller,
-        args = args
-    )
     
-    return solution.ys
+    # diffrax coolness
+    term = diffrax.ODETerm(rhs)
+    
+    # first order RK or diffrax coolness
+    integrator = lambda args : integrator_diffrax(postprocess, term, solver, stepsize_controller, args)
+    if use_old_method == True:
+        integrator = lambda args : integrator_old(postprocess, rhs, args)
 
+    # setup arguments to the integrator, these contain the args to the rhs
+    integrator_args = (0, initial_density_matrix, time_axis, dt, ops, args)
+
+    # time propagation TODO: make while loop
+    result = []
+    
+    # TODO: check for mem leak and clear cache ?
+    while integrator_args[0] < len(time_axis):
+        integrator_args, res = integrator( integrator_args )
+        result.append( res )
+    
+    return integrator_args[1], jnp.concatenate(result)
 
 def rpa_polarizability_function(
     orbs, relaxation_rate, polarization, coulomb_strength, phi_ext=None, hungry=True
