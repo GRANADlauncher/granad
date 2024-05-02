@@ -16,23 +16,32 @@
 #
 # We introduce the basics of GRANAD and do a quick simulation.
 
+### Introduction
+
+# GRANAD lets you simulate structures from a few orbitals up to finite bulks. The process of specifying a structure is designed to be easy and interactive: You can add, shift, combine and manipulate parts of your structure at varying levels of detail involving large groups of orbitals or just single orbitals. To this end, GRANAD offers three fundamental datatypes:
+
+# 1. *Orbitals* are the fundamental building block of a structure.
+# 2. *OrbitalLists* represent a concrete structure. In essence, you can handle these as normal Python lists with additional information regarding Orbital coupling.
+# 3. *Materials* are a stand-in for infinite bulks. You can cut finite pieces from these bulks, which are again just lists of orbitals.
+
+# We will explain each of these and their basic use below.
+
 #
 ### Orbitals
 #
-# At its core, GRANAD is all about orbitals. Let's create one at the origin and inspect it.
+# At its core, GRANAD is all about orbitals. Here we create an orbital and print its properties to understand its structure.
 #
 
 # +
 from granad import Orbital
 
 my_first_orbital = Orbital(
-    position = (0, 0, 0),
     tag = "a tag contains arbitrary information",
 )
 print(my_first_orbital)
 # -
 
-# The group_id, unsurprisingly, groups orbitals. For example: if you create a two-level adatom, you need two orbitals that share the same group_id. In the same way, all orbitals in a graphene sheet share the same group_id.
+# The group_id, unsurprisingly, groups orbitals. It shouldn't concern us too much now. From the output above, we see that orbitals are placed at the origin by default. We can change this by passing an explicit position.
 
 # +
 
@@ -62,7 +71,7 @@ MaterialCatalog.available()
 MaterialCatalog.describe("graphene")
 # -
 
-# There are parameters regarding the geometry, the type of the involved orbitals (the built-in graphene model contains only a single spin polarized pz orbital) , the position of orbitals in the unit cell and the interactions (currently, GRANAD supports hoppings and Coulomb interactions). Let's pick a concrete material.
+# There are parameters regarding the geometry, the type of the involved orbitals (the built-in graphene model contains only a single pz orbital per atom), the position of orbitals in the unit cell and the interactions (currently, GRANAD supports hoppings and Coulomb interactions). Let's pick a concrete material.
 
 # +
 graphene = MaterialCatalog.get("graphene")
@@ -81,19 +90,26 @@ print(my_first_orbital_list)
 
 # Alternatively, you get orbital lists if you cut a flake from a material. You do this by specifying the shape of the flake.
 # You can specify any shape you want, but this is covered in a separate tutorial.
-# For now, we will use a built-in shape: an equilateral triangle with a side length of 15 Angström.
+# For now, we will use a built-in shape: an hexagon with a base length of 10 Angström.
 
 # +
 from granad import Triangle
 import jax.numpy as jnp
-triangle = Triangle(15, armchair = True)
+triangle = Triangle(18)
 # -
 
 # Now, our shape is ready and we can start cutting. To make sure that we are satisfied with what we get, we plot the flake. By default, GRANAD cuts any "dangling" atoms.
 
 # +
-my_first_flake = graphene.cut_flake(triangle, plot = False)
+my_first_flake = graphene.cut_flake(triangle, plot = True)
 print(my_first_flake)
+# -
+
+# There is an extra option for dealing with graphene-like lattices we can pass to the built-in shape, which is the armchair boolean. It just rotates the shape to get the correct edge type. The optional "shift" argument lets you shift the shape in the plane.
+
+# +
+triangle_ac = Triangle(18, armchair = True, shift = [10,10])
+my_first_flake = graphene.cut_flake(triangle_ac, plot = True)
 # -
 
 # For more information on cutting, including different edge types and how to keep dangling atoms, have a look at the corresponding tutorial.
