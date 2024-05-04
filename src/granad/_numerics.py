@@ -512,6 +512,7 @@ def integrate_master_equation(
     # TODO: check for mem leak and clear cache ?
     shapes_known = False
     while integrator_args[0] < len(time_axis):
+        print(f"finished timestep {integrator_args[0]}")
         integrator_args, res = integrator( integrator_args )
         if shapes_known == False:
             result = res
