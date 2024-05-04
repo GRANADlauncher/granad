@@ -58,9 +58,7 @@ def _density_matrix(
     electrons,
     spin_degeneracy,
     eps,
-    from_state,
-    to_state,
-    excited_electrons,
+    excitation,
     beta,
 ):
     """Calculates the normalized spin-traced 1RDM. For zero temperature, accordning to the Aufbau principle.
@@ -75,9 +73,7 @@ def _density_matrix(
             electrons,
             spin_degeneracy,
             eps,
-            from_state,
-            to_state,
-            excited_electrons,
+            excitation
         )
     return _density_thermo(energies, electrons, spin_degeneracy, eps, beta)
 
@@ -124,7 +120,7 @@ def _density_thermo(
 
 
 def _density_aufbau(
-    energies, electrons, spin_degeneracy, eps, from_state, to_state, excited_electrons
+    energies, electrons, spin_degeneracy, eps, excitation
 ):
 
     def _occupation(flags, spin_degeneracy, fraction):
@@ -179,6 +175,8 @@ def _density_aufbau(
             occupation,
         )
 
+    from_state, to_state, excited_electrons = excitation
+    
     homo = jnp.array(jnp.ceil(electrons / spin_degeneracy), int) - 1
 
     # determine where and how often this energy occurs
@@ -266,9 +264,7 @@ def _get_self_consistent(
         electrons,
         spin_degeneracy,
         eps,
-        from_state,
-        to_state,
-        excited_electrons,
+        excitation
     )
 
     return (
@@ -325,6 +321,7 @@ def mean_field( channel, rho ):
 def electric_potential(dipole_operator, electric_field):
     return jnp.einsum("Kij,iK->ij", dipole_operator, electric_field.real)
 
+# TODO: this could be improved
 def electric_potential_rwa(dipole_operator, electric_field):
     # the missing real part is crucial here! the RPA (for real dipole moments) makes the fields complex
     total_field_potential = jnp.einsum("Kij,iK->ij", dipole_operator, electric_field)
@@ -332,10 +329,10 @@ def electric_potential_rwa(dipole_operator, electric_field):
     # Get the indices for the lower triangle, excluding the diagonal
     lower_indices = jnp.tril_indices(total_field_potential.shape[0], -1)
 
-    # Replace elements in the lower triangle with their complex conjugates
-    return total_field_potential.at[lower_indices].set(
-        jnp.conj(total_field_potential[lower_indices])
-    )
+    # Replace elements in the lower triangle with their complex conjugates    
+    tmp = total_field_potential.at[lower_indices].set( jnp.conj(total_field_potential[lower_indices]))
+    # make hermitian again
+    return tmp - 1j*jnp.diag(tmp.diagonal().imag)
 
 def paramagnetic(q, velocity_operator, vector_potential):
     # ~ A p
@@ -445,8 +442,8 @@ def setup_rhs( is_vec_pot, add_induced, use_rwa, relax_fun, illu_fun ):
     return rhs
 
 # TODO: rework this, especially the billions of arguments I just did this to make really sure no memory leaks
-def integrator_diffrax( postprocess, term, solver, stepsize_controller, xs ):
-    i, rho_0, ts, dt, ops, args = xs
+def integrator_diffrax( pp_fun_list, term, solver, stepsize_controller, xs ):
+    i, rho_0, ts, dt, args = xs
     dms = diffrax.diffeqsolve( term,
                             solver,
                             t0=ts[i].min(),
@@ -458,13 +455,13 @@ def integrator_diffrax( postprocess, term, solver, stepsize_controller, xs ):
                             args = args
                             ).ys
 
-    return (i + 1, dms[-1], ts, dt, ops, args), postprocess(ops, dms)
+    return (i + 1, dms[-1], ts, dt, args), [ postprocess(dms) for postprocess in pp_fun_list ]
 
-def integrator_old( postprocess, rhs, xs ):
-    i, rho_0, ts, dt, ops, args = xs
+def integrator_old( pp_fun_list, rhs, xs ):
+    i, rho_0, ts, dt, args = xs
     kernel = lambda r, t: (r + dt * rhs(t, r, args), r) 
     _, density_matrices = jax.lax.scan(kernel, initial_density_matrix, ts[i])
-    return (i + 1, density_matrices[-1], ts, dt, ops, args), postprocess(ops, density_matrices)    
+    return (i + 1, density_matrices[-1], ts, dt, args), [ postprocess(density_matrices) for postprocess in pp_fun_list ]
 
 def integrate_master_equation(
     hamiltonian,
@@ -481,11 +478,8 @@ def integrate_master_equation(
     use_rwa,
     solver,
     stepsize_controller,
-    use_old_method,
     dt,
-    ops,
-    postprocess,
-    _return_rhs = False,
+    pp_fun_list,
 ):
     # a space dependent illumination indicates we should use a vector potential
     is_vector_potential = illumination(0).ndim != 1
@@ -506,22 +500,27 @@ def integrate_master_equation(
     term = diffrax.ODETerm(rhs)
     
     # first order RK or diffrax coolness
-    integrator = lambda args : integrator_diffrax(postprocess, term, solver, stepsize_controller, args)
-    if use_old_method == True:
-        integrator = lambda args : integrator_old(postprocess, rhs, args)
+    integrator = lambda args : integrator_diffrax(pp_fun_list, term, solver, stepsize_controller, args)
+    if solver is None and stepsize_controller is None:
+        integrator = lambda args : integrator_old(pp_fun_list, rhs, args)
 
     # setup arguments to the integrator, these contain the args to the rhs
-    integrator_args = (0, initial_density_matrix, time_axis, dt, ops, args)
+    integrator_args = (0, initial_density_matrix, time_axis, dt, args)
 
-    # time propagation TODO: make while loop
-    result = []
-    
+    # TODO: uff, this is dirtier than quck
+    # TODO: JAXify?
     # TODO: check for mem leak and clear cache ?
+    shapes_known = False
     while integrator_args[0] < len(time_axis):
         integrator_args, res = integrator( integrator_args )
-        result.append( res )
-    
-    return integrator_args[1], jnp.concatenate(result)
+        if shapes_known == False:
+            result = res
+            shapes_known = True
+        else:
+            for i, res_part in enumerate(res):
+                result[i] = jnp.concatenate( (result[i], res_part) )
+            
+    return integrator_args[1], result
 
 def rpa_polarizability_function(
     orbs, relaxation_rate, polarization, coulomb_strength, phi_ext=None, hungry=True

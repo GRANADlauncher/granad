@@ -11,6 +11,7 @@ import jax.numpy as jnp
 
 from granad import _numerics, _plotting, _watchdog
 
+
 @dataclass
 class Orbital:
     """
@@ -50,7 +51,7 @@ class Orbital:
     angular_momentum_z: Optional[int] = None
     spin: Optional[int] = None
     atom_name: Optional[str] = None
-    group_id: int = field(default_factory=_watchdog._Watchdog.next_value)
+    group_id: _watchdog.GroupId = field(default_factory=_watchdog._Watchdog.next_value)
 
     def __post_init__(self):
         object.__setattr__(self, "position", jnp.array(self.position).astype(float))
@@ -67,7 +68,7 @@ class Orbital:
                 self.angular_momentum,
                 self.spin,
                 self.atom_name,
-                self.group_id,
+                self.group_id.id,
             )
         )
 
@@ -114,7 +115,7 @@ class _SortedTupleDict(dict):
     def group_id_items(self):
         """Yields items where all elements of the key tuple are group ids."""
         for key, value in self.items():
-            if all(isinstance(k, int) for k in key):
+            if all(isinstance(k, _watchdog.GroupId) for k in key):
                 yield (key, value)
 
     def orbital_items(self):
@@ -122,8 +123,71 @@ class _SortedTupleDict(dict):
         for key, value in self.items():
             if all(isinstance(k, Orbital) for k in key):
                 yield (key, value)
+                
+@dataclass
+class Params:
+    """
+    A data class for storing parameters necessary for running a simulation involving electronic states and transitions.
 
+    Attributes:
+        excitation (jax.Array): from state, to state, excited electrons 
+        eps (float): Numerical precision used for identifying degenerate eigenstates. Defaults to 1e-5.
+        beta (float): Inverse temperature parameter (1/kT) used in thermodynamic calculations. Set to
+                      `jax.numpy.inf` by default, implying zero temperature.
+        self_consistency_params (dict): A dictionary to hold additional parameters required for self-consistency
+                                        calculations within the simulation. Defaults to an empty dictionary.
+        spin_degeneracy (float): Factor to account for the degeneracy of spin states in the simulation. Typically
+                               set to 2, considering spin up and spin down. 
+        electrons (Optional[int]): The total number of electrons in the structure. If not provided, it is assumed
+                                   that the system's electron number needs to be calculated or is managed elsewhere.
 
+    Note:
+        This object should not be created directly, but is rather used to encapsulate (ephemeral) internal state
+        of OrbitalList.
+    """
+    electrons : int
+    excitation : list[jax.Array] = field(default_factory=lambda : [jnp.array([0]), jnp.array([0]), jnp.array([0])])
+    eps : float = 1e-5
+    beta : float = jnp.inf
+    self_consistency_params : dict =  field(default_factory=dict)
+    spin_degeneracy : float = 2.0
+
+    def __add__( self, other ):
+        if isinstance(other, Params):
+            return Params( electrons = self.electrons + other.electrons )        
+        raise ValueError
+    
+# rule: new couplings are registered here
+@dataclass
+class Couplings:
+    hamiltonian : _SortedTupleDict = field(default_factory=_SortedTupleDict)
+    coulomb : _SortedTupleDict = field(default_factory=_SortedTupleDict)
+    dipole_transitions : _SortedTupleDict = field(default_factory=_SortedTupleDict)
+
+    def __add__( self, other ):
+        if isinstance(other, Couplings):
+            return Couplings()
+        raise ValueError        
+                
+@dataclass
+class TDResult:
+    illumination : Callable
+    time_axis : jax.Array
+    final_density_matrix : jax.Array
+    output : list[jax.Array]
+
+    def ft_output( self, omega_max, omega_min ):
+        ft = lambda o : _numerics.get_fourier_transform(self.time_axis, o, omega_max, omega_min, False)
+        return [ft(o) for o in self.output]
+
+    def ft_illumination( self, omega_max, omega_min, return_omega_axis = True ):
+        return _numerics.get_fourier_transform(self.time_axis, self.td_illumination, omega_max, omega_min, return_omega_axis)
+
+    @property
+    def td_illumination( self ):
+        return jax.vmap(self.illumination)(self.time_axis)
+
+    
 def mutates(func):
     @wraps(func)
     def wrapper(self, *args, **kwargs):
@@ -143,7 +207,6 @@ def recomputes(func):
 
     return wrapper
 
-
 def plotting_methods(cls):
     # attach all plotting methods
     for name in dir(_plotting):
@@ -151,52 +214,7 @@ def plotting_methods(cls):
         if callable(method) and name.startswith("show"):
             setattr(cls, name, method)            
     return cls
-
-@dataclass
-class SimulationResult:
-    time_axis : Optional[jax.Array] = None
-    omega_axis : Optional[jax.Array] = None
-    illumination_omega : Optional[jax.Array] = None
-    final_density_matrix : Optional[jax.Array] = None
-    postprocessed_operators : Optional[dict] = field(default_factory=dict)
-
-@dataclass
-class SimulationParams:
-    """
-    A data class for storing parameters necessary for running a simulation involving electronic states and transitions.
-
-    Attributes:
-        from_state (jax.Array): An array where each element is the index of an electronic state from which
-                                electrons are excited. Defaults to an array containing a single zero.
-        to_state (jax.Array): An array where each element is the index of an electronic state to which
-                              electrons are excited. Defaults to an array containing a single zero.
-        excited_electrons (jax.Array): An array where each element indicates the number of electrons excited
-                                       between the corresponding states in `from_state` and `to_state`.
-                                       Defaults to an array containing a single zero.
-        eps (float): Numerical precision used for identifying degenerate eigenstates. Defaults to 1e-5.
-        beta (float): Inverse temperature parameter (1/kT) used in thermodynamic calculations. Set to
-                      `jax.numpy.inf` by default, implying zero temperature.
-        self_consistency_params (dict): A dictionary to hold additional parameters required for self-consistency
-                                        calculations within the simulation. Defaults to an empty dictionary.
-        spin_degeneracy (float): Factor to account for the degeneracy of spin states in the simulation. Typically
-                               set to 2, considering spin up and spin down. 
-        electrons (Optional[int]): The total number of electrons in the structure. If not provided, it is assumed
-                                   that the system's electron number needs to be calculated or is managed elsewhere.
-
-    Note:
-        This object should not be created directly, but is rather used to encapsulate (ephemeral) internal state
-        of OrbitalList.
-    """
-    from_state : jax.Array = field(default_factory=lambda : jnp.array([0]))
-    to_state : jax.Array = field(default_factory=lambda : jnp.array([0]))
-    excited_electrons : jax.Array = field(default_factory=lambda : jnp.array([0]))    
-    eps : float = 1e-5
-    beta : float = jnp.inf
-    self_consistency_params : dict =  field(default_factory=dict)
-    spin_degeneracy : float = 2.0
-    electrons : Optional[int] = None
     
-
 @plotting_methods
 class OrbitalList:
     """
@@ -234,25 +252,11 @@ class OrbitalList:
         The coupling values can be dynamically modified. When two orbital lists are added, their couplings are merged, 
         and their simulation parameters are wiped.
     """
-
-    def __init__(self, orbs, _hopping_dict=None, _coulomb_dict=None, _transitions_dict=None):
-        # couplings are dicts mapping orbital pairs to couplings
-        self._hopping_dict = (
-            _hopping_dict if _hopping_dict is not None else _SortedTupleDict()
-        )
-        self._coulomb_dict = (
-            _coulomb_dict if _coulomb_dict is not None else _SortedTupleDict()
-        )
-        self._transitions_dict =_transitions_dict if _transitions_dict is not None else _SortedTupleDict()
-
-
-        # contains all high-level simulation information
-        self._list = list(orbs) if orbs is not None else []
-
-        # flag for recomputing state
-        self._recompute = True
-
-        self.simulation_params = SimulationParams()
+    def __init__( self, orbs = None, couplings = None, params = None, recompute = True):
+        self._list = orbs if orbs is not None else []
+        self.couplings = couplings if couplings is not None else Couplings()
+        self.params = params if params is not None else Params( len(orbs) )
+        self._recompute = recompute    
         
     def __getattr__(self, property_name):
         if property_name.endswith("_x"):
@@ -272,14 +276,13 @@ class OrbitalList:
 
     def __str__(self):
         info = f"List with {len(self)} orbitals, {self.electrons} electrons."
-        excited = f"{self.excited_electrons} electrons excited from {self.from_state} to {self.to_state}."
         groups = "\n".join(
             [
                 f"group id {key} : {val} orbitals"
                 for key, val in Counter(self.get_group_ids()).items()
             ]
         )
-        return "\n".join((info, excited, groups))
+        return "\n".join((info, groups)) + "\n" + str(self._list)
 
     def __iter__(self):
         return iter(self._list)
@@ -292,20 +295,11 @@ class OrbitalList:
             raise ValueError
 
         if isinstance(other, OrbitalList):
-            new_hopping_dict = self._hopping_dict.copy()
-            new_hopping_dict.update(other._hopping_dict)
-            new_coulomb_dict = self._coulomb_dict.copy()
-            new_coulomb_dict.update(other._coulomb_dict)
-            new_transitions_dict = self._transitions_dict.copy()
-            new_transitions_dict.update(other._transitions_dict)
+            new_list = (self._list + list(other)).copy()
+            new_couplings = self.couplings + other.couplings 
+            new_params = self.params + other.params 
             
-
-        return OrbitalList(
-            (self._list + list(other)).copy(),
-            _SortedTupleDict(new_hopping_dict),
-            _SortedTupleDict(new_coulomb_dict),
-            _SortedTupleDict(new_transitions_dict),
-        )
+        return OrbitalList( new_list, new_couplings, new_params )
 
     @mutates
     def __setitem__(self, position, value):
@@ -321,17 +315,19 @@ class OrbitalList:
     @mutates
     def __delitem__(self, position):
         orb = self._list[position]
-        self._delete_coupling(orb, self._hopping_dict)
-        self._delete_coupling(orb, self._coulomb_dict)
+        self._delete_coupling(orb, self.coupling.hamiltonian)
+        self._delete_coupling(orb, self.couplings.coulomb)
         del self._list[position]
 
     @staticmethod
     def _are_orbs(candidate):
         return all(isinstance(orb, Orbital) for orb in candidate)
-
+    
     @mutates
-    def _set_coupling(self, orb_or_group_id1, orb_or_group_id2, val_or_func, coupling):
-        coupling[(orb_or_group_id1, orb_or_group_id2)] = val_or_func
+    def _set_coupling(self, orb1, orb2, val_or_func, coupling):
+        for o1 in orb1:
+            for o2 in orb2:
+                coupling[(o1, o2)] = val_or_func
 
     def _hamiltonian_coulomb(self):
 
@@ -345,8 +341,8 @@ class OrbitalList:
             for key, function in coupling_dict.group_id_items():
                 # TODO:  big uff:  we rely on the correct ordering of the group_ids for cols and rows, first key is always smaller than last keys => we get upper triangular valid indices
                 # if it were the other way around, these would be zeroed by the triangle mask
-                cols = group_ids == key[0]
-                rows = (group_ids == key[1])[:, None]
+                cols = group_ids == key[0].id
+                rows = (group_ids == key[1].id)[:, None]
                 combination_indices = jnp.logical_and(rows, cols)
                 valid_indices = jnp.logical_and(triangle_mask, combination_indices)
                 function = jax.vmap(function)
@@ -366,142 +362,50 @@ class OrbitalList:
             return matrix + matrix.conj().T - jnp.diag(jnp.diag(matrix))
 
         # TODO: rounding
-        positions = self._get_positions()
+        positions = self.positions
         distances = jnp.round(
             jnp.linalg.norm(positions - positions[:, None], axis=-1), 6
         )
-        group_ids = jnp.array(self.get_group_ids())
+        group_ids = jnp.array( [orb.group_id.id for orb in self._list] )
 
         hamiltonian = fill_matrix(
-            jnp.zeros((len(self), len(self))).astype(complex), self._hopping_dict
+            jnp.zeros((len(self), len(self))).astype(complex), self.couplings.hamiltonian
         )
         coulomb = fill_matrix(
-            jnp.zeros((len(self), len(self))).astype(complex), self._coulomb_dict
+            jnp.zeros((len(self), len(self))).astype(complex), self.couplings.coulomb
         )
         return hamiltonian, coulomb
 
-    def _get_positions(self):
-        return jnp.array([orb.position for orb in self._list])
+    # TODO: abstract this boilerplate away
+    @mutates
+    def set_dipole_element(self, orb1, orb2, arr):
+        """
+        Sets a dipole transition for specified orbital or index pairs.
 
-    def _ensure_complex(self, func_or_val):
-        if callable(func_or_val):
-            return lambda x: func_or_val(x) + 0.0j
-        if isinstance(func_or_val, (int, float, complex)):
-            return func_or_val + 0.0j
-        raise TypeError
-
-    def _maybe_orbs_to_group_ids(self, maybe_orbs):
-        def convert(maybe_orb):
-            # TODO: check if this is really a group_id
-            if isinstance(maybe_orb, int):
-                return maybe_orb
-            if isinstance(maybe_orb, Orbital):
-                return maybe_orb.group_id
-            return "You have passed something that is neither an orbital nor a group_id"
-        return [convert(x) for x in maybe_orbs]
-
-
-    def _maybe_indices_to_orbs(self, maybe_indices):
-        def convert(maybe_index):
-            if isinstance(maybe_index, int):
-                return self._list[maybe_index]
-            if isinstance(maybe_index, Orbital):
-                return maybe_index
-            return "You have passed something that is neither an orbital nor an index"
-        return [convert(x) for x in maybe_indices]
-
-    def _build(self):
-
-        assert len(self) > 0
-        self._positions = self._get_positions()
-
-        self._hamiltonian, self._coulomb = self._hamiltonian_coulomb()
-
-        # TODO: there is something weird happening here!
+        Parameters:
+            orb_or_index1 (int or Orbital): Identifier or orbital for the first part of the transition.
+            orb_or_index2 (int or Orbital): Identifier or orbital for the second part of the transition.
+            arr (jax.Array): The 3-element array containing dipole transition elements.
+        """
+        self._set_coupling(self.filter_orbs(orb1, int), self.filter_orbs(orb2, int), arr, self.couplings.dipole_transitions)
         
-        self._eigenvectors, self._energies = jax.lax.linalg.eigh(self._hamiltonian)
-        
-        self._initial_density_matrix = _numerics._density_matrix(
-            self._energies,
-            self.electrons,
-            self.spin_degeneracy,
-            self.eps,
-            self.from_state,
-            self.to_state,
-            self.excited_electrons,
-            self.beta,
-        )
-        self._stationary_density_matrix = _numerics._density_matrix(
-            self._energies,
-            self.electrons,
-            self.spin_degeneracy,
-            self.eps,
-            jnp.array([0]),
-            jnp.array([0]),
-            jnp.array([0]),
-            self.beta,
-        )
-
-        if self.self_consistency_params:
-            (
-                self._hamiltonian,
-                self._initial_density_matrix,
-                self._stationary_density_matrix,
-                self._energies,
-                self._eigenvectors,
-            ) = _get_self_consistent(
-                self._hamiltonian,
-                self._coulomb,
-                self._positions,
-                self.spin_degeneracy,
-                self.electrons,
-                self.eps,
-                self._eigenvectors,
-                self._static_density_matrix,
-                **self.self_consistent_params,
-            )
-
-        self._initial_density_matrix = self.transform_to_site_basis( self._initial_density_matrix )
-        self._stationary_density_matrix = self.transform_to_site_basis( self._stationary_density_matrix )
-            
-    def get_group_ids(self):
+    def set_hamiltonian_groups(self, orb1, orb2, func):
         """
-        Retrieves a list of group IDs for all orbitals managed by this object.
-
-        Returns:
-            List[int]: A list of group IDs for each orbital.
-        """
-        return [orb.group_id for orb in self._list]
-
-    def get_unique_group_ids(self):
-        """
-        Retrieves a unique set of group IDs from all orbitals.
-
-        Returns:
-            List[int]: A list of unique group IDs.
-        """
-        return list(set(self.get_group_ids()))
-
-    def set_groups_hopping(self, orb_or_group_id1, orb_or_group_id2, func):
-        """
-        Sets the hopping coupling between two groups of orbitals.
+        Sets the hamiltonian coupling between two groups of orbitals.
 
         Parameters:
             orb_or_group_id1 (int or Orbital): Identifier or orbital for the first group.
             orb_or_group_id2 (int or Orbital): Identifier or orbital for the second group.
-            func (callable): Function that defines the hopping interaction.
+            func (callable): Function that defines the hamiltonian interaction.
 
         Notes:
             The function `func` should be complex-valued.
         """
-        group_id1, group_id2 = self._maybe_orbs_to_group_ids(
-            (orb_or_group_id1, orb_or_group_id2)
-        )
         self._set_coupling(
-            group_id1, group_id2, self._ensure_complex(func), self._hopping_dict
+            self.filter_orbs(orb1, _watchdog.GroupId), self.filter_orbs(orb2, _watchdog.GroupId), self._ensure_complex(func), self.couplings.hamiltonian
         )
 
-    def set_groups_coulomb(self, orb_or_group_id1, orb_or_group_id2, func):
+    def set_coulomb_groups(self, orb1, orb2, func):
         """
         Sets the Coulomb coupling between two groups of orbitals.
 
@@ -513,14 +417,11 @@ class OrbitalList:
         Notes:
             The function `func` should be complex-valued.
         """
-        group_id1, group_id2 = self._maybe_orbs_to_group_ids(
-            (orb_or_group_id1, orb_or_group_id2)
-        )
         self._set_coupling(
-            group_id1, group_id2, self._ensure_complex(func), self._coulomb_dict
+            self.filter_orbs(orb1, _watchdog.GroupId), self.filter_orbs(orb2, _watchdog.GroupId), self._ensure_complex(func), self.couplings.coulomb
         )
 
-    def set_hamiltonian_element(self, orb_or_index1, orb_or_index2, val):
+    def set_hamiltonian_element(self, orb1, orb2, val):
         """
         Sets an element of the Hamiltonian matrix between two orbitals or indices.
 
@@ -529,10 +430,9 @@ class OrbitalList:
             orb_or_index2 (int or Orbital): Identifier or orbital for the second element.
             val (complex): The complex value to set for the Hamiltonian element.
         """
-        orb1, orb2 = self._maybe_indices_to_orbs((orb_or_index1, orb_or_index2))
-        self._set_coupling(orb1, orb2, self._ensure_complex(val), self._hopping_dict)
+        self._set_coupling(self.filter_orbs(orb1, int), self.filter_orbs(orb2, int), self._ensure_complex(val), self.couplings.hamiltonian)
 
-    def set_coulomb_element(self, orb_or_index1, orb_or_index2, val):
+    def set_coulomb_element(self, orb1, orb2, val):
         """
         Sets a Coulomb interaction element between two orbitals or indices.
 
@@ -541,9 +441,64 @@ class OrbitalList:
             orb_or_index2 (int or Orbital): Identifier or orbital for the second element.
             val (complex): The complex value to set for the Coulomb interaction element.
         """
-        orb1, orb2 = self._maybe_indices_to_orbs((orb_or_index1, orb_or_index2))
-        self._set_coupling(orb1, orb2, self._ensure_complex(val), self._coulomb_dict)
+        self._set_coupling(self.filter_orbs(orb1, int), self.filter_orbs(orb2, int), self._ensure_complex(val), self.couplings.coulomb)
 
+    def _ensure_complex(self, func_or_val):
+        if callable(func_or_val):
+            return lambda x: func_or_val(x) + 0.0j
+        if isinstance(func_or_val, (int, float, complex)):
+            return func_or_val + 0.0j
+        raise TypeError
+
+    def _build(self):
+
+        assert len(self) > 0
+
+        self._hamiltonian, self._coulomb = self._hamiltonian_coulomb()
+
+        # TODO: there is something weird happening here!        
+        self._eigenvectors, self._energies = jax.lax.linalg.eigh(self._hamiltonian)
+
+        self._initial_density_matrix = _numerics._density_matrix(
+            self._energies,
+            self.params.electrons,
+            self.params.spin_degeneracy,
+            self.params.eps,
+            self.params.excitation,
+            self.params.beta,
+        )
+        self._stationary_density_matrix = _numerics._density_matrix(
+            self._energies,
+            self.params.electrons,
+            self.params.spin_degeneracy,
+            self.params.eps,
+            Params(0).excitation,
+            self.params.beta,
+        )
+
+        if self.params.self_consistency_params:
+            (
+                self._hamiltonian,
+                self._initial_density_matrix,
+                self._stationary_density_matrix,
+                self._energies,
+                self._eigenvectors,
+            ) = _get_self_consistent(
+                self._hamiltonian,
+                self._coulomb,
+                self.positions,
+                self.params.spin_degeneracy,
+                self.params.electrons,
+                self.params.eps,
+                self._eigenvectors,
+                self._static_density_matrix,
+                **self.params.self_consistent_params,
+            )
+
+        self._initial_density_matrix = self.transform_to_site_basis( self._initial_density_matrix )
+
+        self._stationary_density_matrix = self.transform_to_site_basis( self._stationary_density_matrix )
+            
     def set_open_shell( self ):
         if any( orb.spin is None for orb in self._list ):
             raise ValueError
@@ -573,8 +528,46 @@ class OrbitalList:
             raise ValueError
         self._list.append(other)
 
+    # TODO: replace if else with action map
+    def filter_orbs( self, orb_id, t ):
+        if type(orb_id) == t:
+            return [orb_id]
+        
+        # index to group, orb, tag => group_id / orb / tag at index,
+        if isinstance(orb_id, int) and isinstance(t, _watchdog.GroupId):
+            return [self._list[orb_id].group_id]
+        if isinstance(orb_id, int) and isinstance(t, Orbital):
+            return [self._list[orb_id]]
+        if isinstance(orb_id, int) and isinstance(t, str):
+            return [self._list[orb_id].tag]
+
+        # group to index, orb, tag => group_id / orb / tag at index,
+        if isinstance(orb_id, _watchdog.GroupId) and isinstance(t, str):
+            return [ orb.tag for orb in self if orb.group_id == orb_id ]
+        if isinstance(orb_id, _watchdog.GroupId) and isinstance(t, group_id):
+            return [ orb.group_id for orb in self if orb.group_id == orb_id ]
+        if isinstance(orb_id, _watchdog.GroupId) and isinstance(t, int):
+            return [ self._list.index(orb) for orb in self if orb.group_id == orb_id ]
+
+        # tag to group, orb, index => group_id / orb / tag at index,
+        if isinstance(orb_id, str) and isinstance(t, _watchdog.GroupId):
+            return [orb.group_id for orb in self if orb.tag == orb_id]
+        if isinstance(orb_id, str) and isinstance(t, int):
+            return [self._list.index(orb) for orb in self if orb.tag == orb_id]
+        if isinstance(orb_id, str) and isinstance(t, Orbital):
+            return [orb for orb in self if orb.tag == orb_id]
+
+        # orb to index, group, tag
+        if isinstance(orb_id, Orbital) and isinstance(t, _watchdog.GroupId):
+            return [orb_id.group_id]
+        if isinstance(orb_id, Orbital) and isinstance(t, int):
+            return [self._list.index(orb_id)]
+        if isinstance(orb_id, Orbital) and isinstance(t, str):
+            return [orb_id.tag]
+
+        
     @mutates
-    def shift_by_vector(self, tag_or_group_id, translation_vector):
+    def shift_by_vector(self, orb_id, translation_vector):
         """
         Shifts all orbitals with a specific tag by a given vector.
 
@@ -585,18 +578,11 @@ class OrbitalList:
         Notes:
             This operation mutates the positions of the matched orbitals.
         """
-        if isinstance(tag_or_group_id, str):            
-            orbs = [orb for orb in self._list if orb.tag == tag_or_group_id]
-        elif isinstance(tag_or_group_id, int):
-            orbs = [orb for orb in self._list if orb.group_id == tag_or_group_id]
-        else:
-            orbs = [orb for orb in self._list if orb.group_id in tag_or_group_id]
-            
-        for orb in orbs:
+        for orb in self.get( orb_id, Orbital ):
             orb.position += jnp.array(translation_vector)
 
     @mutates
-    def set_position(self, tag, position):
+    def set_position(self, orb_id, position):
         """
         Sets the position of all orbitals with a specific tag.
 
@@ -607,13 +593,12 @@ class OrbitalList:
         Notes:
             This operation mutates the positions of the matched orbitals.
         """
-        orbs = [orb for orb in self._list if orb.tag == tag]
-        for orb in orbs:
+        for orb in self.filter_orbs( orb_id, Orbital ):
             orb.position = position
 
             
     @mutates
-    def make_self_consistent(self, sc_params):
+    def set_self_consistent(self, sc_params):
         """
         Configures the list for self-consistent field calculations.
 
@@ -621,10 +606,6 @@ class OrbitalList:
             sc_params (dict): Parameters for self-consistency.
         """
         self.self_consistency_params = sc_params
-
-    @mutates
-    def set_electrons( self, number ):
-        self.simulation_params.electrons = number 
 
     @mutates
     def set_excitation(self, from_state, to_state, excited_electrons):
@@ -652,65 +633,30 @@ class OrbitalList:
                 )
             raise TypeError
 
-        self.simulation_params.from_state = maybe_int_to_arr(from_state)
-        self.simulation_params.to_state = maybe_int_to_arr(to_state)
-        self.simulation_params.excited_electrons = maybe_int_to_arr(excited_electrons)
+        self.params.excitation = [maybe_int_to_arr(from_state), maybe_int_to_arr(to_state), maybe_int_to_arr(excited_electrons)]
+        
+    @property
+    def positions(self):
+        return jnp.array([orb.position for orb in self._list])
+
+    # TODO: too verbose
+    @property
+    def electrons( self ):
+        return self.params.electrons
 
     @mutates
-    def set_dipole_transition(self, orb_or_index1, orb_or_index2, arr):
-        """
-        Sets a dipole transition for specified orbital or index pairs.
+    def set_electrons( self, val ):
+        self.params.electrons = val
 
-        Parameters:
-            orb_or_index1 (int or Orbital): Identifier or orbital for the first part of the transition.
-            orb_or_index2 (int or Orbital): Identifier or orbital for the second part of the transition.
-            arr (jax.Array): The 3-element array containing dipole transition elements.
-        """
-        orb1, orb2 = self._maybe_indices_to_orbs((orb_or_index1, orb_or_index2))
-        self._transitions_dict[(orb_or_index1, orb_or_index2)] = jnp.array(arr).astype(
-            complex
-        )
-
+    @property
+    def spin_degeneracy( self ):
+        return self.params.spin_degeneracy
+        
     @property
     @recomputes
     def homo(self):
         return (self.electrons * self.stationary_density_matrix_e).real.diagonal().round(2).nonzero()[0][-1].item()
-
-    @property
-    def electrons(self):
-        if self.simulation_params.electrons is None:
-            return len(self._list)
-        return self.simulation_params.electrons
-
-    @property
-    def spin_degeneracy(self):
-        return self.simulation_params.spin_degeneracy
-
-    @property
-    def from_state(self):
-        return self.simulation_params.from_state
     
-    @property
-    def to_state(self):
-        return self.simulation_params.to_state
-    
-    @property
-    def excited_electrons(self):
-        return self.simulation_params.excited_electrons
-
-    @property
-    def beta(self):
-        return self.simulation_params.beta
-
-    @property
-    def eps(self):
-        return self.simulation_params.eps
-    
-    @property
-    @recomputes
-    def positions(self):
-        return self._positions
-
     @property
     @recomputes
     def eigenvectors(self):
@@ -771,9 +717,9 @@ class OrbitalList:
         dipole_operator = jnp.zeros((3, N, N)).astype(complex)
         for i in range(3):
             dipole_operator = dipole_operator.at[i, :, :].set(
-                jnp.diag(self._positions[:, i] / 2)
+                jnp.diag(self.positions[:, i] / 2)
             )
-        for orbital_combination, value in self._transitions_dict.items():
+        for orbital_combination, value in self.couplings.dipole_transitions.items():
             i, j = self._list.index(orbital_combination[0]), self._list.index(
                 orbital_combination[1]
             )
@@ -791,9 +737,9 @@ class OrbitalList:
            jax.Array: A tensor representing the velocity operator, computed as a differential of position and Hamiltonian.
         """
 
-        if self._transitions_dict is None:
-            x_times_h = jnp.einsum("ij,iL->ijL", self._hamiltonian, self._positions)
-            h_times = jnp.einsum("ij,jL->ijL", self._hamiltonian, self._positions)
+        if self.couplings.dipole_transitions is None:
+            x_times_h = jnp.einsum("ij,iL->ijL", self._hamiltonian, self.positions)
+            h_times = jnp.einsum("ij,jL->ijL", self._hamiltonian, self.positions)
         else:
             positions = self.dipole_operator
             x_times_h = jnp.einsum("kj,Lik->Lij", self._hamiltonian, positions)
@@ -961,7 +907,7 @@ class OrbitalList:
 
 
         # distance vector array from field sources to positions to evaluate field on
-        vec_r = self._positions[:, None] - positions
+        vec_r = self.positions[:, None] - positions
 
         # scalar distances
         denominator = jnp.linalg.norm(vec_r, axis=2) ** 3
@@ -1003,91 +949,36 @@ class OrbitalList:
             correction - density_matrix,
         )
 
-    # TODO: facadify, currently this is disgusting
-    @recomputes
-    def evolve(
-        self,
-        *,
-        end_time: float,
-        illumination: Callable[[float], jax.Array],
-        max_mem_gb : float = 0.5,
-        start_time: Optional[float] = 0.0,
-        dt: Optional[float] = 1e-4,
-        grid: Optional[Union[int, jax.Array]] = None,
-        relaxation_rate: Union[float, jax.Array] = None,
-        saturation_functional: Optional[Callable[[float], float]] = None,
-        postprocess : Optional[Callable] = None,
-        operators : Optional[dict] = None,
-        omega_max : Optional[float] = None,
-        omega_min : Optional[float] = None,
-        use_old_method: bool = False,
-        use_rwa=False,
-        compute_at=None,
-        coulomb_strength=1.0,
-        solver=diffrax.Dopri5(),
-        stepsize_controller=diffrax.PIDController(rtol=1e-10, atol=1e-10),
-        initial_density_matrix : Optional[jax.Array] = None,
-    ):
 
+    # TODO: rewrite _td functions
+    def _td_postprocessing_func_list(self, expectation_values, density_matrix, custom_computation ):
+        """Builds the list of funtions to be applied to the density matrix in postprocessing.
         """
-        Simulates the time evolution of the density matrix for a given system under specified conditions and external fields.
-
-        Parameters:
-            end_time (float): The end time for the simulation.
-            illumination (Callable[[float], jax.Array]): A function that returns the electric field at a given time.
-            max_mem_gb (float): Maximum memory allocated to a single density matrix batch in RAM, defaults to 0.5 GB.
-            start_time (Optional[float]): The start time for the simulation, defaults to 0.0.
-            dt (Optional[float]): The integration step size, defaults to 0.0001.
-            grid (Optional[Union[int, jax.Array]]): Specifies how to subsample density matrices. If integer, determines the frequency of samples; if an array, explicitly states the times at which to sample.
-            relaxation_rate (Union[float, jax.Array]): The relaxation rates to be applied: if constant, the phenomenological term is applied; if an NxN array, the saturated Lindblad model is applied.
-            saturation_functional (Optional[Callable[[float], float]]): A function defining the saturation behavior. If None, uses a default smoothed-out step function.
-            postprocess (Optional[Callable]): A function with the signature f(density_matrix, operator) -> result, for additional processing of results. If None, expectation values will be computed.
-            operators (Optional[dict]): A dictionary mapping operator names to their matrix representations, e.g., {"dipole": flake.dipole_operator}. If not provided, density matrices are returned as-is.
-            omega_max (Optional[float]): Upper frequency limit for Fourier transform of results.
-            omega_min (Optional[float]): Lower frequency limit for Fourier transform of results.
-            use_old_method (bool): Flag to use the old RK method.
-            use_rwa (bool): Whether to apply the rotating wave approximation.
-            compute_at (Optional[any]): Specific orbital indices at which the induced field computation is performed. If None, no induced fields are computed.
-            coulomb_strength (float): Strength of Coulomb interactions.
-            solver (diffrax.Solver): The differential equation solver to use.
-            stepsize_controller (diffrax.StepSizeController): The controller for the solver's step size.
-            initial_density_matrix (Optional[jax.Array]): If given, used as initial density matrix.
-
-        Returns:
-            SimulationResult
-        """
-
-        staturation_functional = saturation_functional if saturation_functional is not None else lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x)))
-
-        # relaxation rate can be
-        # 1. nothing => 0.0
-        # 2. number => decoherence_time
-        # 3. array => lindblad
-        # 4. callable => custom function of signature arr, arr => arr
-        relaxation_rate = relaxation_rate if relaxation_rate is not None else 0.0
         
-        # TODO: check leak
-        if callable(relaxation_rate):
-            relaxation_function = relaxation_rate
-        elif isinstance(relaxation_rate, jax.Array):
-            relaxation_function = _numerics.saturation_lindblad( self.eigenvectors, relaxation_rate, saturation_functional, self.electrons )
-        else:
-            relaxation_function = _numerics.decoherence_time( relaxation_rate )            
-        
-        # Verify that illumination is a callable
-        if not callable(illumination):
-            raise TypeError("Provide a function for e-field")
+        computation = []
+        if expectation_values is not None:
+            if isinstance(expectation_values, jax.Array):
+                expectation_values = [expectation_values]
+            ops = jnp.concatenate( expectation_values)
+            computation.append( lambda rho : self.get_expectation_value(operator = ops, density_matrix = rho) )
+        if density_matrix is not None:            
+            if isinstance(density_matrix, str):
+                density_matrix = [density_matrix]
+            for option in density_matrix:
+                if option == "occ_x":
+                    computation.append( lambda rho : jnp.diagonal(rho, axis1=-1, axis2=-2) )
+                elif option == "occ_e":
+                    computation.append( lambda rho : jnp.diagonal(rho, axis1=-1, axis2=-2) )
+                elif option == "full":
+                    computation.append( lambda rho : rho )
+        if custom_computation is not None:
+            if callable(custom_computation):
+                custom_computation = [custom_computation]
+            computation.extend( custom_computation )
+        assert len(computation) > 0, "Specify what to compute!"
+        return [jax.jit(f) for f in computation]
 
-        # coulomb field propagator, if any
-        coulomb_field_to_from = _numerics.get_coulomb_field_to_from(
-            self.positions, self.positions, compute_at
-        )
-
-        # we start with the flake dm if nothing else is supplied
-        initial_density_matrix = self.initial_density_matrix if initial_density_matrix is None else initial_density_matrix
-        
-
-        ## batching time
+    def _td_time_axis( self, grid, start_time, end_time, dt, max_mem_gb):
         # if grid is an array, sample these times, else subsample time axis
         time_axis = grid
         if not isinstance(grid, jax.Array):
@@ -1099,37 +990,88 @@ class OrbitalList:
         assert matrices_per_batch > 0, "Density matrix exceeds allowed max memory."
         # batch time axis accordingly
         splits = jnp.ceil(time_axis.size /  matrices_per_batch ).astype(int).item()
-        time_axis = jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] )
+        return jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] )
 
-        ## unpacking operators        
-        # we default to computing expecation values in postprocessing
-        postprocess = postprocess if postprocess is not None else lambda ops, dms : jnp.einsum('oij,tji->to', ops, self.electrons * (self.stationary_density_matrix - dms))
-        # if ops are given, turn them into a flat list containing NxN matrices
-        ops = operators if operators is not None else {}
-        no_operators = len(ops) == 0
-        ops_flattened = []
-        dims = [0]
-        keys = []
-        for name, op in ops.items():
-            if op.ndim == 2:        
-                ops_flattened.append(op)
-            elif op.ndim == 3:
-                for inner_op in op:
-                    ops_flattened.append(inner_op)
-            else:
-                raise ValueError
-            dims.append( dims[-1] + op.ndim )
-            keys.append( name )
-        # no operators specified => just return the density matrices
-        if no_operators:
-            postprocess = lambda dummy,r : r
-            ops_flattened = [0] # dummy value
-        ops = jnp.stack( ops_flattened )
+    def _td_dynamic_functions( self, relaxation_rate, illumination, saturation ):
+        relaxation_rate = relaxation_rate if relaxation_rate is not None else 0.0                        
+        if callable(relaxation_rate):
+            relaxation_function = relaxation_rate
+        elif isinstance(relaxation_rate, jax.Array):
+            # TODO: check leak
+            relaxation_function = _numerics.saturation_lindblad( self.eigenvectors, relaxation_rate, saturation, self.electrons )
+        else:
+            relaxation_function = _numerics.decoherence_time( relaxation_rate )
+
+        if illumination is None:
+            illumination = lambda t : jnp.array([0.,0.,0.])            
+        if not callable(illumination):
+            raise TypeError("Provide a function for e-field")
+
+        return illumination, relaxation_function
+    
+    @recomputes
+    def td_run(            
+            self,
+            *,
+            end_time : float,
+            start_time : float = 0.0,
+            dt : float = 1e-4,
+            grid : int = 100,
+            max_mem_gb : float = 0.5,
+
+            initial_density_matrix : Optional[jax.Array] = None,
+
+            coulomb_strength : float = 1.0,
+            
+            illumination : Callable = None,
+            
+            saturation : Callable = None,
+            relaxation_rate : Union[float, jax.Array, Callable] = None,
+
+            compute_at : Optional[jax.Array] = None,
+
+            expectation_values : Optional[list[jax.Array]] = None,
+            density_matrix : Optional[list[str]] = None,
+            computation : Optional[Callable] = None,
+
+            use_rwa : bool = False,
+
+            solver = diffrax.Dopri5(),
+            stepsize_controller = diffrax.PIDController(rtol=1e-10,atol=1e-10),
+
+            dry_run : bool = False,
+    ):
+
+        """
+        Simulates the time evolution of the density matrix for a given system under specified conditions and external fields.
+
+        Parameters:
+
+        Returns:
+            ResultTD
+        """
+
+        # external functions
+        illumination, relaxation = self._td_dynamic_functions(relaxation_rate, illumination, saturation)
+
+        # batched time axis 
+        time_axis = self._td_time_axis(grid, start_time, end_time, dt, max_mem_gb)
+
+        # applied to density matrix batch
+        pp_fun_list = self._td_postprocessing_func_list(expectation_values, density_matrix, computation)
+        
+        # coulomb field propagator, if any
+        coulomb_field_to_from = _numerics.get_coulomb_field_to_from(
+            self.positions, self.positions, compute_at
+        )
+
+        # we start with the flake dm if nothing else is supplied
+        initial_density_matrix = self.initial_density_matrix if initial_density_matrix is None else initial_density_matrix        
 
         ## integrate
-        final_density_matrix, ops = _numerics.integrate_master_equation(
+        final_density_matrix, output = _numerics.integrate_master_equation(
             self.hamiltonian,
-            self.coulomb,
+            self.coulomb * coulomb_strength,
             self.dipole_operator,
             self.electrons,
             self.velocity_operator,
@@ -1137,37 +1079,21 @@ class OrbitalList:
             self.stationary_density_matrix,
             time_axis,
             illumination,
-            relaxation_function,
+            relaxation,
             coulomb_field_to_from,
             use_rwa,
             solver,
             stepsize_controller,
-            use_old_method,
             dt,    
-            ops,
-            postprocess
+            pp_fun_list,
         )
-
-        ## preparing output        
-        # undo split
-        time_axis = jnp.concatenate(time_axis)
-        # operator dict
-        postprocessed_operators = {}        
-        # fourier trafo
-        omega_axis, illumination_omega = None, None
-        if omega_max is not None and omega_min is not None:
-            omega_axis, ops = _numerics.get_fourier_transform(time_axis, ops, omega_max, omega_min)
-            illumination_omega = _numerics.get_fourier_transform(time_axis, jax.vmap(illumination)(time_axis), omega_max, omega_min, return_omega_axis = False)        
-        # regroup operators according to original dimensions
-        for i, name in enumerate(keys):
-            postprocessed_operators[name] = ops[:, dims[i]:dims[i+1]]            
-        res = SimulationResult(time_axis = time_axis,
-                               final_density_matrix = final_density_matrix,
-                               illumination_omega = illumination_omega,
-                               omega_axis = omega_axis,
-                               postprocessed_operators = postprocessed_operators
-                               )        
-        return res
+        
+        return TDResult(
+            time_axis = jnp.concatenate(time_axis),
+            illumination = illumination,
+            final_density_matrix = final_density_matrix,
+            output = output,
+        )
 
     # TODO: decouple rpa numerics from orbital datataype
     def get_polarizability_rpa(
@@ -1232,49 +1158,6 @@ class OrbitalList:
         eri = self.coulomb[None, None]
         overlap = overlap if overlap is not None else jnp.eye(self.hamiltonian.shape[0])
         return _rhf( self.hamiltonian, eri, overlap, self.electrons )
-
-    # @classmethod
-    # def to_hdf5( cls, filename : str):
-    #     with h5py.File('my_data.h5', 'r') as f:
-    #         # Load arrays
-    #         loaded_arrays = {name: np.array(f[name]) for name in arrays}
-
-    #         # Load dataclass dictionaries
-    #         loaded_dataclass_dicts = []
-            
-    #     for idx in range(len(dataclass_dicts)):
-    #         group = f[f'dataclass_{idx}']
-    #         loaded_dict = {key: group[key][()] for key in group}
-    #         # Convert bytes to str if necessary (for Python 3 compatibility)
-    #         loaded_dict = {k: v.decode() if isinstance(v, bytes) else v for k, v in loaded_dict.items()}
-    #         loaded_dataclass_dicts.append(loaded_dict)
-    #         return
-
-    # def to_hdf5( self, filename : str ):
-    #     arrays = {
-    #         "hamiltonian" : self.hamiltonian,
-    #         "coulomb" : self.coulomb,
-    #         "initial_density_matrix" : self.initial_density_matrix,
-    #         "positions" : self.positions,
-    #         "eigenvectors" : self.eigenvectors,
-    #         "static_density_matrix" : self.static_density_matrix,
-    #         "energies" : self.energies,
-    #     }
-
-    #     dataclass_dicts = [asdict(orb) for orb in self]
-        
-    #     # Open an HDF5 file
-    #     with h5py.File('my_data.h5', 'w') as f:
-    #         # Store each array in the file
-    #         for name, array in arrays.items():
-    #             f.create_dataset(name, data=array)
-
-    #         # Store dataclass dictionaries
-    #         # We store each as a separate group with datasets for each field
-    #         for idx, dclass in enumerate(dataclass_dicts):
-    #             group = f.create_group(f'dataclass_{idx}')
-    #             for key, value in dclass.items():
-    #                 group.create_dataset(key, data=np.string_(value) if isinstance(value, str) else value)
     
     @property
     def atoms( self ):

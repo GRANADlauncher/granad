@@ -190,7 +190,7 @@ class Material:
                                       as a dictionary containing the orbital's position and an optional tag
                                       for further identification.
         interactions (defaultdict[dict]): Describes the interactions between orbitals within the material.
-                                         Each interaction is categorized by type (e.g., 'hopping', 'Coulomb'),
+                                         Each interaction is categorized by type (e.g., 'hamiltonian', 'Coulomb'),
                                          and includes the participants, parameters like 
                                          [onsite, offsite_nearest_neighbor, offsite_next_to_nearest_neighbor, ...], and                                         
                                          an optional mathematical expression defining the interaction for the coupling beyound 
@@ -199,7 +199,7 @@ class Material:
     Usage:
         The `Material` class is used to define a material's structure and properties step-by-step.
         An example is constructing the material graphene, with specific lattice properties,
-        orbitals corresponding to carbon's p_z orbitals, and defining hopping and Coulomb interactions
+        orbitals corresponding to carbon's p_z orbitals, and defining hamiltonian and Coulomb interactions
         among these orbitals. 
 
     Example:
@@ -214,7 +214,7 @@ class Material:
             .add_orbital(position=(0, 0), tag="sublattice_1", species="pz")
             .add_orbital(position=(-1/3, -2/3), tag="sublattice_2", species="pz")
             .add_interaction(
-                "hopping",
+                "hamiltonian",
                 participants=("pz", "pz"),
                 parameters=[0.0, 2.66], # no expression given => we online look at onsite and nearest neighbors
             )
@@ -348,7 +348,7 @@ class Material:
         Adds an interaction between orbitals specified by an interaction type and participants.
 
         Parameters:
-            interaction_type (str): The type of interaction (e.g., 'hopping', 'Coulomb').
+            interaction_type (str): The type of interaction (e.g., 'hamiltonian', 'Coulomb').
             participants (tuple): A tuple identifying the participants in the interaction.
             parameters (dict): Parameters relevant to the interaction.
             expression (function): A function defining the mathematical form of the interaction.
@@ -415,7 +415,6 @@ class Material:
             distance_func = self._couplings_to_function(
                 *couplings, (species_1, species_2)
             )
-            
             setter_func(self._species_to_groups[species_1], self._species_to_groups[species_2], distance_func)
 
 
@@ -448,8 +447,8 @@ class Material:
                     raw_list.append(orb)
 
         orbital_list = OrbitalList(raw_list)
-        self._set_couplings(orbital_list.set_groups_hopping, "hopping")
-        self._set_couplings(orbital_list.set_groups_coulomb, "coulomb")
+        self._set_couplings(orbital_list.set_hamiltonian_groups, "hamiltonian")
+        self._set_couplings(orbital_list.set_coulomb_groups, "coulomb")
         return orbital_list        
 
 _MoS2 = (
@@ -466,19 +465,19 @@ _MoS2 = (
     .add_orbital(position=(1/3, 2/3, -1.5), tag="sublattice_sulfur_top", species="p_sulfur")
     .add_orbital(position=(1/3, 2/3, 1.5), tag="sublattice_sulfur_bottom", species="p_sulfur")
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("d_molybdenum", "p_sulfur"),
-        parameters=[-3.352]  # Hypothetical hopping parameter
+        parameters=[-3.352]  # Hypothetical hamiltonian parameter
     )
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("p_sulfur", "p_sulfur"),
-        parameters=[-2., 0.1, 0.1]  # Hypothetical hopping parameter
+        parameters=[-2., 0.1, 0.1]  # Hypothetical hamiltonian parameter
     )
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("d_molybdenum", "d_molybdenum"),
-        parameters=[0.201, 0.2175]  # Hypothetical hopping parameter
+        parameters=[0.201, 0.2175]  # Hypothetical hamiltonian parameter
     )
     .add_interaction(
         "coulomb",
@@ -510,19 +509,19 @@ _hBN = (
     .add_orbital(position=(0, 0), tag="sublattice_boron", species="pz_boron")
     .add_orbital(position=(-1/3, -2/3), tag="sublattice_nitrogen", species="pz_nitrogen")
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("pz_boron", "pz_boron"),
-        parameters=[2.46, -0.04],  # Hypothetical hopping parameter
+        parameters=[2.46, -0.04],  # Hypothetical hamiltonian parameter
     )
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("pz_nitrogen", "pz_nitrogen"),
-        parameters=[-2.55, -0.04],  # Hypothetical hopping parameter
+        parameters=[-2.55, -0.04],  # Hypothetical hamiltonian parameter
     )
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("pz_boron", "pz_nitrogen"),
-        parameters=[-2.16],  # Hypothetical hopping parameter
+        parameters=[-2.16],  # Hypothetical hamiltonian parameter
     )
 )
 
@@ -538,7 +537,7 @@ _graphene = (
     .add_orbital(position=(0, 0), tag="sublattice_1", species="pz")
     .add_orbital(position=(-1/3, -2/3), tag="sublattice_2", species="pz")
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("pz", "pz"),
         parameters=[0.0, 2.66],
     )
@@ -560,7 +559,7 @@ _ssh = (
     .add_orbital(position=(0,), tag="sublattice_1", species="pz")
     .add_orbital(position=(0.8,), tag="sublattice_2", species="pz")
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("pz", "pz"),
         parameters=[0.0, 1 + 0.2, 1 - 0.2],
     )
@@ -581,7 +580,7 @@ _metal_1d = (
     .add_orbital_species("pz", l=1, atom='C')
     .add_orbital(position=(0,), tag="", species="pz")
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("pz", "pz"),
         parameters=[0.0, 2.66],
     )
