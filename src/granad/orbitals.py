@@ -1056,7 +1056,7 @@ class OrbitalList:
 
         # batched time axis 
         time_axis = self._td_time_axis(grid, start_time, end_time, dt, max_mem_gb)
-        print(f"Batched time axis {time_axis.shape}")
+        print(f"Batched time axis {len(time_axis)}")
 
         # applied to density matrix batch
         pp_fun_list = self._td_postprocessing_func_list(expectation_values, density_matrix, computation)
