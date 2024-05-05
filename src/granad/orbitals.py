@@ -984,8 +984,8 @@ class OrbitalList:
         assert matrices_per_batch > 0, "Density matrix exceeds allowed max memory."
         # batch time axis accordingly
         splits = jnp.ceil(time_axis.size /  matrices_per_batch ).astype(int).item()
-        mem_needed = size * (4 + 6 + matrices_per_batch )
-        return jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] ), mem_needed
+        mem_req = size * (4 + 6 + matrices_per_batch )
+        return jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] ), mem_req
 
     def _td_dynamic_functions( self, relaxation_rate, illumination, saturation ):
         relaxation_rate = relaxation_rate if relaxation_rate is not None else 0.0                        
@@ -1051,7 +1051,9 @@ class OrbitalList:
 
         # batched time axis 
         time_axis, mem_req = self._td_time_axis(grid, start_time, end_time, dt, max_mem_gb)
-        if dry_run: print(f"est mem consum {mem_req}")
+        if dry_run:
+            print(f"est mem consum {mem_req}")
+            return
 
         # applied to density matrix batch
         pp_fun_list = self._td_postprocessing_func_list(expectation_values, density_matrix, computation)
