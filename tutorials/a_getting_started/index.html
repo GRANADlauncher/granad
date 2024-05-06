@@ -74,8 +74,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">Basis Handling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
@@ -126,7 +124,8 @@
 <li><em>OrbitalLists</em> represent a concrete structure. In essence, you can handle these as normal Python lists with additional information regarding Orbital coupling.</li>
 <li><em>Materials</em> are a stand-in for infinite bulks. You can cut finite pieces from these bulks, which are again just lists of orbitals.</li>
 </ol>
-<p>We will explain each of these and their basic use below.</p>
+<p>We will use each of them below to set up a small graphene nanoantenna coupling to an external field.</p>
+<p>Once this is done, we will use GRANAD's main feature and simulate the induced dynamics in the nanoantenna directly in time domain.</p>
 <h2 id="orbitals">Orbitals</h2>
 <p>At its core, GRANAD is all about orbitals. Here we create an orbital and print its properties to understand its structure.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">Orbital</span>
@@ -144,7 +143,7 @@
  &#39;angular_momentum_z&#39;: None,
  &#39;spin&#39;: None,
  &#39;atom_name&#39;: None,
- &#39;group_id&#39;: 1}
+ &#39;group_id&#39;: GroupId(id=1)}
 </code></pre></div>
 <p>The group_id, unsurprisingly, groups orbitals. It shouldn't concern us too much now. From the output above, we see that orbitals are placed at the origin by default. We can change this by passing an explicit position.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">my_second_orbital</span> <span class="o">=</span> <span class="n">Orbital</span><span class="p">(</span>
@@ -161,7 +160,7 @@
  &#39;angular_momentum_z&#39;: None,
  &#39;spin&#39;: None,
  &#39;atom_name&#39;: None,
- &#39;group_id&#39;: 2}
+ &#39;group_id&#39;: GroupId(id=2)}
 </code></pre></div>
 <p>This is all there is to know about orbitals!</p>
 <h2 id="materials">Materials</h2>
@@ -181,7 +180,8 @@ hBN
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>Material: graphene
   Lattice Constant: 2.46 Å
-  Lattice Basis: [[ 1.         0.         0.       ]
+  Lattice Basis: 
+[[ 1.         0.         0.       ]
  [-0.5        0.8660254  0.       ]]
   Orbital Species:
     pz characterized by (n,l,m,s, atom name) = (0, 1, 0, 0, &#39;C&#39;)
@@ -189,8 +189,12 @@ hBN
     Position: (0, 0), Tag: sublattice_1, Species: pz
     Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
   Interactions:
-    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0.0, 2.66], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff4e59a2c00&gt;)
-    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff4e59a2d40&gt;)
+   Type: hamiltonian, Participants: (&#39;pz&#39;, &#39;pz&#39;):
+                    NN Couplings: 0.0, 2.66
+                    Other neighbors: Zero coupling
+   Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;):
+                    NN Couplings: 16.522, 8.64, 5.333
+                    Other neighbors: Coupling with a (regularized) Coulomb-like potential
 </code></pre></div>
 <p>There are parameters regarding the geometry, the type of the involved orbitals (the built-in graphene model contains only a single pz orbital per atom), the position of orbitals in the unit cell and the interactions (currently, GRANAD supports hoppings and Coulomb interactions). Let's pick a concrete material.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">graphene</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
@@ -202,10 +206,8 @@ hBN
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">my_first_orbital_list</span> <span class="o">=</span> <span class="n">OrbitalList</span><span class="p">([</span><span class="n">my_first_orbital</span><span class="p">,</span> <span class="n">my_second_orbital</span><span class="p">])</span>
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_orbital_list</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>List with 2 orbitals, 2 electrons.
-[0] electrons excited from [0] to [0].
-group id 1 : 1 orbitals
-group id 2 : 1 orbitals
+<div class="language-text highlight"><pre><span></span><code>List with 2 orbitals, 2 electrons.Excitation: f[Array([0], dtype=int64), Array([0], dtype=int64), Array([0], dtype=int64)]
+[Orbital(position=Array([0., 0., 0.], dtype=float64), layer_index=None, tag=&#39;a tag contains arbitrary information&#39;, energy_level=None, angular_momentum=None, angular_momentum_z=None, spin=None, atom_name=None, group_id=GroupId(id=1)), Orbital(position=Array([1., 1., 1.], dtype=float64), layer_index=None, tag=&#39;a new, shifted orbital&#39;, energy_level=None, angular_momentum=None, angular_momentum_z=None, spin=None, atom_name=None, group_id=GroupId(id=2))]
 </code></pre></div>
 <p>Alternatively, you get orbital lists if you cut a flake from a material. You do this by specifying the shape of the flake.
 You can specify any shape you want, but this is covered in a separate tutorial.
@@ -219,9 +221,8 @@ For now, we will use a built-in shape: an hexagon with a base length of 10 Angst
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_flake</span><span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../a_getting_started_files/a_getting_started_21_0.png" /></p>
-<div class="language-text highlight"><pre><span></span><code>List with 46 orbitals, 46 electrons.
-[0] electrons excited from [0] to [0].
-group id 3 : 46 orbitals
+<div class="language-text highlight"><pre><span></span><code>List with 46 orbitals, 46 electrons.Excitation: f[Array([0], dtype=int64), Array([0], dtype=int64), Array([0], dtype=int64)]
+[Orbital(position=Array([3.69      , 2.13042249, 0.        ], dtype=float64), layer_index=0, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([2.46      , 4.26084499, 0.        ], dtype=float64), layer_index=1, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([6.15      , 2.13042249, 0.        ], dtype=float64), layer_index=2, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([4.92      , 4.26084499, 0.        ], dtype=float64), layer_index=3, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([3.69      , 6.39126748, 0.        ], dtype=float64), layer_index=4, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([8.61      , 2.13042249, 0.        ], dtype=float64), layer_index=5, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([7.38      , 4.26084499, 0.        ], dtype=float64), layer_index=6, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([6.15      , 6.39126748, 0.        ], dtype=float64), layer_index=7, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([4.92      , 8.52168997, 0.        ], dtype=float64), layer_index=8, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([11.07      ,  2.13042249,  0.        ], dtype=float64), layer_index=9, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([9.84      , 4.26084499, 0.        ], dtype=float64), layer_index=10, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([8.61      , 6.39126748, 0.        ], dtype=float64), layer_index=11, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([7.38      , 8.52168997, 0.        ], dtype=float64), layer_index=12, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([ 6.15      , 10.65211247,  0.        ], dtype=float64), layer_index=13, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([13.53      ,  2.13042249,  0.        ], dtype=float64), layer_index=14, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([12.3       ,  4.26084499,  0.        ], dtype=float64), layer_index=15, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([11.07      ,  6.39126748,  0.        ], dtype=float64), layer_index=16, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([9.84      , 8.52168997, 0.        ], dtype=float64), layer_index=17, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([ 8.61      , 10.65211247,  0.        ], dtype=float64), layer_index=18, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([ 7.38      , 12.78253496,  0.        ], dtype=float64), layer_index=19, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([14.76      ,  4.26084499,  0.        ], dtype=float64), layer_index=20, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([13.53      ,  6.39126748,  0.        ], dtype=float64), layer_index=21, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([12.3       ,  8.52168997,  0.        ], dtype=float64), layer_index=22, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([11.07      , 10.65211247,  0.        ], dtype=float64), layer_index=23, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([ 9.84      , 12.78253496,  0.        ], dtype=float64), layer_index=24, tag=&#39;sublattice_1&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([2.46      , 2.84056332, 0.        ], dtype=float64), layer_index=25, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([4.92      , 2.84056332, 0.        ], dtype=float64), layer_index=26, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([3.69      , 4.97098582, 0.        ], dtype=float64), layer_index=27, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([7.38      , 2.84056332, 0.        ], dtype=float64), layer_index=28, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([6.15      , 4.97098582, 0.        ], dtype=float64), layer_index=29, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([4.92      , 7.10140831, 0.        ], dtype=float64), layer_index=30, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([9.84      , 2.84056332, 0.        ], dtype=float64), layer_index=31, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([8.61      , 4.97098582, 0.        ], dtype=float64), layer_index=32, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([7.38      , 7.10140831, 0.        ], dtype=float64), layer_index=33, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([6.15     , 9.2318308, 0.       ], dtype=float64), layer_index=34, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([12.3       ,  2.84056332,  0.        ], dtype=float64), layer_index=35, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([11.07      ,  4.97098582,  0.        ], dtype=float64), layer_index=36, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([9.84      , 7.10140831, 0.        ], dtype=float64), layer_index=37, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([8.61     , 9.2318308, 0.       ], dtype=float64), layer_index=38, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([ 7.38     , 11.3622533,  0.       ], dtype=float64), layer_index=39, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([14.76      ,  2.84056332,  0.        ], dtype=float64), layer_index=40, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([13.53      ,  4.97098582,  0.        ], dtype=float64), layer_index=41, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([12.3       ,  7.10140831,  0.        ], dtype=float64), layer_index=42, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([11.07     ,  9.2318308,  0.       ], dtype=float64), layer_index=43, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([ 9.84     , 11.3622533,  0.       ], dtype=float64), layer_index=44, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3)), Orbital(position=Array([ 8.61      , 13.49267579,  0.        ], dtype=float64), layer_index=45, tag=&#39;sublattice_2&#39;, energy_level=0, angular_momentum=1, angular_momentum_z=0, spin=0, atom_name=&#39;C&#39;, group_id=GroupId(id=3))]
 </code></pre></div>
 <p>There is an extra option for dealing with graphene-like lattices we can pass to the built-in shape, which is the armchair boolean. It just rotates the shape to get the correct edge type. The optional "shift" argument lets you shift the shape in the plane.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">triangle_ac</span> <span class="o">=</span> <span class="n">Triangle</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">shift</span> <span class="o">=</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">])</span>
@@ -230,52 +231,72 @@ group id 3 : 46 orbitals
 <p><img alt="png" src="../a_getting_started_files/a_getting_started_23_0.png" /></p>
 <p>For more information on cutting, including different edge types and how to keep dangling atoms, have a look at the corresponding tutorial.</p>
 <h2 id="a-first-simulation">A first simulation</h2>
-<p>To get a feeling of the setup, we first inspect the energies of the flake</p>
+<p>Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix <span class="arithmatex">\(\rho(t)\)</span> of a system by integrating a nonlinear master equation. Once the time dependent density matrix is known, dynamical expectation values can be computed. Say you have a Hermitian operator epresented by a matrix <span class="arithmatex">\(A\)</span> and the solution of the master equation <span class="arithmatex">\(\rho(t)\)</span>. The expectation value is then just <span class="arithmatex">\(a(t) = \text{Tr][\rho(t) A]\)</span>. We will illustrate this at the example of the dipole moment in the small graphene flake we created above.</p>
+<p>But before we dive into exploring the dynamics of the flake, we first inspect its energies</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">my_first_flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
 </span></code></pre></div>
-<p><img alt="png" src="../a_getting_started_files/a_getting_started_27_0.png" /></p>
-<p>Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix <span class="arithmatex">\(\rho(t)\)</span> of a system by integrating a nonlinear master equation. As a result, it is possible to track the evolution of the physical observable associated with a Hermitian operator <span class="arithmatex">\(A\)</span> by computing <span class="arithmatex">\(a(t) = Tr[\rho(t) A]\)</span>. Optical properties in particular are largely determined by the polarization or dipole operator <span class="arithmatex">\(\hat{P}\)</span> and they are usually expressed in frequency domain. To this end, GRANAD offers a way to compute the Fourier transform <span class="arithmatex">\(a(\omega)\)</span> directly after time propagation. We will look at an example tracking the time evolution of the dipole operator below, where the computation proceeds in two steps:</p>
+<p><img alt="png" src="../a_getting_started_files/a_getting_started_28_0.png" /></p>
+<p>GRANAD offers similar built-in functions to visualize (both static and dynamic) properties of a flake. For more information, please consult the corresponding tutorial.</p>
+<p>Now that we are ready, we can study the induced dipole moment. In particular, we will:</p>
 <ol>
 <li>Excite the flake with an electric field.</li>
-<li>Compute its dipole moment <span class="arithmatex">\(p(\omega)\)</span> from the expectation value of its dipole operator.</li>
+<li>Compute its dipole moment <span class="arithmatex">\(p(t) = \text{Tr}[\rho(t) P]\)</span></li>
 </ol>
-<p>We first do step 1. To obtain a broad frequency spectrum, we must pick a narrow pulse in time-domain</p>
+<p>The electric field is given as a function mapping the time (a single float) to a vector representing the field components like this <code>field : t -&gt; vec</code>.</p>
+<p>You can specify custom functions, but GRANAD comes with a few built-ins. We will just use the built-in Pulse.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">Pulse</span>
 </span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
 </span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">my_first_illumination</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
 </span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">2.3</span><span class="p">,</span> <span class="n">peak</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mi">2</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="p">)</span> 
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="p">)</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="nb">print</span><span class="p">(</span> <span class="n">my_first_illumination</span><span class="p">(</span> <span class="mf">0.0</span><span class="p">)</span> <span class="p">)</span> <span class="c1"># initial value of the field</span>
 </span></code></pre></div>
-<p>For step 2, a few parameters have to be chosen</p>
-<ol>
-<li>Simulation duration: we go from 0 to 40 in 1e5 steps.</li>
-<li>Relaxation rate: this is <span class="arithmatex">\(r\)</span> in the dissipation term <span class="arithmatex">\(D[\rho] = r \cdot(\rho - \rho_0)\)</span> in the master equation.</li>
-<li>Frequency domain limits: we choose the interval [0, 16].</li>
-<li>Density matrix sampling rate: producing 1e5 density matrices can quickly exhaust RAM ressources. So we only save every 100th density matrix, such that we get 1000 density matrices.</li>
-</ol>
-<p>A simulation is just passing all of these parameters to the corresponding method of our flake.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">omegas</span><span class="p">,</span> <span class="n">dipole_omega</span><span class="p">,</span> <span class="n">pulse_omega</span> <span class="o">=</span>  <span class="n">my_first_flake</span><span class="o">.</span><span class="n">get_expectation_value_frequency_domain</span><span class="p">(</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>        <span class="n">operator</span><span class="o">=</span><span class="n">my_first_flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">,</span> 
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>        <span class="n">end_time</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>        <span class="n">steps_time</span><span class="o">=</span><span class="mf">1e5</span><span class="p">,</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>        <span class="n">relaxation_rate</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>        <span class="n">illumination</span><span class="o">=</span><span class="n">my_first_illumination</span><span class="p">,</span>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>        <span class="n">omega_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>        <span class="n">omega_max</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>        <span class="n">skip</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>    <span class="p">)</span>
-</span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>RHS compiled
+<div class="language-text highlight"><pre><span></span><code>[2.60905079e-13-1.44036042e-13j 0.00000000e+00+0.00000000e+00j
+ 0.00000000e+00+0.00000000e+00j]
 </code></pre></div>
-<p>We see that three variables are returned: the omega axis we have specified, the dipole moment and the pulse in freqeuency domain. There is no way to control the number of points in the omega axis, because it is the result of a Fourier transform.</p>
-<p>We now plot the dipole moment and the pulse in frequency domain.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">omegas</span><span class="p">,</span> <span class="n">dipole_omega</span><span class="p">)</span>
-</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">omegas</span><span class="p">,</span> <span class="n">pulse_omega</span><span class="p">,</span> <span class="s2">&quot;--&quot;</span><span class="p">)</span>
-</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<p>Now we come to the actual simulation. For any time-domain simulation, we have to decide on a few additional parameters:</p>
+<ol>
+<li>Simulation duration: we go from 0 to 40 to make sure everything has equilibrated.</li>
+<li>Relaxation rate: here, we pick a single number characterizing the rate of energy dissipation across all channels.</li>
+<li>The operators whose expectation values we want to compute. They are given as a simple list.</li>
+</ol>
+<p>We want to calculate the induced polarization from the dipole operator. This operator can be represented as a 3xNxN matrix, where N is the number of orbitals and 3 corresponds to Cartesian components x,y,z and we can compute it directly</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../a_getting_started_files/a_getting_started_37_0.png" /></p>
+<div class="language-text highlight"><pre><span></span><code>(3, 60, 60)
+</code></pre></div>
+<p>We want to compute its expectation value, so we have to wrap it in a list and pass it to the TD simulation, called <code>td_run</code></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">my_first_flake</span><span class="o">.</span><span class="n">td_run</span><span class="p">(</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">end_time</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="c1"># the start is set to 0 by default </span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="n">relaxation_rate</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">illumination</span><span class="o">=</span><span class="n">my_first_illumination</span><span class="p">,</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">expectation_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">my_first_flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">]</span> <span class="c1"># you can also omit the list for a single operator, but this is bad practice</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>finished timestep 0
+RHS compiled
+</code></pre></div>
+<p>If you want to compute expecation values of more operators, you can simply add them to the list. The result variable is a container for </p>
+<ol>
+<li>the last density matrix in the simulation (this is important if you want to continue the time evolution).</li>
+<li>the time axis, which is an array of samples [t_1, t_2, ... t_n].</li>
+<li>an "output", which is a list of arrays, corresponding to the operators we passed in. Each array contains the time-dependent expectation value like [p_1, p_2, ..., p_n].</li>
+</ol>
+<p>We have only specified one operator to compute the expectation value of, such the list only contains one element.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">))</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>1
+</code></pre></div>
+<p>This list contains an array of shape Tx3. So, if we want the dipole moment at the 10-th timestep in x-direction, we would do</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">dipole_moments</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">dipole_moments</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>(3.4130823167721756e-13+0j)
+</code></pre></div>
+<p>Now that we understand how a time domain simulation works, we can visualize the result. GRANAD offers a dedicated function for this</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">my_first_flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span> <span class="n">result</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;p_x&quot;</span><span class="p">,</span> <span class="s2">&quot;p_y&quot;</span><span class="p">,</span> <span class="s2">&quot;p_z&quot;</span><span class="p">],</span> <span class="n">show_illumination</span> <span class="o">=</span> <span class="kc">False</span> <span class="p">)</span> 
+</span></code></pre></div>
+<p><img alt="png" src="../a_getting_started_files/a_getting_started_47_0.png" /></p>
               
             </div>
           </div><footer>

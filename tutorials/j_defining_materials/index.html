@@ -62,8 +62,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">Basis Handling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
@@ -132,7 +130,7 @@
                                       as a dictionary containing the orbital&#39;s position and an optional tag
                                       for further identification.
         interactions (defaultdict[dict]): Describes the interactions between orbitals within the material.
-                                         Each interaction is categorized by type (e.g., &#39;hopping&#39;, &#39;Coulomb&#39;),
+                                         Each interaction is categorized by type (e.g., &#39;hamiltonian&#39;, &#39;Coulomb&#39;),
                                          and includes the participants, parameters like 
                                          [onsite, offsite_nearest_neighbor, offsite_next_to_nearest_neighbor, ...], and                                         
                                          an optional mathematical expression defining the interaction for the coupling beyound 
@@ -141,7 +139,7 @@
     Usage:
         The `Material` class is used to define a material&#39;s structure and properties step-by-step.
         An example is constructing the material graphene, with specific lattice properties,
-        orbitals corresponding to carbon&#39;s p_z orbitals, and defining hopping and Coulomb interactions
+        orbitals corresponding to carbon&#39;s p_z orbitals, and defining hamiltonian and Coulomb interactions
         among these orbitals.
 
     Example:
@@ -156,7 +154,7 @@
             .add_orbital(position=(0, 0), tag=&quot;sublattice_1&quot;, species=&quot;pz&quot;)
             .add_orbital(position=(-1/3, -2/3), tag=&quot;sublattice_2&quot;, species=&quot;pz&quot;)
             .add_interaction(
-                &quot;hopping&quot;,
+                &quot;hamiltonian&quot;,
                 participants=(&quot;pz&quot;, &quot;pz&quot;),
                 parameters=[0.0, 2.66], # no expression given =&gt; we online look at onsite and nearest neighbors
             )
@@ -184,12 +182,12 @@
 </span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>    <span class="o">.</span><span class="n">add_orbital</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">species</span> <span class="o">=</span> <span class="s2">&quot;up&quot;</span><span class="p">)</span>
 </span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>    <span class="o">.</span><span class="n">add_orbital</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">species</span> <span class="o">=</span> <span class="s2">&quot;down&quot;</span><span class="p">)</span>   
 </span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>    <span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span>
-</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="s2">&quot;hopping&quot;</span><span class="p">,</span>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>        <span class="s2">&quot;hamiltonian&quot;</span><span class="p">,</span>
 </span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>        <span class="n">participants</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;up&quot;</span><span class="p">,</span> <span class="s2">&quot;up&quot;</span><span class="p">),</span>
 </span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>        <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span>
 </span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>    <span class="p">)</span>
 </span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span>
-</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="s2">&quot;hopping&quot;</span><span class="p">,</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="s2">&quot;hamiltonian&quot;</span><span class="p">,</span>
 </span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>        <span class="n">participants</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;down&quot;</span><span class="p">,</span> <span class="s2">&quot;down&quot;</span><span class="p">),</span>
 </span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>        <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span>
 </span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    <span class="p">)</span>
@@ -260,12 +258,13 @@ cut_flake_generic(material, grid_range)
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">graphene</span>  <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">graphene_haldane</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">graphene</span><span class="p">)</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">graphene_haldane</span><span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span><span class="s2">&quot;hopping&quot;</span><span class="p">,</span> <span class="n">participants</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;pz&#39;</span><span class="p">,</span> <span class="s1">&#39;pz&#39;</span><span class="p">),</span> <span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="mf">0.1</span><span class="p">])</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">graphene_haldane</span><span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span><span class="s2">&quot;hamiltonian&quot;</span><span class="p">,</span> <span class="n">participants</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;pz&#39;</span><span class="p">,</span> <span class="s1">&#39;pz&#39;</span><span class="p">),</span> <span class="n">parameters</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="mf">0.1</span><span class="p">])</span>
 </span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">graphene_haldane</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>Material: graphene
   Lattice Constant: 2.46 Å
-  Lattice Basis: [[ 1.         0.         0.       ]
+  Lattice Basis: 
+[[ 1.         0.         0.       ]
  [-0.5        0.8660254  0.       ]]
   Orbital Species:
     pz characterized by (n,l,m,s, atom name) = (0, 1, 0, 0, &#39;C&#39;)
@@ -273,8 +272,12 @@ cut_flake_generic(material, grid_range)
     Position: (0, 0), Tag: sublattice_1, Species: pz
     Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
   Interactions:
-    Type: hopping, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([0, 1.0, 0.1j], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fa520389300&gt;)
-    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;), Couplings (neighbor, function): ([16.522, 8.64, 5.333], &lt;function Material.add_interaction.&lt;locals&gt;.&lt;lambda&gt; at 0x7fa522d0ede0&gt;)
+   Type: hamiltonian, Participants: (&#39;pz&#39;, &#39;pz&#39;):
+                    NN Couplings: 0, 1.0, 0.1j
+                    Other neighbors: Zero coupling
+   Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;):
+                    NN Couplings: 16.522, 8.64, 5.333
+                    Other neighbors: Coupling with a (regularized) Coulomb-like potential
 </code></pre></div>
 <p>The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">hexagon</span> <span class="o">=</span>  <span class="n">Hexagon</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
@@ -287,7 +290,7 @@ cut_flake_generic(material, grid_range)
 <p>We now display the edge state</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argwhere</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">flake_topological</span><span class="o">.</span><span class="n">energies</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-2</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">flake_topological</span><span class="o">.</span><span class="n">show_2d</span><span class="p">(</span> <span class="n">display</span> <span class="o">=</span> <span class="n">flake_topological</span><span class="o">.</span><span class="n">eigenvectors</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">]</span>  <span class="p">)</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">flake_topological</span><span class="o">.</span><span class="n">show_2d</span><span class="p">(</span> <span class="n">display</span> <span class="o">=</span> <span class="n">flake_topological</span><span class="o">.</span><span class="n">eigenvectors</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">],</span> <span class="n">scale</span> <span class="o">=</span> <span class="kc">True</span>  <span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../j_defining_materials_files/j_defining_materials_17_0.png" /></p>
 <h2 id="handling-non-periodic-dimensions">Handling non-periodic dimensions</h2>
@@ -304,7 +307,7 @@ cut_flake_generic(material, grid_range)
 </span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>    <span class="o">.</span><span class="n">add_orbital</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">),</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;sublattice_1&quot;</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="s2">&quot;pz&quot;</span><span class="p">)</span>
 </span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>    <span class="o">.</span><span class="n">add_orbital</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,</span><span class="mf">0.1</span><span class="p">),</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;sublattice_2&quot;</span><span class="p">,</span> <span class="n">species</span><span class="o">=</span><span class="s2">&quot;pz&quot;</span><span class="p">)</span>
 </span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>    <span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span>
-</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="s2">&quot;hopping&quot;</span><span class="p">,</span>
+</span><span id="__span-8-13"><a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="s2">&quot;hamiltonian&quot;</span><span class="p">,</span>
 </span><span id="__span-8-14"><a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>        <span class="n">participants</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;pz&quot;</span><span class="p">,</span> <span class="s2">&quot;pz&quot;</span><span class="p">),</span>
 </span><span id="__span-8-15"><a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>        <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">+</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="mf">0.2</span><span class="p">],</span>
 </span><span id="__span-8-16"><a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="p">)</span>
@@ -312,7 +315,7 @@ cut_flake_generic(material, grid_range)
 </span><span id="__span-8-18"><a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>        <span class="s2">&quot;coulomb&quot;</span><span class="p">,</span>
 </span><span id="__span-8-19"><a id="__codelineno-8-19" name="__codelineno-8-19" href="#__codelineno-8-19"></a>        <span class="n">participants</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;pz&quot;</span><span class="p">,</span> <span class="s2">&quot;pz&quot;</span><span class="p">),</span>
 </span><span id="__span-8-20"><a id="__codelineno-8-20" name="__codelineno-8-20" href="#__codelineno-8-20"></a>        <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">16.522</span><span class="p">,</span> <span class="mf">8.64</span><span class="p">,</span> <span class="mf">5.333</span><span class="p">],</span>
-</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>        <span class="n">expression</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="mf">14.399</span> <span class="o">/</span> <span class="n">d</span>
+</span><span id="__span-8-21"><a id="__codelineno-8-21" name="__codelineno-8-21" href="#__codelineno-8-21"></a>        <span class="n">expression</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="mf">14.399</span> <span class="o">/</span> <span class="n">d</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span>
 </span><span id="__span-8-22"><a id="__codelineno-8-22" name="__codelineno-8-22" href="#__codelineno-8-22"></a>    <span class="p">)</span>
 </span><span id="__span-8-23"><a id="__codelineno-8-23" name="__codelineno-8-23" href="#__codelineno-8-23"></a><span class="p">)</span>
 </span><span id="__span-8-24"><a id="__codelineno-8-24" name="__codelineno-8-24" href="#__codelineno-8-24"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">_ssh_modified</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">unit_cells</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span>

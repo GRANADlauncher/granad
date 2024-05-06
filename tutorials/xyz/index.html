@@ -62,8 +62,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">Basis Handling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
@@ -115,12 +113,10 @@
 </span></code></pre></div>
 <p>We can look at only the atoms in this file. They are given as a dictionary. The type of atom is the key. The value is all positions where atoms of this type are.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">atoms</span><span class="p">)</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="c1"># </span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># If you supply no name to the to_xyz method, it will just return the string</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>defaultdict(&lt;class &#39;list&#39;&gt;, {&#39;C&#39;: [[&#39;6.15&#39;, &#39;2.130422493309719&#39;, &#39;0.0&#39;], [&#39;4.92&#39;, &#39;4.260844986619438&#39;, &#39;0.0&#39;], [&#39;8.61&#39;, &#39;2.130422493309719&#39;, &#39;0.0&#39;], [&#39;7.38&#39;, &#39;4.260844986619438&#39;, &#39;0.0&#39;], [&#39;6.15&#39;, &#39;6.391267479929157&#39;, &#39;0.0&#39;], [&#39;11.07&#39;, &#39;2.130422493309719&#39;, &#39;0.0&#39;], [&#39;9.84&#39;, &#39;4.260844986619438&#39;, &#39;0.0&#39;], [&#39;8.61&#39;, &#39;6.391267479929157&#39;, &#39;0.0&#39;], [&#39;7.38&#39;, &#39;8.521689973238876&#39;, &#39;0.0&#39;], [&#39;6.15&#39;, &#39;10.652112466548594&#39;, &#39;0.0&#39;], [&#39;12.3&#39;, &#39;4.260844986619438&#39;, &#39;0.0&#39;], [&#39;11.07&#39;, &#39;6.391267479929157&#39;, &#39;0.0&#39;], [&#39;9.84&#39;, &#39;8.521689973238876&#39;, &#39;0.0&#39;], [&#39;8.61&#39;, &#39;10.652112466548594&#39;, &#39;0.0&#39;], [&#39;4.92&#39;, &#39;2.8405633244129587&#39;, &#39;0.0&#39;], [&#39;7.38&#39;, &#39;2.8405633244129587&#39;, &#39;0.0&#39;], [&#39;6.15&#39;, &#39;4.970985817722678&#39;, &#39;0.0&#39;], [&#39;9.84&#39;, &#39;2.8405633244129587&#39;, &#39;0.0&#39;], [&#39;8.61&#39;, &#39;4.970985817722678&#39;, &#39;0.0&#39;], [&#39;7.38&#39;, &#39;7.1014083110323964&#39;, &#39;0.0&#39;], [&#39;6.15&#39;, &#39;9.231830804342115&#39;, &#39;0.0&#39;], [&#39;12.3&#39;, &#39;2.8405633244129587&#39;, &#39;0.0&#39;], [&#39;11.07&#39;, &#39;4.970985817722678&#39;, &#39;0.0&#39;], [&#39;9.84&#39;, &#39;7.1014083110323964&#39;, &#39;0.0&#39;], [&#39;8.61&#39;, &#39;9.231830804342115&#39;, &#39;0.0&#39;], [&#39;7.38&#39;, &#39;11.362253297651835&#39;, &#39;0.0&#39;]]})
 </code></pre></div>
+<p>If you supply no name to the to_xyz method, it will just return the string</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">to_xyz</span><span class="p">())</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>26
@@ -158,8 +154,6 @@ C 7.38 11.362253297651835 0.0
 <p>You can also reload, although this is limited: all atoms in the xyz file get the same group id by default.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">new_flake</span> <span class="o">=</span> <span class="n">OrbitalList</span><span class="o">.</span><span class="n">from_xyz</span><span class="p">(</span><span class="s1">&#39;flake.xyz&#39;</span><span class="p">)</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">assert</span> <span class="n">new_flake</span><span class="o">.</span><span class="n">atoms</span> <span class="o">==</span> <span class="n">flake</span><span class="o">.</span><span class="n">atoms</span>
-</span></code></pre></div>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>
 </span></code></pre></div>
               
             </div>

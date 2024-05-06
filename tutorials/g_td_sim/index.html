@@ -62,8 +62,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">Basis Handling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
@@ -72,13 +70,19 @@
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Time-Domain simulations</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#performance-tips">Performance Tips</a>
+    <li class="toctree-l2"><a class="reference internal" href="#observables">Observables</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#options">Options</a>
+    <li class="toctree-l2"><a class="reference internal" href="#density-matrices">Density matrices</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#convergence">Convergence</a>
+    <li class="toctree-l2"><a class="reference internal" href="#occupations">Occupations</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#resuming-simulations">Resuming simulations</a>
+    <li class="toctree-l2"><a class="reference internal" href="#combinations">Combinations</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#custom-computations">Custom computations</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#automatic-convergence-check">Automatic Convergence Check</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#parameters">Parameters</a>
     </li>
     </ul>
                   </li>
@@ -116,218 +120,154 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="time-domain-simulations">Time-Domain simulations</h1>
-<h2 id="performance-tips">Performance Tips</h2>
-<p>First, we do the necessary setup: imports, shape, flake and field definition </p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Pulse</span><span class="p">,</span> <span class="n">Triangle</span><span class="p">,</span> <span class="n">Wave</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">import</span> <span class="nn">diffrax</span> <span class="c1"># is behind the time propagation</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="n">triangle</span> <span class="o">=</span> <span class="n">Triangle</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span><span class="n">triangle</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">peak</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="n">fwhm</span> <span class="o">=</span> <span class="mi">2</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="p">)</span>
+<h2 id="observables">Observables</h2>
+<p>You can compute multiple observables in one run</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Hexagon</span><span class="p">,</span> <span class="n">Pulse</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Hexagon</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">2.3</span><span class="p">,</span> <span class="n">peak</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mi">2</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">operators</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">velocity_operator</span><span class="p">]</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">td_run</span><span class="p">(</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">expectation_values</span> <span class="o">=</span> <span class="n">operators</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>     <span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_3_0.png" /></p>
-<p>The dynamics of any observable depend on the density matrix. The function get_expectation_value_frequency_domain essentially</p>
-<ol>
-<li>samples density matrices in time</li>
-<li>computes the time-dependent expectation value</li>
-<li>Fourier transforms it.</li>
-</ol>
-<p>This is fine if we want to simulate a single observable, but means that we have to rerun the simulation for every observable. To save time, we can do the TD simulation by hand, save the density matrices and then compute expectation values without needing to recompute.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">time</span><span class="p">,</span> <span class="n">density_matrices</span> <span class="o">=</span>  <span class="n">flake</span><span class="o">.</span><span class="n">get_density_matrix_time_domain</span><span class="p">(</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>        <span class="n">end_time</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        <span class="n">steps_time</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span>
-</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        <span class="n">relaxation_rate</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        <span class="n">illumination</span><span class="o">=</span><span class="n">pulse</span><span class="p">,</span>
-</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="n">skip</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
-</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="p">)</span>
-</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">density_matrices</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-</span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>RHS compiled
-
-
-(10000, 26, 26)
+<div class="language-text highlight"><pre><span></span><code>finished timestep 0
+RHS compiled
 </code></pre></div>
-<p>Now, we have density matrices in time domain. The first axis is time, the last two axis correspond to the dimension of the one particle Hilbert space. Let's compute expectation values for the dipole operator by hand</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value</span><span class="p">(</span> <span class="n">density_matrix</span> <span class="o">=</span> <span class="n">density_matrices</span><span class="p">,</span> <span class="n">operator</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span> <span class="p">)</span>
+<p>The result object stores this info. Operators are concatenated in the order you passed them in.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">))</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
-<p>You might have noticed that neither the density_matrices nor the dipole_operator are square matrices. The function can still handle that. Let's inspect the shape of the dipole moments</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-</span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>(10000, 3)
+<div class="language-text highlight"><pre><span></span><code>1
+(4000, 6)
 </code></pre></div>
-<p>So, the first axis is time, the last axis corresponds to x,y,z  Cartesian coordinates.</p>
-<p>Let's do the same computation in Fourier space: we can avoid recomputation by passing the TD density matrix as an explicit argument</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">omegas</span><span class="p">,</span> <span class="n">p_omega</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value_frequency_domain</span><span class="p">(</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">operator</span><span class="o">=</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">,</span>  <span class="c1"># the dipole moment is the expectation value of the dipole operator</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">density_matrices</span> <span class="o">=</span> <span class="n">density_matrices</span><span class="p">,</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">omega_min</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">omega_max</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>    
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="p">)</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">p_omega</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<p>The induced dipole moment at timestep 10 is given by</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,:</span><span class="mi">3</span><span class="p">])</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>(64, 3)
+<div class="language-text highlight"><pre><span></span><code>[9.05330966e-13+0.j 1.58297657e-13+0.j 0.00000000e+00+0.j]
 </code></pre></div>
-<p>So, the first axis is the Fourier partner of time, the frequency, and the last axis still corresponds to x,y,z  Cartesian coordinates.</p>
-<h2 id="options">Options</h2>
-<p>The time evolution relies on <a href="https://docs.kidger.site/diffrax">diffrax</a>. You can pass <a href="https://docs.kidger.site/diffrax/usage/how-to-choose-a-solver/">solvers</a> directly to any function calling the time domain evolution. By default, we use 5-th order Runge Kutta with adaptive step size, where the relative and absolute tolerance are set to 1e-10.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">omegas</span><span class="p">,</span> <span class="n">p_omega_8</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value_frequency_domain</span><span class="p">(</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">operator</span><span class="o">=</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">,</span> 
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">density_matrices</span> <span class="o">=</span> <span class="n">density_matrices</span><span class="p">,</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">omega_min</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">omega_max</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">solver</span> <span class="o">=</span> <span class="n">diffrax</span><span class="o">.</span><span class="n">Dopri8</span><span class="p">(),</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p">)</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">omegas</span><span class="p">,</span> <span class="n">p_omega</span><span class="p">)</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">omegas</span><span class="p">,</span> <span class="n">p_omega_8</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span><span class="p">)</span>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<p>Induced current at timestep 10</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,</span><span class="mi">3</span><span class="p">:])</span>
 </span></code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_18_0.png" /></p>
-<p>We see that we have pretty good agreement.</p>
-<h2 id="convergence">Convergence</h2>
-<p>To check convergence, we can</p>
-<ol>
-<li>Decrease the initial step size by passing a higher value for steps_time</li>
-<li>Choose a more accurate diffrax solver</li>
-<li>Check physical consistency with the continuity equation</li>
-</ol>
-<p>We will look at the third example. The continuity equation relates the dipole moment and the (longitudinal) current</p>
-<div class="arithmatex">\[\nabla j = -\partial_t \rho = -\partial_t \nabla P \implies j = -\partial_t P\]</div>
-<p>In Fourier space, we can write equivalently</p>
-<div class="arithmatex">\[-i \omega p(\omega) = j(\omega)\]</div>
-<p>The current operator is, a bit confusingly, called velocity operator in GRANAD, since atomic units are used, where q = 1 and <span class="arithmatex">\(j = q v\)</span>. </p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">omegas</span><span class="p">,</span> <span class="n">j_omega</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value_frequency_domain</span><span class="p">(</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">operator</span><span class="o">=</span><span class="n">flake</span><span class="o">.</span><span class="n">velocity_operator</span><span class="p">,</span>  
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">time</span><span class="o">=</span><span class="n">time</span><span class="p">,</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">density_matrices</span> <span class="o">=</span> <span class="n">density_matrices</span><span class="p">,</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>    <span class="n">omega_min</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>    <span class="n">omega_max</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>        
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="p">)</span>
-</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>
-</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">p_omega_0</span> <span class="o">=</span> <span class="n">p_omega</span>
-</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="n">j_omega_0</span> <span class="o">=</span> <span class="n">j_omega</span>
-</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="n">j_term</span> <span class="o">=</span> <span class="n">j_omega_0</span><span class="o">.</span><span class="n">imag</span>
-</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">p_term</span> <span class="o">=</span>  <span class="n">omegas</span><span class="p">[:,</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">p_omega_0</span><span class="o">.</span><span class="n">real</span>
-</span><span id="__span-6-13"><a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span> <span class="n">omegas</span><span class="p">,</span> <span class="n">p_term</span> <span class="p">)</span>
-</span><span id="__span-6-14"><a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span> <span class="n">omegas</span><span class="p">,</span> <span class="n">j_term</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span> <span class="p">)</span>
-</span><span id="__span-6-15"><a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</span></code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_28_0.png" /></p>
-<p>We see that the continuity equation holds.</p>
-<h2 id="resuming-simulations">Resuming simulations</h2>
-<p>TD simulations can be resumed. This is useful, e.g. when computing the EPI, where the system needs to have reached a steady state. Let's compute the EPI for our tiny triangle. First, we propagate the system in time and check the oscillation of the dipole moment</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">end_time</span> <span class="o">=</span> <span class="mi">2</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span> <span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">1.</span> <span class="p">)</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">time</span><span class="p">,</span> <span class="n">density_matrices</span> <span class="o">=</span>  <span class="n">flake</span><span class="o">.</span><span class="n">get_density_matrix_time_domain</span><span class="p">(</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>        <span class="n">end_time</span><span class="o">=</span><span class="n">end_time</span><span class="p">,</span>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>        <span class="n">steps_time</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="n">relaxation_rate</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>        <span class="n">illumination</span><span class="o">=</span><span class="n">wave</span><span class="p">,</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>        <span class="n">skip</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="p">)</span>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="n">p</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value</span><span class="p">(</span> <span class="n">density_matrix</span> <span class="o">=</span> <span class="n">density_matrices</span><span class="p">,</span> <span class="n">operator</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span> <span class="p">)</span>
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
-</span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>RHS compiled
+<div class="language-text highlight"><pre><span></span><code>[ 1.33103192e-11+6.17228924e-15j -1.09182314e-14-9.83546108e-15j
+  0.00000000e+00+0.00000000e+00j]
 </code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_32_1.png" /></p>
-<p>The dipole moment doesn't look periodic, so the system is likely not in a steady state. We can push the system further in time by supplying</p>
-<ol>
-<li>the time we ended the simulation as start time</li>
-<li>the last density matrix we sampled</li>
-</ol>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">time_new</span><span class="p">,</span> <span class="n">density_matrices_new</span> <span class="o">=</span>  <span class="n">flake</span><span class="o">.</span><span class="n">get_density_matrix_time_domain</span><span class="p">(</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>        <span class="n">start_time</span><span class="o">=</span><span class="n">end_time</span><span class="p">,</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>        <span class="n">end_time</span><span class="o">=</span><span class="n">end_time</span><span class="o">+</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>        <span class="n">initial_density_matrix</span> <span class="o">=</span> <span class="n">density_matrices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        <span class="n">steps_time</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span>
-</span><span id="__span-8-6"><a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>        <span class="n">relaxation_rate</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-8-7"><a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="n">illumination</span><span class="o">=</span><span class="n">wave</span><span class="p">,</span>
-</span><span id="__span-8-8"><a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>        <span class="n">skip</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-</span><span id="__span-8-9"><a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="p">)</span>
-</span><span id="__span-8-10"><a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="n">p_new</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value</span><span class="p">(</span> <span class="n">density_matrix</span> <span class="o">=</span> <span class="n">density_matrices_new</span><span class="p">,</span> <span class="n">operator</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span> <span class="p">)</span>
-</span><span id="__span-8-11"><a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">time</span><span class="p">,</span> <span class="n">time_new</span><span class="p">]),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">p</span><span class="p">,</span> <span class="n">p_new</span><span class="p">])</span> <span class="p">)</span>
-</span><span id="__span-8-12"><a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<p>We can access the Fourier transform as</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">omegas</span><span class="p">,</span> <span class="n">pulse_omega</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ft_illumination</span><span class="p">(</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="n">omega_max</span> <span class="p">)</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">output_omega</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ft_output</span><span class="p">(</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="n">omega_max</span> <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1">#</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="c1"># So we can quickly check the continuity equation</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>RHS compiled
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">omegas</span> <span class="o">*</span> <span class="n">output_omega</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">imag</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">j</span> <span class="o">=</span> <span class="n">output_omega</span><span class="p">[:,</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">real</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">omegas</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;$- \text</span><span class="si">{Im}</span><span class="s1">[\omega p_x]$&#39;</span><span class="p">)</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">omegas</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;$\text</span><span class="si">{Re}</span><span class="s1">[j_x]$&#39;</span><span class="p">)</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_12_0.png" /></p>
+<p>The field is also accessible</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">td_illumination</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>(4000, 3)
 </code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_35_1.png" /></p>
-<p>We can repeat this process until we have visual confirmation of the steady state:</p>
-<ol>
-<li>continue simulation with end_time increased and the initial density matrix set to the last density matrix</li>
-<li>repeat 1 if the result is not periodic</li>
-</ol>
-<p>GRANAD offers a way you can try to automate this process: the function "fraction_periodic" tries to compute the fraction of a signal that is periodic. Let's look at it</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">fraction_periodic</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">help</span><span class="p">(</span><span class="n">fraction_periodic</span><span class="p">)</span>
+<p><em>WARNING: The following behavior might change and the density_matrix argument may be removed</em></p>
+<h2 id="density-matrices">Density matrices</h2>
+<p>If we want to only get density matrices, we can simply omit the observables dictionary. The result object then contains a single generic dictionary item.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">td_run</span><span class="p">(</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;full&quot;</span><span class="p">],</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>     <span class="p">)</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">density_matrix</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">density_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>Help on function fraction_periodic in module granad._numerics:
-
-fraction_periodic(signal, threshold=0.01)
-    Estimates the fraction of a periodic component in a given signal by analyzing the deviation of the cumulative mean from its median value. The periodicity is inferred based on the constancy of the cumulative mean of the absolute value of the signal.
-
-    Parameters:
-        signal (jax.Array): A 1D array representing the signal of interest.
-        threshold (float, optional): A threshold value to determine the significance level of deviation from periodicity. Defaults to 0.01.
-
-    Returns:
-        float: A ratio representing the fraction of the signal that is considered periodic, based on the specified threshold.
-</code></pre></div>
-<p>In our case, the signal to check for periodicity is the dipole moment: once it is periodic, we have hit a steady state. We can define a custom function to test this</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">def</span> <span class="nf">is_steady</span><span class="p">(</span> <span class="n">density_matrices</span> <span class="p">):</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">p</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value</span><span class="p">(</span> <span class="n">operator</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">,</span> <span class="n">density_matrix</span> <span class="o">=</span> <span class="n">density_matrices</span> <span class="p">)</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="k">if</span> <span class="n">fraction_periodic</span><span class="p">(</span><span class="n">p</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">threshold</span> <span class="o">=</span> <span class="mf">1e-1</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>        <span class="k">return</span> <span class="kc">True</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="k">return</span> <span class="kc">False</span>
-</span></code></pre></div>
-<p>We chose the value of 0.8 somewhat arbitrarily, but the exact value probably doesn't matter that much in practice if it's high enough (&gt; 0.5). Our automated loop looks like this</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">loop_iterations</span> <span class="o">=</span> <span class="mi">0</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="k">while</span> <span class="n">is_steady</span><span class="p">(</span> <span class="n">density_matrices</span> <span class="p">)</span> <span class="o">==</span> <span class="kc">False</span> <span class="ow">and</span> <span class="n">loop_iterations</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">start_time</span> <span class="o">=</span> <span class="n">end_time</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="n">end_time</span> <span class="o">+</span> <span class="mi">10</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">time_new</span><span class="p">,</span> <span class="n">density_matrices_new</span> <span class="o">=</span>  <span class="n">flake</span><span class="o">.</span><span class="n">get_density_matrix_time_domain</span><span class="p">(</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>        <span class="n">start_time</span> <span class="o">=</span> <span class="n">start_time</span><span class="p">,</span>
-</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>        <span class="n">end_time</span> <span class="o">=</span> <span class="n">end_time</span><span class="p">,</span>
-</span><span id="__span-11-8"><a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>        <span class="n">initial_density_matrix</span> <span class="o">=</span> <span class="n">density_matrices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
-</span><span id="__span-11-9"><a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>        <span class="n">steps_time</span><span class="o">=</span><span class="mf">1e6</span><span class="p">,</span>
-</span><span id="__span-11-10"><a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>        <span class="n">relaxation_rate</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-11-11"><a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>        <span class="n">illumination</span><span class="o">=</span><span class="n">wave</span><span class="p">,</span>
-</span><span id="__span-11-12"><a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>        <span class="n">skip</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
-</span><span id="__span-11-13"><a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>    <span class="p">)</span>
-</span><span id="__span-11-14"><a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>    <span class="n">density_matrices</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">density_matrices</span><span class="p">,</span> <span class="n">density_matrices_new</span><span class="p">]</span> <span class="p">)</span>
-</span><span id="__span-11-15"><a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>    <span class="n">time</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span> <span class="p">[</span><span class="n">time</span><span class="p">,</span> <span class="n">time_new</span><span class="p">]</span> <span class="p">)</span>
-</span><span id="__span-11-16"><a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>    <span class="n">loop_iterations</span> <span class="o">+=</span> <span class="mi">1</span>
-</span><span id="__span-11-17"><a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>
-</span><span id="__span-11-18"><a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="nb">print</span><span class="p">(</span> <span class="n">is_steady</span><span class="p">(</span><span class="n">density_matrices</span><span class="p">)</span> <span class="p">)</span>
-</span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>RHS compiled
-
-
+<div class="language-text highlight"><pre><span></span><code>finished timestep 0
 RHS compiled
 
 
+(4000, 87, 87)
+</code></pre></div>
+<p>We can convert them to energy basis</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">density_matrix_e</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">transform_to_energy_basis</span><span class="p">(</span> <span class="n">density_matrix</span> <span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">density_matrix_e</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>(4000, 87, 87)
+</code></pre></div>
+<h2 id="occupations">Occupations</h2>
+<p>We can extract only site occupations</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">td_run</span><span class="p">(</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;occ_x&quot;</span><span class="p">],</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>     <span class="p">)</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">occ_x</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">occ_x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>finished timestep 0
 RHS compiled
 
 
-True
+(4000, 87)
 </code></pre></div>
-<p>Now, we plot</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">p</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_expectation_value</span><span class="p">(</span> <span class="n">operator</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">,</span> <span class="n">density_matrix</span> <span class="o">=</span> <span class="n">density_matrices</span> <span class="p">)</span>
-</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span> <span class="n">time</span><span class="p">,</span> <span class="n">p</span> <span class="p">)</span>
-</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<p>We can extract only energy occupations</p>
+<p><em>DANGER</em>: this introduces additional cubic complexity </p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">set_excitation</span><span class="p">(</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">td_run</span><span class="p">(</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;occ_e&quot;</span><span class="p">],</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>     <span class="p">)</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">plot_only</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">],</span> <span class="n">show_illumination</span> <span class="o">=</span> <span class="kc">False</span> <span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_45_0.png" /></p>
-<p>We have correctly identified periodicity and thus the density matrix density_matrices[-1] can be taken as a steady state for epi calculation</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">get_epi</span><span class="p">(</span> <span class="n">flake</span><span class="o">.</span><span class="n">transform_to_energy_basis</span><span class="p">(</span><span class="n">density_matrices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">omega</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="p">))</span>
-</span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>0.1904075988085434
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_26_0.png" /></p>
+<div class="language-text highlight"><pre><span></span><code>finished timestep 0
+RHS compiled
 </code></pre></div>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_26_2.png" /></p>
+<h2 id="combinations">Combinations</h2>
+<p>We can also extract multiple things at the same time</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">td_run</span><span class="p">(</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;full&quot;</span><span class="p">,</span> <span class="s2">&quot;occ_x&quot;</span><span class="p">],</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">expectation_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">],</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-11-7"><a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>finished timestep 0
+RHS compiled
+</code></pre></div>
+<p>The output will now contain three arrays: induced dipole moments, site occupations and full density matrices</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">))</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># by default, operators come first</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># we specified [&quot;full&quot;, &quot;occ_x&quot;] =&gt; full density matrices</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># we specified [&quot;full&quot;, &quot;occ_x&quot;] =&gt; site occupations</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>3
+(4000, 3)
+(4000, 87, 87)
+(4000, 87)
+</code></pre></div>
+<h2 id="custom-computations">Custom computations</h2>
+<p>TBD</p>
+<h2 id="automatic-convergence-check">Automatic Convergence Check</h2>
+<p>TBD</p>
+<h2 id="parameters">Parameters</h2>
+<p>TBD</p>
               
             </div>
           </div><footer>
