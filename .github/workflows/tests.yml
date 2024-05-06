@@ -1,0 +1,41 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'  
+          
+      - name: Check for Build Flag
+        id: check-flag
+        run: |
+          echo "Commit Message: ${{ github.event.head_commit.message }}"
+          echo "TRIGGER_BUILD=false" >> $GITHUB_ENV
+          if [[ "${{ github.event.head_commit.message }}" =~ \[run-tests\] ]]; then
+            echo "TRIGGER_BUILD=true" >> $GITHUB_ENV
+          fi
+          
+      - name: Install dependencies
+        if: env.TRIGGER_BUILD == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run tests
+        if: env.TRIGGER_BUILD == 'true'
+        run: |
+          pip install pytest
+          pytest
+
+          

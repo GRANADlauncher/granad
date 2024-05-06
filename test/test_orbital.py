@@ -1,12 +1,11 @@
 from granad import *
 
-def test_uuid():
-    pos = (0.0, 0.0, 0.0)
-    orb_a =  Orbital("A", pos)
-    orb_b =  Orbital("B", pos)
-    assert orb_a.uuid != orb_b.uuid    
-    graphene = Material(**MaterialDatabase.graphene)
-    orbs = graphene.cut(10*Shapes.triangle, plot = False)
-    assert orbs[0].uuid != orb_a.uuid != orb_b.uuid
+def test_group_id():
+    orb_a =  Orbital()
+    orb_b =  Orbital()
+    assert orb_a.group_id != orb_b.group_id    
+    graphene = MaterialCatalog.get("graphene")
+    orbs = graphene.cut_flake(Triangle(10), plot = False)
+    assert orbs[0].group_id != orb_a.group_id != orb_b.group_id
 
 
