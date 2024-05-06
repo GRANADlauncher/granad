@@ -19,7 +19,7 @@ def _plot_wrapper(plot_func):
     return wrapper
 
 @_plot_wrapper
-def show_2d(orbs, show_tags=None, show_index=False, display = None):
+def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None):
     """
     Generates a 2D scatter plot representing the positions of orbitals in the xy-plane,
     filtered by specified tags. Optionally colors points by eigenvector amplitudes.
@@ -33,6 +33,10 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None):
     Returns:
     - None: A 2D scatter plot is displayed.
     """
+
+    # decider whether to take abs val and normalize 
+    def scale_vals( vals ):
+        return jnp.abs(vals) / jnp.abs(vals).max() if scale else vals
     
     # Determine which tags to display
     if show_tags is None:
@@ -51,8 +55,8 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None):
     fig, ax = plt.subplots()
     
     if display is not None:
-        cmap = plt.cm.viridis
-        colors = jnp.abs(display) / jnp.abs(display).max()
+        cmap = plt.cm.viridis if cmap is None else cmap
+        colors = scale_vals(display) 
         scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap)
         cbar = fig.colorbar(scatter, ax=ax)
     else:
@@ -79,7 +83,7 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None):
     ax.axis('equal')
 
 @_plot_wrapper
-def show_3d(orbs, show_tags=None, show_index=False, display = None):
+def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None):
     """
     Generates a 3D scatter plot representing the positions of orbitals in 3D space,
     filtered by specified tags. Optionally colors points by eigenvector amplitudes.
@@ -93,7 +97,10 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None):
     Returns:
     - None: A 3D scatter plot is displayed.
     """
-    
+    # decider whether to take abs val and normalize 
+    def scale_vals( vals ):
+        return jnp.abs(vals) / jnp.abs(vals).max() if scale else vals
+
     # Determine which tags to display
     if show_tags is None:
         show_tags = {orb.tag for orb in orbs}
@@ -112,8 +119,8 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None):
     ax = fig.add_subplot(111, projection='3d')
     
     if display is not None:
-        cmap = plt.cm.viridis
-        colors = jnp.abs(display) / jnp.abs(display).max()
+        cmap = plt.cm.viridis if cmap is None else cmap
+        colors = scale_vals( display )
         scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], [orb.position[2] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, depthshade=True)
         cbar = fig.colorbar(scatter, ax=ax)
         cbar.set_label('Eigenvector Magnitude')
@@ -160,42 +167,46 @@ def show_energies(orbs):
 
 
 @_plot_wrapper
-def show_time_dependence(
+def show_res(
     orbs,
-    density_matrices,
-    operator = None,
-    time: jax.Array = None,
-    indicate_eigenstate = True,
-    ylabel = None,
-    thresh: float = 1e-2,
+    res,
+    plot_only : jax.Array = None,
+    plot_labels : list[str] = None,
+    show_illumination = True,
+    omega_max = None,
+    omega_min = None,
 ):
     """Depicts an expectation value as a function of time.
 
 
-    - `density_matrices`: TxNxN array, if no operator is given, diagonal elements will be plotted
-    - `operator`: if given, show its time-dependent expectation value
-    - `time`: time axis
-    - `indicate_eigenstate`: whether to associate the i-th energy eigenstate to the i-th column of expectation_value
-    - `thresh`: plotting threshold.  o_t is plotted if max(o_t) - min(o_t) > thresh
+    - `res`: result object
+    - `plot_only`: only these indices will be plotted
+    - `plot_legend`: names associated to the indexed quantities
     """
-    if operator is not None:
-        expectation_value = orbs.get_expectation_value(operator, density_matrices)
-    else:
-        expectation_value = jnp.diagonal(density_matrices, axis1 = -1, axis2 = -2 )
-        
-    time = time if time is not None else jnp.arange(expectation_value.shape[0])
-    fig, ax = plt.subplots(1, 1)
-    for idx in jnp.nonzero(
-        jnp.abs(jnp.amax(expectation_value, axis=0) - jnp.amin(expectation_value, axis=0)) > thresh
-    )[0]:
-        ax.plot(time, expectation_value[:, idx], label=f"{float(orbs.energies[idx]):2.2f} eV")
-
-    time_label = "time steps" if time.dtype == int else r"time [$\hbar$/eV]"
-    ax.set_xlabel(time_label)
-    if ylabel is not None:
-        ax.set_ylabel(ylabel)
-    if indicate_eigenstate == True:
-        plt.legend()
+    def _show( obs, name ):
+        ax.plot(x_axis, obs, label = name)
+    
+    fig, ax = plt.subplots(1, 1)    
+    ax.set_xlabel(r"time [$\hbar$/eV]")
+    plot_obs = res.output
+    illu = res.td_illumination
+    x_axis = res.time_axis
+    
+    if omega_max is not None and omega_min is not None:
+        plot_obs = res.ft_output( omega_max, omega_min )
+        x_axis, illu = res.ft_illumination( omega_max, omega_min )
+        ax.set_xlabel(r"$\omega$ [$\hbar$ eV]")
+    
+    for obs in plot_obs:
+        obs = obs if plot_only is None else obs[:, plot_only]
+        for i, obs_flat in enumerate(obs.T):
+            label = '' if plot_labels is None else plot_labels[i]
+            _show( obs_flat, label )
+        if show_illumination == True:
+            for component, illu_flat in enumerate(illu.T):            
+                _show(illu_flat, f'illumination_{component}')
+            
+    plt.legend()
 
 
 @_plot_wrapper

@@ -27,7 +27,7 @@ flake = graphene.cut_flake( Triangle(15)  )
 
 # +
 print(flake.atoms)
-# 
+# -
 
 # If you supply no name to the to_xyz method, it will just return the string
 
@@ -47,4 +47,3 @@ flake.to_xyz('flake.xyz')
 new_flake = OrbitalList.from_xyz('flake.xyz')
 assert new_flake.atoms == flake.atoms
 # -
-

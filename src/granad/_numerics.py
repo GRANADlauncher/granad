@@ -197,6 +197,7 @@ def _get_self_consistent(
     hamiltonian,
     coulomb,
     positions,
+    excitation,
     spin_degeneracy,
     electrons,
     eps,
@@ -205,13 +206,14 @@ def _get_self_consistent(
     iterations,
     mix,
     accuracy,
+    coulomb_strength,    
 ):
 
     def _to_site_basis(ev, mat):
         return ev @ mat @ ev.conj().T
 
     def _phi(rho):
-        return coulomb @ jnp.diag(rho - rho_uniform)
+        return coulomb_strength * (coulomb @ jnp.diag(rho - rho_uniform))
 
     def _stop(args):
         return jnp.logical_and(
@@ -227,14 +229,12 @@ def _get_self_consistent(
         energies, eigenvectors = jnp.linalg.eigh(ham_new)
 
         # new density matrix
-        rho_energy, _ = _density_aufbau(
+        rho_energy = _density_aufbau(
             energies,
             electrons,
             spin_degeneracy,
             eps,
-            eq_arr,
-            eq_arr,
-            eq_arr,
+            [0*el for el in excitation],
         )
 
         return _to_site_basis(eigenvectors, rho_energy), rho, idx + 1
@@ -244,7 +244,7 @@ def _get_self_consistent(
         jnp.round(positions, 8), return_inverse=True, return_counts=True, axis=0
     )
     normalization = 2.0 if int(spin_degeneracy) == 1 else 1.0
-    rho_uniform = jnp.diag((1 / counts)[arr[:, 0]]) / (energies.size * normalization)
+    rho_uniform = jnp.diag((1 / counts)[arr[:, 0]]) / (hamiltonian.diagonal().size * normalization)
     eq_arr = jnp.array([0])
 
     # first induced potential
@@ -255,6 +255,7 @@ def _get_self_consistent(
     rho, rho_old, idx = jax.lax.while_loop(_stop, _loop, (rho, rho_old, 0))
     if idx == iterations - 1:
         raise ValueError("Self-consistent procedure did not converge!!")
+    print(f"SC finished: {idx} / {iterations}")
 
     # new hamiltonian and initial state
     ham_new = hamiltonian + _phi(rho) * mix + _phi(rho_old) * (1 - mix)

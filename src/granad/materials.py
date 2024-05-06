@@ -12,6 +12,16 @@ from granad import _watchdog
 from granad.orbitals import Orbital, OrbitalList
 from granad._plotting import _display_lattice_cut
 
+def zero_coupling(d):
+    """Zero coupling"""
+    return 0.0j
+
+def ohno_potential( offset = 0, start = 14.399 ):
+    def inner(d):
+        """Coupling with a (regularized) Coulomb-like potential"""
+        return start / (d + offset) + 0j
+    return inner
+
 
 def cut_flake_1d( material, unit_cells, plot=False):
     """
@@ -168,6 +178,8 @@ def _finalize(method):
     def wrapper(self, *args, **kwargs):
         for species in self.species.keys():
             self._species_to_groups[species] = _watchdog._Watchdog.next_value()
+        if "grid_range" in kwargs:
+            return cut_flake_generic(self, *args, **kwargs)
         if self.dim == 1:
             return cut_flake_1d(self, *args, **kwargs)        
         elif self.dim == 2:
@@ -239,7 +251,7 @@ class Material:
         if self.lattice_constant:
             description += f"  Lattice Constant: {self.lattice_constant} Å\n"
         if self.lattice_basis:
-            description += f"  Lattice Basis: {self._lattice_basis}\n"
+            description += f"  Lattice Basis: \n{self._lattice_basis}\n"
         
         if self.species:
             description += "  Orbital Species:\n"
@@ -256,7 +268,16 @@ class Material:
             description += "  Interactions:\n"
             for type_, interaction in self.interactions.items():
                 for participants, coupling in interaction.items():
-                    description += f"    Type: {type_}, Participants: {participants}, Couplings (neighbor, function): {coupling}\n"
+                    description += f"""   Type: {type_}, Participants: {participants}:
+                    NN Couplings: {', '.join(map(str, coupling[0]))}
+                    """
+                    # Check if there's a docstring on the function
+                    if coupling[1].__doc__ is not None:
+                        function_description = coupling[1].__doc__
+                    else:
+                        function_description = "No description available for this function."
+                        
+                    description += f"Other neighbors: {function_description}\n"
         
         return description
     
@@ -343,7 +364,7 @@ class Material:
         self.species[name] = (n,l,m,s,atom)
         return self
 
-    def add_interaction(self, interaction_type, participants, parameters = None, expression = lambda x : 0j):
+    def add_interaction(self, interaction_type, participants, parameters = None, expression = zero_coupling):
         """
         Adds an interaction between orbitals specified by an interaction type and participants.
 
@@ -355,8 +376,8 @@ class Material:
 
         Returns:
             Material: Returns self to enable method chaining.
-        """
-        self.interactions[interaction_type][participants] =  (parameters if parameters is not None else [], lambda x : expression(x) + 0j)
+        """            
+        self.interactions[interaction_type][participants] =  (parameters if parameters is not None else [], expression)
         return self
 
     def _get_positions_in_uc( self, species = None ):
@@ -388,7 +409,7 @@ class Material:
         if len(couplings) == 0:
             return outside_fun
         
-        couplings = jnp.array(couplings) + 0.0j        
+        couplings = jnp.array(couplings).astype(complex)
         grid = self._get_grid( [ (0, len(couplings)) for i in range(self.dim) ] )
         pos_uc_1 = self._get_positions_in_uc( (species[0],) )
         pos_uc_2 = self._get_positions_in_uc( (species[1],) )
@@ -398,7 +419,6 @@ class Material:
         distances = jnp.unique(
             jnp.round(jnp.linalg.norm(positions_1 - positions_2[:, None, :], axis=2), 8)
         )[: len(couplings)]
-        
 
         def inner(d):
             return jax.lax.cond(
@@ -449,8 +469,8 @@ class Material:
         orbital_list = OrbitalList(raw_list)
         self._set_couplings(orbital_list.set_hamiltonian_groups, "hamiltonian")
         self._set_couplings(orbital_list.set_coulomb_groups, "coulomb")
-        return orbital_list        
-
+        return orbital_list
+    
 _MoS2 = (
     Material("MoS2")
     .lattice_constant(3.16)  # Approximate lattice constant of monolayer MoS2
@@ -482,17 +502,17 @@ _MoS2 = (
     .add_interaction(
         "coulomb",
         participants=("d_molybdenum", "p_sulfur"),
-        expression = lambda d: 14.399/(d+1)
+        expression = ohno_potential(1)
     )
     .add_interaction(
         "coulomb",
         participants=("p_sulfur", "p_sulfur"),
-        expression = lambda d: 14.399/(d+1)
+        expression = ohno_potential(1)
     )
     .add_interaction(
         "coulomb",
         participants=("d_molybdenum", "d_molybdenum"),
-        expression = lambda d: 14.399/(d+1)
+        expression = ohno_potential(1)
     )
 )
 
@@ -523,6 +543,21 @@ _hBN = (
         participants=("pz_boron", "pz_nitrogen"),
         parameters=[-2.16],  # Hypothetical hamiltonian parameter
     )
+    .add_interaction(
+        "hamiltonian",
+        participants=("pz_boron", "pz_boron"),
+        expression = ohno_potential(1)
+    )
+    .add_interaction(
+        "hamiltonian",
+        participants=("pz_nitrogen", "pz_nitrogen"),
+        expression = ohno_potential(1)
+    )
+    .add_interaction(
+        "hamiltonian",
+        participants=("pz_boron", "pz_nitrogen"),
+        expression = ohno_potential(1)
+    )
 )
 
     
@@ -545,7 +580,7 @@ _graphene = (
         "coulomb",
         participants=("pz", "pz"),
         parameters=[16.522, 8.64, 5.333],
-        expression=lambda d: 14.399 / d
+        expression=ohno_potential(0)
     )
 )
 
@@ -567,7 +602,7 @@ _ssh = (
         "coulomb",
         participants=("pz", "pz"),
         parameters=[16.522, 8.64, 5.333],
-        expression=lambda d: 14.399 / d
+        expression=ohno_potential(0)
     )
 )
 
@@ -588,7 +623,7 @@ _metal_1d = (
         "coulomb",
         participants=("pz", "pz"),
         parameters=[16.522, 8.64, 5.333],
-        expression=lambda d: 14.399 / d
+        expression=ohno_potential(0)
     )
 )
 

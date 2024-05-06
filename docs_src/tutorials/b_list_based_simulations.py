@@ -14,239 +14,211 @@
 
 # # List-based Simulations 
 #
-# We detail the main datatype of GRANAD.
+# Every GRANAD simulation dependens on orbitals and their interactions. Orbitals themselves are quite boring. To make them interact and shift them around, you need to put them into list, which is what this tutorial is about.
 
 ### Orbitals: A Recap
 # 
-# As already explained in the "Getting Started" Tutorial, Orbitals are the basic building blocks of orbital lists. Let's inspect the class
-
-# +
-from granad import *
-print(Orbital.__doc__)
-# -
+# As already explained in the "Getting Started" Tutorial, Orbitals are the basic building blocks of orbital lists. They are book keeping devices containing quantum numbers, position and a user-defined string. There is not much more to them.
 
 ### Orbital lists
 
-# To group orbitals, we put them in a list. 
-
-# +
-print(OrbitalList.__doc__)
-# -
-
-# So the docstring tells us that orbital lists
+# We can make orbitals interact by putting them into a list. The class we need for this is called `OrbitalList` It allows us
 
 # 1. allow to couple orbitals 
-# 2. store simulation parameters in a dataclass
-# 3. compute physical observables lazily (it also talks about bases, but see the seperate tutorial).
-# 4. let us simulate things
-
-# We will look at these remaining points below.
+# 2. set simulation parameters
+# 3. compute and plot physical observables (such as energy spectra or TD simulations)
 
 ### Coupling orbitals
 
-# Say we want to create a stack of two graphene flakes.
+# We already learned in the first tutorial that there are only two ways of making an orbital list:
+
+# 1. creating it ourselves
+# 2. cutting it from a bulk material
+
+# In the former case, we have to specify all couplings ourselves. In the latter case, the material has already told the orbitals how to interact.
+
+# Say we want to specify an isolated atom representing a quantum optical TLS. We need two energy levels: an upper and a lower energy. So its a good idea to use an Orbital for each of them.
+# The orbitals belong to the same atom. To remind us of this, we specify a tag.
 
 # +
-flake = MaterialCatalog.get("graphene").cut_flake( Rectangle(10, 10) )
-# -
-
-# How do we create the second flake and stack it on top? First of all, we duplicate the existing flake
-
-# +
-flake_shifted = MaterialCatalog.get("graphene").cut_flake( Rectangle(10, 10) )
-# -
-
-# We then inspect its orbitals.
-
-# +
-print(flake_shifted)
-# -
-
-# When the orbitals in a flake are instantiated, they are automatically assigned a group id that has not been in use before. This flake contains only one group for all pz orbitals in the flake. We can check this
-
-# +
-print(flake_shifted.get_group_ids()) # the i-th entry is the group of the i-th orbital
-print(flake_shifted.get_unique_group_ids()) # this is just jnp.unique on the previous array
-# -
-
-# So, we know that all orbitals in the flake have the same group_id. As such, we can group them and shift them together.
-
-# +
-group_id_upper = flake_shifted.get_unique_group_ids()
-
-# this shift will be applied to all orbitals with the same group => the flake is lifted in z-direction
-flake_shifted.shift_by_vector( group_id_upper, [0,0,1] )
-# -
-
-# Creating the stack is easy now
-
-# +
-stack = flake + flake_shifted
-stack.show_3d()
-# -
-
-# Okay, we have the geometry right, but what about the coupling? If we inspect the energies
-
-# +
-stack.show_energies()
-# -
-
-# We see that we get every point twice: the interlayer coupling is zero by default, so we have a two-fold degenerate spectrum. To lift this degeneracy, we need to couple the layers. We do this via a function depending on distance. Say, you want to couple only nearest neighbors in a layer with a strength of -2.66. Interlayer nearest neighbors are separated by a distance of 1 Angström. So, one way to express the coupling as a function is by a narrow gaussian around 1.0
-
-# +
-def interlayer_hopping( distance ):
-    return jnp.exp( -100*(distance - 1.0)**2 )
-# -
-
-# If the distance is (sufficiently close to) 1.0, we couple with -2.66, otherwise we don't couple. So, we want to couple two groups: the lower group of pz orbitals (the flake in the xy-plane) and the upper group. We do this like this:
-
-# +
-lower_id = flake.get_unique_group_ids()[0]
-upper_id = flake_shifted.get_unique_group_ids()[0]
-stack.set_groups_hopping( lower_id, upper_id, interlayer_hopping )
-stack.show_energies()
-# -
-
-# The degeneracy is lifted! Consider now an adatom
-
-# +
+from granad import Orbital
 lower_level = Orbital(tag="atom")
 upper_level = Orbital(tag="atom")
+# -
+
+# We want to use the Orbitals in a simulation. This means that we have to put them into a list
+
+# +
+from granad import OrbitalList
 atom = OrbitalList([lower_level, upper_level])
 print(atom)
 # -
 
-# For now, we have two electrons. We learn how to change this below. Each orbital has its own group_id. Don't change these, GRANAD handles these by default. We want to set energies of this adatom, i.e. its hamiltonian. If we just want a TLS with energies $\pm 0.5$, we have a $2x2$ matrix, where H[0,0] = -0.5, and H[1,1] = 0.5. We can set the hamiltonian elements directly
+# We can tell that the total electron number in our system is 2. This is GRANAD's default behavior: each orbital is considered to contribute 1 electron. This can be changed of course
+
+# +
+atom.set_electrons(1)
+print(atom)
+# -
+
+# We can now already compute static quantities of the atom, like its energies.
+
+# +
+print(atom.energies)
+# -
+
+# This is not very interesting, because we have specified no couplings. By default, GRANAD considers all couplings to be zero unless stated otherwise. So let's change this.
+
+# GRANAD lets us explicitly set elements of the hamiltonian (and coulomb) matrices by their list indices. We have put the Orbital called `lower_level` in the 0-th position, so we can assign it an an energy of -0.5. 
 
 # +
 atom.set_hamiltonian_element( 0, 0, -0.5)
-atom.set_hamiltonian_element( 1, 1, 0.5) 
+# -
+
+# Similarly, we can assign the energy to the upper level
+
+# +
+atom.set_hamiltonian_element( 1, 1, 0.5)
+# -
+
+# If we now check the energies, we see that they have updated automatically
+
+# +
+print(atom.energies)
+# -
+
+# So that worked. You might have realized that you didn't have to call any function to get the energies with the updated couplings. This is because GRANAD evaluates lazily:  physical quantities that depend on the couplings (like the energies or a coulomb matrix entry) will be computed when they are needed. Aside from using list indices for setting couplings, you can also use the orbitals themselves. This takes some time to get used to, but is quite practical.
+
+# Let's say for illustration we couple the upper and lower level. You could do it like this
+
+# +
+atom.set_hamiltonian_element( 1, 0, 0.5j)
+# -
+
+# Or like this
+
+# +
+atom.set_hamiltonian_element( upper_level, lower_level, 0.1j) # changes the same element 
 print(atom.hamiltonian)
 # -
 
-# We can also set the elements by directly referencing the orbitals
+# We see that the matrix entry corresponding to the inter-level coupling is now modified accordingly, with hermiticity of the hamiltonian taken into account properly.
+
+# Introducing dipole transitions works similarly: We just have to remember to pass in a vector for the transition
 
 # +
-atom.set_hamiltonian_element( upper_level, upper_level, 0.8)
-print(atom.hamiltonian)
+atom.set_dipole_element( upper_level, lower_level, [0,0,1] ) # transition in z-direction
+print(atom.dipole_operator[2])
 # -
 
-# You can do the same thing for any element of the graphene flake btw. Talking about it, let's couple the atom to it. First, we combine the lists
+# Let's look at the position of the atom
 
 # +
-stack_with_atom = stack + atom
+print(atom.positions)
 # -
 
-# Now, we move the atom somewhere in between the two flakes
+# It is located at the origin. Let's shift it. We can manipulate the "position" attribute of the two orbitals by hand (not recommended) or we can use the tag we just defined, like so
 
 # +
-stack_with_atom.show_3d( show_index = True )
+atom.shift_by_vector( [0, 0, 1] )
+print(atom.positions)
 # -
 
-# We pick two indices we like and put the atom in between. To move all orbitals on the atom, we use the tag we just defined.
+# Every orbital we have annotated by this tag will be shifted. Obviously, shifting a single point is not so interesting, so let's do something more complicated.
+
+# Consider a slightly more involved geometric example, i.e. stacking two graphene flakes.
+
+# We chose simple rectangles
 
 # +
-new_atom_position = stack_with_atom[0].position + jnp.array( [0,0,0.5] )
-stack_with_atom.set_position("atom", position = new_atom_position)
-stack_with_atom.show_3d()
+from granad import MaterialCatalog, Rectangle
+flake = MaterialCatalog.get("graphene").cut_flake( Rectangle(10, 10), plot = True )
 # -
 
-# Now, we look at the energies
+# By default, graphene flakes are created in the xy - plane. They contain pz Orbitals which are grouped together by an id. You can directly apply shifts to groups of orbitals. We want to shift the entire flake
 
 # +
-stack_with_atom.show_energies()
+flake.shift_by_vector( [0,0,1]  )
+print(flake.positions)
 # -
 
-# Not much of a change, but the reason is that we forgot to couple the atom to the flakes. So let's do that. We couple it just to its nearest neighbors.
+# Now we have shifted the entire flake. But we actually wanted a stack, so we need a new flake at the bottom.
 
 # +
-stack_with_atom.set_hamiltonian_element( lower_level, 0, 0.3 ) # we can even mix orbitals and indices
-stack_with_atom.set_hamiltonian_element( upper_level, 0, 0.3 )
-
-stack_with_atom.set_hamiltonian_element( upper_level, 64, 0.3 )
-stack_with_atom.set_hamiltonian_element( upper_level, 64, 0.3 )
-stack.show_energies()
+second_flake = MaterialCatalog.get("graphene").cut_flake( Rectangle(10, 10) )
 # -
 
-# Setting coulomb elements works analogously. To wrap up, we can couple by 
-
-# 1. setting matrix elements indexing via orbitals or their list indices
-# 2. setting coupling functions via group ids (you can also pass orbitals to these functions, but the behavior is a bit weirder).
-
-
-### Simulation Parameters
-
-# Let's revisit the adatom we just built.
+# How do we combine the flakes? Well, both are lists, so we can just add them
 
 # +
-print(atom)
+stack = flake + second_flake
+stack.show_3d()
 # -
 
-# We have two electrons, but a traditional TLS should only have one. We can do this like that
+# This is the first step. Now, we need to set couplings. For simplicity, we will couple nearest neighbors in different layers by setting their hopping rate in the Hamiltonian to 2.0. Interlayer nearest neighbors are separated by a distance of 1 Angström.
+
+# To achieve this, we could
+
+# 1. loop over all orbitals in the lower flake.
+# 2. get their nearest neighbor in the upper flake.
+# 3. call stack.set_hamiltonian_element to set the coupling to 1.0.
+
+# This is very cumbersome, so we take a more flexible approach: specifying the coupling by a distance-dependent function. We want a function that is 2.0 for a distance of 1.0 and 0.0 else. One way to express this is a narrow gaussian around 1.0.
 
 # +
-atom.set_electrons( atom.electrons - 1 )
-print(atom)
+import jax.numpy as jnp
+def interlayer_hopping( distance ):
+    return 2.0 * jnp.exp( -100*(distance - 1.0)**2 )
 # -
 
-# This looks better. Let's excite the transition (in our lingo, this is HOMO-LUMO)
+# To set the coupling, we do
 
 # +
-atom.set_excitation( 0, 1, 1)
-atom.show_energies()
+stack.set_hamiltonian_groups( flake, second_flake, interlayer_hopping )
 # -
 
-# This works. Let's now combine it with another TLS
+# We can perform a slightly more interesting simulation by looping over a bunch of nearest-neighbor couplings and study the impact on the energy landscape. To this end, we rewrite the coupling function: TODO: explain more
 
 # +
-a = Orbital(tag="atom2")
-b = Orbital(tag="atom2")
-atom2 = OrbitalList([a, b])
-
-atoms = atom + atom2
-print(atoms.energies)
-print(atoms)
+def interlayer_hopping_factory( coupling ):
+    def interlayer_hopping( distance ):
+        return coupling * jnp.exp( -100*(distance - 1.0)**2 )    
+    return interlayer_hopping
 # -
 
-# WAIT! We are back to 2 + 2 = 4 electrons, i.e. one per orbital? Why is this? The reason is that addition for orbital lists is defined as, schematically
-
-# 1. orb1 + orb2 = [orb1, orb2]
-# 2. coupling1 + coupling2 = [coupling1, coupling2]
-# 3. param1 + param2  = default_params
-
-# This might change in the future allowing you to define your own addition for all orbital list attributes. For now, we need to reset to the correct orbital number manually
+# We now loop and plot
 
 # +
-atoms.set_electrons( atoms.electrons - 1)
+import matplotlib.pyplot as plt
+n_orbs = len(stack)
+for coupling in [0, 1.0, 1.5, 2.0, 3.0]:
+    interlayer_hopping = interlayer_hopping_factory( coupling )
+    stack.set_hamiltonian_groups( flake, second_flake, interlayer_hopping )    
+    plt.plot( stack.energies, 'o', label = coupling )
+plt.title("Energy landscape dependent on interlayer cc-hopping")
+plt.legend()
+plt.show()
 # -
 
-# Another peculiarity of orbital lists is: they can contain each orbital only one time. So, if you try:
+# Admittedly, this way of specifying couplings gets some time to get used to, but it is really flexible. 
+
+# To recap: we have learned that there are three different ways to address orbitals in a list, corresponding to varying levels of granularity:
+
+# 1. *Single Orbitals* may be accessed by their list index or directly.
+# 2. *User-grouped Orbitals* may be accessed by their tag.
+# 3. *Auto-grouped Orbitals* may be accessed by their group_id.
+
+# Based on this information, you can manipulate orbitals, e.g. shift them around.
+
+### Pitfalls
+
+# Deleting and modifying state is dangerous.
 
 # +
-# updated_stack = stack_with_atom + atoms
+atom = OrbitalList( [Orbital(), Orbital()] )
+atom.set_electrons(1)
+del atom[0] # ALWAYS removes 1 electron
+print(atom.electrons) # you have an empty atom
 # -
 
-# This will fail, because stack_with_atom already contains the atom contained in atoms. Admittedly, this is weird.
-
-# If you are interested in the simulation parameters
-
-# +
-print(SimulationParams.__doc__)
-# -
-
-# So, they encapsulate the state of the simulation. Just remember to set them directly before you simulate.
-
-### Lazy computation
-
-# This is quickly explained: we have used it all the time!
-
-# +
-atom.set_hamiltonian_element(0,0,0.0) # doesnt compute anything
-atom.set_hamiltonian_element(0,0,1.0) # still, nothing computed
-atom.energies # now, we need to compute
-# -
-
-
-### Simulations
-
-# Simulations don't change anything about the orbitals, so we can do the same time propagation with two different relaxation rates etc. The only methods that change anything about the list explicitly tell you so by starting with "set".
+# For this reason, the deletion (and append) operation may change or be removed entirely.

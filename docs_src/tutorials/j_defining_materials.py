@@ -43,12 +43,12 @@ hubbard = (
     .add_orbital(position=(0, 0, 0), species = "up")
     .add_orbital(position=(0, 0, 0), species = "down")   
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("up", "up"),
         parameters=[0.0, t],
     )
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("down", "down"),
         parameters=[0.0, t],
     )
@@ -88,7 +88,7 @@ flake.show_3d()
 from copy import deepcopy
 graphene  = MaterialCatalog.get("graphene")
 graphene_haldane = deepcopy(graphene)
-graphene_haldane.add_interaction("hopping", participants = ('pz', 'pz'), parameters = [0, 1.0, 1j*0.1])
+graphene_haldane.add_interaction("hamiltonian", participants = ('pz', 'pz'), parameters = [0, 1.0, 1j*0.1])
 print(graphene_haldane)
 # -
 
@@ -107,7 +107,7 @@ for orb_1 in [orb for orb in flake_topological if orb.tag == 'sublattice_1']:
 # +
 import jax.numpy as jnp
 idx = jnp.argwhere(jnp.abs(flake_topological.energies) < 1e-2)[0].item()
-flake_topological.show_2d( display = flake_topological.eigenvectors[:, idx]  )
+flake_topological.show_2d( display = flake_topological.eigenvectors[:, idx], scale = True  )
 # -
 
 
@@ -128,7 +128,7 @@ _ssh_modified = (
     .add_orbital(position=(0,0), tag="sublattice_1", species="pz")
     .add_orbital(position=(0.8,0.1), tag="sublattice_2", species="pz")
     .add_interaction(
-        "hopping",
+        "hamiltonian",
         participants=("pz", "pz"),
         parameters=[0.0, 1 + 0.2, 1 - 0.2],
     )
@@ -136,7 +136,7 @@ _ssh_modified = (
         "coulomb",
         participants=("pz", "pz"),
         parameters=[16.522, 8.64, 5.333],
-        expression=lambda d: 14.399 / d
+        expression=lambda d: 14.399 / d + 0j
     )
 )
 flake = _ssh_modified.cut_flake( unit_cells = 10)

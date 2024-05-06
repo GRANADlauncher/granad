@@ -13,7 +13,7 @@ class GroupId():
     def __lt__(self, other):
         if not isinstance(other, GroupId):
             return NotImplemented
-        return self.id < self.id
+        return self.id < other.id
 
     def __le__(self, other):
         return self < other or self == other
@@ -26,7 +26,7 @@ class GroupId():
 
     def __ne__(self, other):
         return not self == other
-
+    
 class _Watchdog:
     _counter = GroupId()
 

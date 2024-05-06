@@ -24,8 +24,9 @@
 # 2. *OrbitalLists* represent a concrete structure. In essence, you can handle these as normal Python lists with additional information regarding Orbital coupling.
 # 3. *Materials* are a stand-in for infinite bulks. You can cut finite pieces from these bulks, which are again just lists of orbitals.
 
-# We will explain each of these and their basic use below.
+# We will use each of them below to set up a small graphene nanoantenna coupling to an external field.
 
+# Once this is done, we will use GRANAD's main feature and simulate the induced dynamics in the nanoantenna directly in time domain.
 #
 ### Orbitals
 #
@@ -116,58 +117,79 @@ my_first_flake = graphene.cut_flake(triangle_ac, plot = True)
 
 ### A first simulation
 
-# To get a feeling of the setup, we first inspect the energies of the flake
+# Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix $\rho(t)$ of a system by integrating a nonlinear master equation. Once the time dependent density matrix is known, dynamical expectation values can be computed. Say you have a Hermitian operator epresented by a matrix $A$ and the solution of the master equation $\rho(t)$. The expectation value is then just $a(t) = \text{Tr][\rho(t) A]$. We will illustrate this at the example of the dipole moment in the small graphene flake we created above.
+
+# But before we dive into exploring the dynamics of the flake, we first inspect its energies
 
 # +
 my_first_flake.show_energies()
 # -
 
-# Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix $\rho(t)$ of a system by integrating a nonlinear master equation. As a result, it is possible to track the evolution of the physical observable associated with a Hermitian operator $A$ by computing $a(t) = Tr[\rho(t) A]$. Optical properties in particular are largely determined by the polarization or dipole operator $\hat{P}$ and they are usually expressed in frequency domain. To this end, GRANAD offers a way to compute the Fourier transform $a(\omega)$ directly after time propagation. We will look at an example tracking the time evolution of the dipole operator below, where the computation proceeds in two steps:
+# GRANAD offers similar built-in functions to visualize (both static and dynamic) properties of a flake. For more information, please consult the corresponding tutorial.
 
-#
+# Now that we are ready, we can study the induced dipole moment. In particular, we will:
+
 # 1. Excite the flake with an electric field.
-# 2. Compute its dipole moment $p(\omega)$ from the expectation value of its dipole operator.
+# 2. Compute its dipole moment $p(t) = \text{Tr}[\rho(t) P]$
 
-# We first do step 1. To obtain a broad frequency spectrum, we must pick a narrow pulse in time-domain
+# The electric field is given as a function mapping the time (a single float) to a vector representing the field components like this `field : t -> vec`.
+ 
+# You can specify custom functions, but GRANAD comes with a few built-ins. We will just use the built-in Pulse.
 
 # +
 from granad import Pulse
 
 my_first_illumination = Pulse(
     amplitudes=[1e-5, 0, 0], frequency=2.3, peak=5, fwhm=2
-) 
+)
+print( my_first_illumination( 0.0) ) # initial value of the field
 # -
 
-# For step 2, a few parameters have to be chosen
-#
-# 1. Simulation duration: we go from 0 to 40 in 1e5 steps.
-# 2. Relaxation rate: this is $r$ in the dissipation term $D[\rho] = r \cdot(\rho - \rho_0)$ in the master equation.
-# 3. Frequency domain limits: we choose the interval [0, 16].
-# 4. Density matrix sampling rate: producing 1e5 density matrices can quickly exhaust RAM ressources. So we only save every 100th density matrix, such that we get 1000 density matrices.
 
-# A simulation is just passing all of these parameters to the corresponding method of our flake.
+# Now we come to the actual simulation. For any time-domain simulation, we have to decide on a few additional parameters:
+#
+# 1. Simulation duration: we go from 0 to 40 to make sure everything has equilibrated.
+# 2. Relaxation rate: here, we pick a single number characterizing the rate of energy dissipation across all channels.
+# 3. The operators whose expectation values we want to compute. They are given as a simple list.
+
+# We want to calculate the induced polarization from the dipole operator. This operator can be represented as a 3xNxN matrix, where N is the number of orbitals and 3 corresponds to Cartesian components x,y,z and we can compute it directly
 
 # +
-omegas, dipole_omega, pulse_omega =  my_first_flake.get_expectation_value_frequency_domain(
-        operator=my_first_flake.dipole_operator, 
-        end_time=40,
-        steps_time=1e5,
-        relaxation_rate=1 / 10,
-        illumination=my_first_illumination,
-        omega_min=0,
-        omega_max=10,
-        skip=100,
+print(my_first_flake.dipole_operator.shape)
+# -
+
+# We want to compute its expectation value, so we have to wrap it in a list and pass it to the TD simulation, called `td_run`
+
+# +
+result = my_first_flake.td_run(
+    end_time=40, # the start is set to 0 by default 
+    relaxation_rate=1 / 10,
+    illumination=my_first_illumination,
+    expectation_values = [my_first_flake.dipole_operator] # you can also omit the list for a single operator, but this is bad practice
     )
 # -
 
-# We see that three variables are returned: the omega axis we have specified, the dipole moment and the pulse in freqeuency domain. There is no way to control the number of points in the omega axis, because it is the result of a Fourier transform.
+# If you want to compute expecation values of more operators, you can simply add them to the list. The result variable is a container for 
 
-# We now plot the dipole moment and the pulse in frequency domain.
+# 1. the last density matrix in the simulation (this is important if you want to continue the time evolution).
+# 2. the time axis, which is an array of samples [t_1, t_2, ... t_n].
+# 3. an "output", which is a list of arrays, corresponding to the operators we passed in. Each array contains the time-dependent expectation value like [p_1, p_2, ..., p_n].
+
+# We have only specified one operator to compute the expectation value of, such the list only contains one element.
 
 # +
-import matplotlib.pyplot as plt
+print(len(result.output))
+# -
 
-plt.plot(omegas, dipole_omega)
-plt.plot(omegas, pulse_omega, "--")
-plt.show()
+# This list contains an array of shape Tx3. So, if we want the dipole moment at the 10-th timestep in x-direction, we would do
+
+# +
+dipole_moments = result.output[0]
+print(dipole_moments[10, 0])
+# -
+
+# Now that we understand how a time domain simulation works, we can visualize the result. GRANAD offers a dedicated function for this
+
+# +
+my_first_flake.show_res( result, plot_labels = ["p_x", "p_y", "p_z"], show_illumination = False ) 
 # -

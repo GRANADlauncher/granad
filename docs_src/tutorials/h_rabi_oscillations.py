@@ -23,33 +23,29 @@
 # We set up an isolated adatom.
 
 # +
-import jax.numpy as jnp
-import matplotlib
-from granad import Wave, Orbital, OrbitalList, MaterialCatalog, Triangle
+from granad import Orbital, OrbitalList
 
-lower_level = Orbital(tag="atom")
-upper_level = Orbital(tag="atom")
-atom = OrbitalList([lower_level, upper_level])
-
+atom = OrbitalList([Orbital(), Orbital()])
 atom.set_electrons( 1 )
-atom.set_hamiltonian_element(upper_level, upper_level, 0.5)
-atom.set_hamiltonian_element(lower_level, lower_level, -0.5)
-
-atom.set_dipole_transition(upper_level, lower_level, [0, 7.5, 0])
+atom.set_hamiltonian_element(1, 1, 0.5)
+atom.set_hamiltonian_element(0, 0, -0.5)
+atom.set_dipole_element(1, 0, [0, 7.5, 0])
 # -
 
 # We study undamped time evolution under harmonic illumination
 
 # +
+from granad import Wave
 wave = Wave(amplitudes=[0, 0.05, 0], frequency=1)
-time, density_matrices = atom.get_density_matrix_time_domain(
+result = atom.td_run(
     end_time=50,
+    grid = 10,
     illumination=wave,
     use_rwa=True,
     coulomb_strength = 0.0,
-    steps_time = 1e5,
+    density_matrix = ["occ_e"],
 )
-atom.show_time_dependence(density_matrices, time=time)
+atom.show_res(result, plot_only = [atom.homo, atom.homo+1], plot_labels = ["homo", "lumo"], show_illumination = False)
 # -
 
 ### Coupling to a Flake
@@ -57,33 +53,35 @@ atom.show_time_dependence(density_matrices, time=time)
 # We combine the TLS with a graphene flake in the top position above an atom.
 
 # +
+import jax.numpy as jnp
+from granad import MaterialCatalog, Triangle
 graphene = MaterialCatalog.get("graphene")
 flake = graphene.cut_flake(Triangle(10, armchair = True, shift = [10,10]), plot=False)
 flake_with_atom = flake + atom
-flake_with_atom.set_electrons( flake_with_atom.electrons - 1 )
 pz_orbital = flake_with_atom[8]
 top = pz_orbital.position + jnp.array([0, 0, 1])
-flake_with_atom.set_position(tag="atom", position=top)
+flake_with_atom.set_position(top, atom)
 flake_with_atom.show_3d(show_index=True)
 # -
 
 # We set the couplings
 
 # +
-flake_with_atom.set_hamiltonian_element(pz_orbital, lower_level, 0.5)
-flake_with_atom.set_hamiltonian_element(pz_orbital, upper_level, 0.5)
+flake_with_atom.set_hamiltonian_element(pz_orbital, atom[0], 1)
+flake_with_atom.set_hamiltonian_element(pz_orbital, atom[1], 1)
 # -
 
 # Now, the time evolution of the composite system
 
 # +
-time, density_matrices = flake_with_atom.get_density_matrix_time_domain(
+flake_with_atom.show_energies()
+result = flake_with_atom.td_run(
+    grid = 10,
     end_time=50,
     illumination=wave,
     use_rwa=True,
     coulomb_strength = 0.0,
-    steps_time = 1e5,
+    density_matrix = ["occ_e"],
 )
-density_matrices_e = flake_with_atom.transform_to_energy_basis(density_matrices)
-flake_with_atom.show_time_dependence( density_matrices_e, time=time)
+flake_with_atom.show_res( result, plot_only = [9,10], show_illumination = False )
 # -

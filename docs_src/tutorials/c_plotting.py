@@ -19,7 +19,7 @@
 # A typical simulation requires visualizing:
 
 # 1. geometry
-# 2. time-dependent arrays (such as dipole moments)
+# 2. simulation results
 # 3. space-dependent arrays (such as eigenstates, charges, ...)
 
 # All public plotting functions are associated with a list of orbitals.
@@ -29,7 +29,7 @@
 # Geometries can be visualized in 2D or 3D.
 
 # +
-from granad import Wave, Orbital, OrbitalList, MaterialCatalog, Rectangle
+from granad import MaterialCatalog, Rectangle
 
 flake = MaterialCatalog.get("graphene").cut_flake( Rectangle(10, 10) )
 flake.show_2d()
@@ -39,53 +39,51 @@ flake.show_2d()
 
 # +
 flake_shifted = MaterialCatalog.get("graphene").cut_flake( Rectangle(10, 10) )
-flake_shifted.shift_by_vector( "sublattice_1", [0,0,1] )
-flake_shifted.shift_by_vector( "sublattice_2", [0,0,1] )
+flake_shifted.shift_by_vector( flake_shifted, [0,0,1] )
 stack = flake + flake_shifted
 stack.show_3d()
 # -
 
-### Time-dependent arrays
+### Simulation output
 
-# There is a dedicated function for processing TD simulation output
-
-# +
-help(flake.show_time_dependence)
-# -
-
-# So, lets plot the relaxing energy occupations of the first flake after exciting a HOMO-LUMO transition
+# There is a dedicated function for showing TD simulation results. Let's illustrate this by tracking the current
 
 # +
-flake.set_excitation( flake.homo, flake.homo + 2, 1 )
-time, density_matrices =  flake.get_density_matrix_time_domain(
-        end_time=40,
-        steps_time=1e5,
-        relaxation_rate=1/10,
-        illumination=Wave( [0,0,0], 0 ),
-        skip=100,
+from granad import Pulse
+pulse = Pulse(
+    amplitudes=[1e-5, 0, 0], frequency=2.3, peak=5, fwhm=2
 )
-density_matrices_e = flake.transform_to_energy_basis( density_matrices )
-flake.show_time_dependence( density_matrices = density_matrices_e  )
+result = flake.td_run(
+    illumination=pulse,
+    expectation_values = [flake.velocity_operator],
+    end_time=40,
+    relaxation_rate=1/10,
+    grid=100,
+)
+plot_labels = ['j_x', 'j_y', 'j_z'] 
+flake.show_res( result, plot_labels = plot_labels )
 # -
 
-# If we want, we can check that the correct excitation is set
+# We can also plot in frequency domain by specifying the omega limits
 
 # +
-flake.show_energies()
+flake.show_res( result, omega_max = 5, omega_min = 0, plot_labels = plot_labels )
 # -
 
 ### Space-dependent arrays
 
-# The functions show_2d and show_3d are a bit more versatile than initially indicated. Let's see why at the 2d example
+# The functions show_2d and show_3d are a bit more versatile than initially indicated.
+
+# If we supply a "display" argument, we can plot an arbitrary array on the grid spanned by the orbitals and filter it by orbital tags. Let's demonstrate this by visualizing the lowest energy one particle state of the flake
 
 # +
-help(flake.show_2d)
+flake.show_2d( display = flake.eigenvectors[:, 0] )
 # -
 
-# So, the display argument allows us to plot an arbitrary function defined on the grid spanned by the orbitals and filter it by orbital tags. Let's demonstrate this by visualizing the lowest energy one particle state of the flake
+# If you want a normalized plot of the absolute values, do
 
 # +
-flake.show_2d( display = flake.eigenvectors[:, 0] ) # the ground state is the
+flake.show_2d( display = flake.eigenvectors[:, 0], scale = True )
 # -
 
 # Additionally, if you supply the keyword argument name = "MY-PLOT-NAME.pdf" to any plotting function, the plot will not be displayed, but instead saved to disk in the directory you invoked Python.

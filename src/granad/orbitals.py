@@ -83,7 +83,7 @@ class Orbital:
     def __lt__(self, other):
         if not isinstance(other, Orbital):
             return NotImplemented
-        return self.group_id < self.group_id
+        return self.group_id < other.group_id
 
     def __le__(self, other):
         return self < other or self == other
@@ -145,7 +145,7 @@ class Params:
         This object should not be created directly, but is rather used to encapsulate (ephemeral) internal state
         of OrbitalList.
     """
-    electrons : int
+    electrons : int 
     excitation : list[jax.Array] = field(default_factory=lambda : [jnp.array([0]), jnp.array([0]), jnp.array([0])])
     eps : float = 1e-5
     beta : float = jnp.inf
@@ -154,7 +154,7 @@ class Params:
 
     def __add__( self, other ):
         if isinstance(other, Params):
-            return Params( electrons = self.electrons + other.electrons )        
+            return Params(self.electrons + other.electrons)        
         raise ValueError
     
 # rule: new couplings are registered here
@@ -164,9 +164,16 @@ class Couplings:
     coulomb : _SortedTupleDict = field(default_factory=_SortedTupleDict)
     dipole_transitions : _SortedTupleDict = field(default_factory=_SortedTupleDict)
 
+    def __str__( self ):
+        return 
+
     def __add__( self, other ):
-        if isinstance(other, Couplings):
-            return Couplings()
+        if isinstance(other, Couplings):            
+            return Couplings(
+                _SortedTupleDict(self.hamiltonian | other.hamiltonian),
+                _SortedTupleDict(self.coulomb | other.coulomb),
+                _SortedTupleDict(self.dipole_transitions | other.dipole_transitions)
+            )
         raise ValueError        
                 
 @dataclass
@@ -254,15 +261,24 @@ class OrbitalList:
     """
     def __init__( self, orbs = None, couplings = None, params = None, recompute = True):
         self._list = orbs if orbs is not None else []
-        self.couplings = couplings if couplings is not None else Couplings()
+        self.couplings = couplings if couplings is not None else Couplings( )
         self.params = params if params is not None else Params( len(orbs) )
         self._recompute = recompute    
         
     def __getattr__(self, property_name):
         if property_name.endswith("_x"):
-            return getattr(self, property_name[:-2])
+            original_name = property_name[:-2]
+            try:
+                return getattr(self, original_name)
+            except AttributeError:
+                pass 
         elif property_name.endswith("_e"):
-            return self.transform_to_energy_basis( getattr(self, property_name[:-2]) )
+            original_name = property_name[:-2]
+            try:
+                return self.transform_to_energy_basis(getattr(self, original_name))
+            except AttributeError:
+                pass            
+        raise AttributeError(f"{self.__class__.__name__!r} object has no attribute {property_name!r}")
 
     def __len__(self):
         return len(self._list)
@@ -272,11 +288,10 @@ class OrbitalList:
         return self._list[position]
 
     def __repr__(self):
-        return repr(self._list)
-
-    def __str__(self):
         info = f"List with {len(self)} orbitals, {self.electrons} electrons."
-        return "\n".join((info, str(self._list))) 
+        info += f"Excitation: f{self.params.excitation}"
+        # TODO: add sth about groups
+        return "\n".join((info, repr(self._list))) 
 
     def __iter__(self):
         return iter(self._list)
@@ -309,8 +324,10 @@ class OrbitalList:
     @mutates
     def __delitem__(self, position):
         orb = self._list[position]
-        self._delete_coupling(orb, self.coupling.hamiltonian)
+        self._delete_coupling(orb, self.couplings.hamiltonian)
         self._delete_coupling(orb, self.couplings.coulomb)
+        self._delete_coupling(orb, self.couplings.dipole_transitions)
+        self.params.electrons -= 1
         del self._list[position]
 
     @staticmethod
@@ -343,6 +360,7 @@ class OrbitalList:
                 matrix = matrix.at[valid_indices].set(
                     function(distances[valid_indices])
                 )
+            matrix += matrix.conj().T - jnp.diag(jnp.diag(matrix))
 
             # we now set single elements
             rows, cols, vals = [], [], []
@@ -351,9 +369,12 @@ class OrbitalList:
                 cols.append(self._list.index(key[1]))
                 vals.append(val)
 
+            # TODO: uff not good
+            vals = jnp.array(vals)
             matrix = matrix.at[rows, cols].set(vals)
+            matrix = matrix.at[cols, rows].set(vals.conj())
 
-            return matrix + matrix.conj().T - jnp.diag(jnp.diag(matrix))
+            return matrix
 
         # TODO: rounding
         positions = self.positions
@@ -381,7 +402,7 @@ class OrbitalList:
             orb_or_index2 (int or Orbital): Identifier or orbital for the second part of the transition.
             arr (jax.Array): The 3-element array containing dipole transition elements.
         """
-        self._set_coupling(self.filter_orbs(orb1, int), self.filter_orbs(orb2, int), arr, self.couplings.dipole_transitions)
+        self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), jnp.array(arr).astype(complex), self.couplings.dipole_transitions)
         
     def set_hamiltonian_groups(self, orb1, orb2, func):
         """
@@ -424,7 +445,7 @@ class OrbitalList:
             orb_or_index2 (int or Orbital): Identifier or orbital for the second element.
             val (complex): The complex value to set for the Hamiltonian element.
         """
-        self._set_coupling(self.filter_orbs(orb1, int), self.filter_orbs(orb2, int), self._ensure_complex(val), self.couplings.hamiltonian)
+        self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), self._ensure_complex(val), self.couplings.hamiltonian)
 
     def set_coulomb_element(self, orb1, orb2, val):
         """
@@ -435,7 +456,7 @@ class OrbitalList:
             orb_or_index2 (int or Orbital): Identifier or orbital for the second element.
             val (complex): The complex value to set for the Coulomb interaction element.
         """
-        self._set_coupling(self.filter_orbs(orb1, int), self.filter_orbs(orb2, int), self._ensure_complex(val), self.couplings.coulomb)
+        self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), self._ensure_complex(val), self.couplings.coulomb)
 
     def _ensure_complex(self, func_or_val):
         if callable(func_or_val):
@@ -470,23 +491,24 @@ class OrbitalList:
             self.params.beta,
         )
 
-        if self.params.self_consistency_params:
+        if len(self.params.self_consistency_params) != 0:
             (
                 self._hamiltonian,
                 self._initial_density_matrix,
                 self._stationary_density_matrix,
                 self._energies,
                 self._eigenvectors,
-            ) = _get_self_consistent(
+            ) = _numerics._get_self_consistent(
                 self._hamiltonian,
                 self._coulomb,
                 self.positions,
+                self.params.excitation,
                 self.params.spin_degeneracy,
                 self.params.electrons,
                 self.params.eps,
                 self._eigenvectors,
-                self._static_density_matrix,
-                **self.params.self_consistent_params,
+                self._stationary_density_matrix,
+                **self.params.self_consistency_params,
             )
 
         self._initial_density_matrix = self.transform_to_site_basis( self._initial_density_matrix )
@@ -503,7 +525,7 @@ class OrbitalList:
         
     def index(self, orb):
         return self._list.index(orb)
-        
+
     @mutates
     def append(self, other):
         """
@@ -521,47 +543,56 @@ class OrbitalList:
         if other in self:
             raise ValueError
         self._list.append(other)
+        self.params.electrons += 1
 
     # TODO: replace if else with action map
     def filter_orbs( self, orb_id, t ):
-        if type(orb_id) == t:
-            return [orb_id]
-        
-        # index to group, orb, tag => group_id / orb / tag at index,
-        if isinstance(orb_id, int) and isinstance(t, _watchdog.GroupId):
-            return [self._list[orb_id].group_id]
-        if isinstance(orb_id, int) and isinstance(t, Orbital):
-            return [self._list[orb_id]]
-        if isinstance(orb_id, int) and isinstance(t, str):
-            return [self._list[orb_id].tag]
+        def filter_single_orb(orb_id, t):
+            if type(orb_id) == t:
+                return [orb_id]
 
-        # group to index, orb, tag => group_id / orb / tag at index,
-        if isinstance(orb_id, _watchdog.GroupId) and isinstance(t, str):
-            return [ orb.tag for orb in self if orb.group_id == orb_id ]
-        if isinstance(orb_id, _watchdog.GroupId) and isinstance(t, group_id):
-            return [ orb.group_id for orb in self if orb.group_id == orb_id ]
-        if isinstance(orb_id, _watchdog.GroupId) and isinstance(t, int):
-            return [ self._list.index(orb) for orb in self if orb.group_id == orb_id ]
+            # index to group, orb, tag => group_id / orb / tag at index,
+            if isinstance(orb_id, int) and t == _watchdog.GroupId:
+                return [self._list[orb_id].group_id]
+            if isinstance(orb_id, int) and t == Orbital:
+                return [self._list[orb_id]]
+            if isinstance(orb_id, int) and t == str:
+                return [self._list[orb_id].tag]
 
-        # tag to group, orb, index => group_id / orb / tag at index,
-        if isinstance(orb_id, str) and isinstance(t, _watchdog.GroupId):
-            return [orb.group_id for orb in self if orb.tag == orb_id]
-        if isinstance(orb_id, str) and isinstance(t, int):
-            return [self._list.index(orb) for orb in self if orb.tag == orb_id]
-        if isinstance(orb_id, str) and isinstance(t, Orbital):
-            return [orb for orb in self if orb.tag == orb_id]
+            # group to index, orb, tag => group_id / orb / tag at index,
+            if isinstance(orb_id, _watchdog.GroupId) and t == str:
+                return [ orb.tag for orb in self if orb.group_id == orb_id ]
+            if isinstance(orb_id, _watchdog.GroupId) and t == Orbital:
+                return [ orb for orb in self if orb.group_id == orb_id ]
+            if isinstance(orb_id, _watchdog.GroupId) and t == int:
+                return [ i for i, orb in enumerate(self) if orb.group_id == orb_id ]
 
-        # orb to index, group, tag
-        if isinstance(orb_id, Orbital) and isinstance(t, _watchdog.GroupId):
-            return [orb_id.group_id]
-        if isinstance(orb_id, Orbital) and isinstance(t, int):
-            return [self._list.index(orb_id)]
-        if isinstance(orb_id, Orbital) and isinstance(t, str):
-            return [orb_id.tag]
+            # tag to group, orb, index => group_id / orb / tag at index,
+            if isinstance(orb_id, str) and t == _watchdog.GroupId:
+                return [orb.group_id for orb in self if orb.tag == orb_id]
+            if isinstance(orb_id, str) and t == int:
+                return [i for i, orb in enumerate(self) if orb.tag == orb_id]
+            if isinstance(orb_id, str) and t == Orbital:
+                return [orb for orb in self if orb.tag == orb_id]
+
+            # orb to index, group, tag
+            if isinstance(orb_id, Orbital) and t == _watchdog.GroupId:
+                return [orb_id.group_id]
+            if isinstance(orb_id, Orbital) and t == int:
+                return [self._list.index(orb_id)]
+            if isinstance(orb_id, Orbital) and t == str:
+                return [orb_id.tag]
+
+        # TODO: this is bad, do action map
+        if not isinstance(orb_id, OrbitalList):
+            orb_id = [orb_id]
+
+        return [ x for orb in orb_id for x in filter_single_orb(orb, t) ]
+            
 
         
     @mutates
-    def shift_by_vector(self, orb_id, translation_vector):
+    def shift_by_vector(self, translation_vector, orb_id = None):
         """
         Shifts all orbitals with a specific tag by a given vector.
 
@@ -572,11 +603,12 @@ class OrbitalList:
         Notes:
             This operation mutates the positions of the matched orbitals.
         """
-        for orb in self.get( orb_id, Orbital ):
+        filtered_orbs = self.filter_orbs( orb_id, Orbital ) if orb_id is not None else self
+        for orb in filtered_orbs:
             orb.position += jnp.array(translation_vector)
 
     @mutates
-    def set_position(self, orb_id, position):
+    def set_position(self, position, orb_id = None):
         """
         Sets the position of all orbitals with a specific tag.
 
@@ -587,19 +619,21 @@ class OrbitalList:
         Notes:
             This operation mutates the positions of the matched orbitals.
         """
-        for orb in self.filter_orbs( orb_id, Orbital ):
+        filtered_orbs = self.filter_orbs( orb_id, Orbital ) if orb_id is not None else self
+        for orb in filtered_orbs:
             orb.position = position
 
             
     @mutates
-    def set_self_consistent(self, sc_params):
+    def set_self_consistent(self, **kwargs):
         """
         Configures the list for self-consistent field calculations.
 
         Parameters:
             sc_params (dict): Parameters for self-consistency.
         """
-        self.self_consistency_params = sc_params
+        default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0}
+        self.params.self_consistency_params = default | kwargs
 
     @mutates
     def set_excitation(self, from_state, to_state, excited_electrons):
@@ -618,13 +652,7 @@ class OrbitalList:
             if isinstance(maybe_int, int):
                 return jnp.array([maybe_int])
             if isinstance(maybe_int, list):
-                maybe_int = jnp.array(maybe_int)
-            if isinstance(maybe_int, jax.Array):
-                return (
-                    jnp.array(maybe_int)
-                    if maybe_int.ndim > 1
-                    else jnp.array([maybe_int])
-                )
+                return jnp.array(maybe_int)
             raise TypeError
 
         self.params.excitation = [maybe_int_to_arr(from_state), maybe_int_to_arr(to_state), maybe_int_to_arr(excited_electrons)]
@@ -641,6 +669,14 @@ class OrbitalList:
     @mutates
     def set_electrons( self, val ):
         self.params.electrons = val
+
+    @property
+    def eps( self ):
+        return self.params.eps
+
+    @mutates
+    def set_eps( self, val ):
+        self.params.eps = val
 
     @property
     def spin_degeneracy( self ):
@@ -719,6 +755,7 @@ class OrbitalList:
             )
             k = value.nonzero()[0]
             dipole_operator = dipole_operator.at[k, i, j].set(value[k])
+
         return dipole_operator + jnp.transpose(dipole_operator, (0, 2, 1)).conj()
     
     @property
@@ -805,7 +842,7 @@ class OrbitalList:
         return self._transform_basis(observable, self._eigenvectors.conj().T)
 
     @recomputes
-    def get_charge(density_matrix = None):
+    def get_charge(self, density_matrix = None):
         """
         Calculates the charge distribution from a given density matrix or from the initial density matrix if not specified.
 
@@ -815,13 +852,8 @@ class OrbitalList:
         Returns:
            jax.Array: A diagonal array representing charges at each site.
         """
-        if density_matrix is None:
-            return jnp.diag(
-                self.initial_density_matrix
-                * self.electrons
-            )
-        else:
-            return jnp.diag(density_matrix * self.electrons)
+        density_matrix = self.initial_density_matrix if density_matrix is None else density_matrix
+        return jnp.diag(density_matrix * self.electrons)
 
     @recomputes
     def get_dos(self, omega: float, broadening: float = 0.1):
@@ -960,9 +992,9 @@ class OrbitalList:
                 density_matrix = [density_matrix]
             for option in density_matrix:
                 if option == "occ_x":
-                    computation.append( lambda rho : jnp.diagonal(rho, axis1=-1, axis2=-2) )
+                    computation.append( lambda rho : self.electrons * jnp.diagonal(rho, axis1=-1, axis2=-2) )
                 elif option == "occ_e":
-                    computation.append( lambda rho : jnp.diagonal(rho, axis1=-1, axis2=-2) )
+                    computation.append( lambda rho : self.electrons * jnp.diagonal( self.transform_to_energy_basis(rho), axis1=-1, axis2=-2) )
                 elif option == "full":
                     computation.append( lambda rho : rho )
         if custom_computation is not None:

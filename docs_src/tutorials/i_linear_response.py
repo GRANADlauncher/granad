@@ -61,22 +61,22 @@ pulse = Pulse(
 # We then compute the TD dipole moment and Fourier transform it.
 
 # +
-omegas, dipole_omega, pulse_omega =  flake.get_expectation_value_frequency_domain(
-        operator=flake.dipole_operator,  # the dipole moment is the expectation value of the dipole operator
-        end_time=40,
-        steps_time=1e5,
-        relaxation_rate=1/10,
-        illumination=pulse,
-        omega_min=0,
-        omega_max=5,
-        skip=100,    
+result = flake.td_run(
+    expectation_values = [ flake.dipole_operator ],
+    end_time=40,
+    relaxation_rate=1/10,
+    illumination=pulse,
 )
 # -
 
 # The polarizability is given by $p / E$ (we only take the $x$ - component).
 
 # +
-absorption_td = jnp.abs( -omegas * jnp.imag( dipole_omega[:,0] / pulse_omega[:,0] ) )
+omega_max = omegas_rpa.max()
+omega_min = omegas_rpa.min()
+p_omega = result.ft_output( omega_max, omega_min )[0]
+omegas_td, pulse_omega = result.ft_illumination( omega_max, omega_min )
+absorption_td = jnp.abs( -omegas_td * jnp.imag( p_omega[:,0] / pulse_omega[:,0] ) )
 # -
 
 # We can now compare the two results.
@@ -86,7 +86,7 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 plt.figure(figsize=(10, 6))
 plt.plot(omegas_rpa, absorption_rpa / jnp.max(absorption_rpa), 'o', linewidth=2, label = 'RPA')
-plt.plot(omegas, absorption_td / jnp.max(absorption_td), linewidth=2, ls = '--', label = 'TD' ) 
+plt.plot(omegas_td, absorption_td / jnp.max(absorption_td), linewidth=2, ls = '--', label = 'TD' ) 
 plt.xlabel(r'$\hbar\omega$', fontsize=20)
 plt.ylabel(r'$\sigma(\omega)$', fontsize=25)
 plt.title('Absorption Spectrum as a Function of Photon Energy', fontsize=15)

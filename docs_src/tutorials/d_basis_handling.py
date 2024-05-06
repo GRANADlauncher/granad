@@ -52,8 +52,3 @@ import matplotlib.pyplot as plt
 plt.matshow(flake.dipole_operator_e[0].real)
 plt.show()
 # -
-
-
-
-
-
