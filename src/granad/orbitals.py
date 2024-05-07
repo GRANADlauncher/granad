@@ -178,7 +178,7 @@ class Couplings:
                 
 @dataclass
 class TDResult:
-    illumination : Callable
+    td_illumination : jax.Array
     time_axis : jax.Array
     final_density_matrix : jax.Array
     output : list[jax.Array]
@@ -189,10 +189,6 @@ class TDResult:
 
     def ft_illumination( self, omega_max, omega_min, return_omega_axis = True ):
         return _numerics.get_fourier_transform(self.time_axis, self.td_illumination, omega_max, omega_min, return_omega_axis)
-
-    @property
-    def td_illumination( self ):
-        return jax.vmap(self.illumination)(self.time_axis)
 
     
 def mutates(func):
@@ -1014,10 +1010,13 @@ class OrbitalList:
         size = (self.initial_density_matrix.size * self.initial_density_matrix.itemsize) / 1e9
         matrices_per_batch = jnp.floor( max_mem_gb / size  ).astype(int).item()
         assert matrices_per_batch > 0, "Density matrix exceeds allowed max memory."
-        # batch time axis accordingly
+
+        # batch time axis accordingly, stretch to make array
         splits = jnp.ceil(time_axis.size /  matrices_per_batch ).astype(int).item()
-        mem_req = size * (4 + 6 + matrices_per_batch )
-        return jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] ), mem_req
+        tmp = jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] )        
+        if len(tmp[0]) != len(tmp[-1]):
+            tmp[-1] = tmp[-2][-1] + (time_axis[1] - time_axis[0]) + tmp[0]
+        return jnp.array( tmp )
 
     def _td_dynamic_functions( self, relaxation_rate, illumination, saturation ):
         relaxation_rate = relaxation_rate if relaxation_rate is not None else 0.0                        
@@ -1066,7 +1065,6 @@ class OrbitalList:
             solver = diffrax.Dopri5(),
             stepsize_controller = diffrax.PIDController(rtol=1e-10,atol=1e-10),
 
-            dry_run : bool = False,
     ):
 
         """
@@ -1082,10 +1080,7 @@ class OrbitalList:
         illumination, relaxation = self._td_dynamic_functions(relaxation_rate, illumination, saturation)
 
         # batched time axis 
-        time_axis, mem_req = self._td_time_axis(grid, start_time, end_time, dt, max_mem_gb)
-        if dry_run:
-            print(f"est mem consum {mem_req}")
-            return
+        time_axis = self._td_time_axis(grid, start_time, end_time, dt, max_mem_gb)
 
         # applied to density matrix batch
         pp_fun_list = self._td_postprocessing_func_list(expectation_values, density_matrix, computation)
@@ -1117,10 +1112,11 @@ class OrbitalList:
             dt,    
             pp_fun_list,
         )
-        
+
+        time_axis_conc = jnp.concatenate(time_axis)
         return TDResult(
-            time_axis = jnp.concatenate(time_axis),
-            illumination = illumination,
+            time_axis = time_axis_conc,
+            td_illumination = jax.vmap(illumination)(time_axis_conc),
             final_density_matrix = final_density_matrix,
             output = output,
         )
