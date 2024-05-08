@@ -513,7 +513,6 @@ def integrate_master_equation(
     # TODO: check for mem leak and clear cache ?
     shapes_known = False
     while integrator_args[0] < len(time_axis):
-        print(f"finished timestep {integrator_args[0]}")
         integrator_args, res = integrator( integrator_args )
         if shapes_known == False:
             result = res
@@ -521,7 +520,8 @@ def integrate_master_equation(
         else:
             for i, res_part in enumerate(res):
                 result[i] = jnp.concatenate( (result[i], res_part) )
-            
+        ts = integrator_args[2]
+        print(f"{ts[integrator_args[0]][-1] / jnp.max(time_axis) * 100} %")            
     return integrator_args[1], result
 
 def rpa_polarizability_function(
