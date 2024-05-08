@@ -39,7 +39,7 @@ flake.show_2d()
 
 # +
 flake_shifted = MaterialCatalog.get("graphene").cut_flake( Rectangle(10, 10) )
-flake_shifted.shift_by_vector( flake_shifted, [0,0,1] )
+flake_shifted.shift_by_vector( [0,0,1] )
 stack = flake + flake_shifted
 stack.show_3d()
 # -

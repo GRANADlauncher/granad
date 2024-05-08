@@ -1013,7 +1013,10 @@ class OrbitalList:
 
         # batch time axis accordingly, stretch to make array
         splits = jnp.ceil(time_axis.size /  matrices_per_batch ).astype(int).item()
-        return jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] )        
+        tmp = jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] )        
+        if len(tmp[0]) != len(tmp[-1]):
+            tmp[-1] = tmp[-2][-1] + (time_axis[1] - time_axis[0]) + tmp[0]
+        return jnp.array( tmp )
 
     def _td_dynamic_functions( self, relaxation_rate, illumination, saturation ):
         relaxation_rate = relaxation_rate if relaxation_rate is not None else 0.0                        
