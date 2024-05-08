@@ -31,13 +31,12 @@ def fraction_periodic(signal, threshold=1e-2):
     return (deviation < threshold).sum().item() / len(signal)
 
 def get_fourier_transform(t_linspace, function_of_time, omega_max = jnp.inf, omega_min = -jnp.inf, return_omega_axis=True):
-    # Compute the FFT along the first axis
-    function_of_omega = (
-        jnp.fft.fft(function_of_time, axis=0) / function_of_time.shape[0]
-    )
-
     # Calculate the frequency axis
     delta_t = t_linspace[1] - t_linspace[0]  # assuming uniform spacing
+
+    # Compute the FFT along the first axis    
+    function_of_omega = jnp.fft.fft(function_of_time, axis=0) * delta_t
+
     N = function_of_time.shape[0]  # number of points in t_linspace
     omega_axis = 2 * jnp.pi * jnp.fft.fftfreq(N, d=delta_t)
 

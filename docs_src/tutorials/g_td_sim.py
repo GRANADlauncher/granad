@@ -63,7 +63,7 @@ print(result.output[0][10,3:])
 omega_min, omega_max = 0, 5
 omegas, pulse_omega = result.ft_illumination( omega_min = omega_min, omega_max = omega_max )
 output_omega = result.ft_output( omega_min = omega_min, omega_max = omega_max )[0]
-#
+# -
 
 # So we can quickly check the continuity equation
 
@@ -88,7 +88,7 @@ print(result.td_illumination.shape)
 
 ### Density matrices
 
-# If we want to only get density matrices, we can simply omit the observables dictionary. The result object then contains a single generic dictionary item.
+# If we want to only get density matrices, we can simply omit the operator list. The result object then contains a one-element list.
 
 # +
 result = flake.td_run(

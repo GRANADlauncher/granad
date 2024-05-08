@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: '3.12'  
           
-      - name: Check for Build Flag
+      - name: Check for Test Flag
         id: check-flag
         run: |
           echo "Commit Message: ${{ github.event.head_commit.message }}"
