@@ -201,7 +201,7 @@ cut_flake_2d(material, polygon, plot=False, minimum_neighbor_number: int = 2)
     Returns:
         list: A list of orbitals positioned within the specified polygon and satisfying the neighbor condition.
 
-    Details:
+    Note:
         The function first translates the polygon into the positive xy-plane to avoid negative coordinates,
         then calculates the extent of the grid needed to cover the polygon based on the material&#39;s lattice basis.
         Atom positions are then pruned based on the minimum neighbor count using the `_prune_neighbors` nested function,
@@ -247,26 +247,28 @@ Rectangle(length_x, length_y)
         jax.numpy.ndarray: An array of shape (5, 2), representing the vertices of the rectangle,
                            starting and ending at the same vertex to facilitate drawing closed shapes.
 
-    Example:
+    Note:
+        ```python
         # Rectangle with length 2.0 and height 1.0 angstroms
         rectangle = Rectangle(2.0, 1.0)
+        ```
 </code></pre></div>
 <h2 id="bearded-configurations">Bearded configurations</h2>
 <p>Cutting removes "dangling" atoms by default. Dangling atoms are defined by their neighbor number: if they have only one neighbor, they are removed. If you want to deactivate this to keep "bearded" configurations, do</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">graphene</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">minimum_neighbor_number</span> <span class="o">=</span> <span class="mi">0</span> <span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">graphene</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">minimum_neighbor_number</span> <span class="o">=</span> <span class="mi">0</span> <span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../f_cutting_files/f_cutting_21_0.png" /></p>
 <h2 id="layers">Layers</h2>
 <p>If you have a naturally layered structure, eg MoS2, and you cut by keeping every atom with &lt; 2 neighbors, you get</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Rectangle</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">mos2</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MoS2&quot;</span><span class="p">)</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">mos2</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span> <span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Rectangle</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">mos2</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MoS2&quot;</span><span class="p">)</span>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">mos2</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span> <span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../f_cutting_files/f_cutting_24_0.png" /></p>
 <p>So there seem to be dangling atoms. The reason is that in "3d", we need to remove &lt; 3 neighbors</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Rectangle</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">mos2</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MoS2&quot;</span><span class="p">)</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">mos2</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">minimum_neighbor_number</span> <span class="o">=</span> <span class="mi">3</span> <span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Rectangle</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">mos2</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;MoS2&quot;</span><span class="p">)</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">mos2</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">minimum_neighbor_number</span> <span class="o">=</span> <span class="mi">3</span> <span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../f_cutting_files/f_cutting_26_0.png" /></p>
               

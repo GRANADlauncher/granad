@@ -193,7 +193,15 @@ hBN
   Interactions:
    Type: hamiltonian, Participants: (&#39;pz&#39;, &#39;pz&#39;):
                     NN Couplings: 0.0, 2.66
-                    Other neighbors: Zero coupling
+                    Other neighbors: 
+    Returns a zero coupling constant as a complex number.
+
+    Args:
+        d (float): A parameter (typically representing distance or some other factor) that is ignored by the function, as the output is always zero.
+
+    Returns:
+        complex: Returns 0.0 as a complex number (0.0j).
+
    Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;):
                     NN Couplings: 16.522, 8.64, 5.333
                     Other neighbors: Coupling with a (regularized) Coulomb-like potential

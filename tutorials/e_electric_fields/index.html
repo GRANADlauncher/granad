@@ -122,12 +122,12 @@
 Wave(amplitudes: list[float], frequency: float)
     Function for computing time-harmonic electric fields.
 
-        - `amplitudes`: electric field amplitudes in xyz-components
-        - `frequency`: frequency
+    Args:
+        amplitudes: electric field amplitudes in xyz-components
+        frequency: frequency
 
-    **Returns:**
-
-    Function that computes the electric field as a functon of time
+    Returns:
+       Function that computes the electric field as a functon of time
 </code></pre></div>
 <p>So, calling "Wave" gives back a function we can evaluate at single points in time</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="mi">1</span>  <span class="p">)</span>
