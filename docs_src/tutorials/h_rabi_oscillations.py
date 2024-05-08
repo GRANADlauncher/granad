@@ -25,11 +25,13 @@
 # +
 from granad import Orbital, OrbitalList
 
-atom = OrbitalList([Orbital(), Orbital()])
-atom.set_electrons( 1 )
-atom.set_hamiltonian_element(1, 1, 0.5)
-atom.set_hamiltonian_element(0, 0, -0.5)
-atom.set_dipole_element(1, 0, [0, 7.5, 0])
+lower_level = Orbital()
+upper_level = Orbital()
+adatom  = OrbitalList( [lower_level, upper_level] )
+adatom.set_hamiltonian_element(lower_level, lower_level, -0.5)
+adatom.set_hamiltonian_element(upper_level, upper_level, 0.5)
+adatom.set_dipole_element( lower_level, upper_level, [0, 7.5/2, 0] ) 
+adatom.set_electrons( 1 )
 # -
 
 # We study undamped time evolution under harmonic illumination
@@ -37,7 +39,7 @@ atom.set_dipole_element(1, 0, [0, 7.5, 0])
 # +
 from granad import Wave
 wave = Wave(amplitudes=[0, 0.05, 0], frequency=1)
-result = atom.td_run(
+result = adatom.master_equation(
     end_time=50,
     grid = 10,
     illumination=wave,
@@ -45,7 +47,7 @@ result = atom.td_run(
     coulomb_strength = 0.0,
     density_matrix = ["occ_e"],
 )
-atom.show_res(result, plot_only = [atom.homo, atom.homo+1], plot_labels = ["homo", "lumo"], show_illumination = False)
+adatom.show_res(result, plot_only = [adatom.homo, adatom.homo+1], plot_labels = ["homo", "lumo"], show_illumination = False)
 # -
 
 ### Coupling to a Flake
@@ -57,25 +59,32 @@ import jax.numpy as jnp
 from granad import MaterialCatalog, Triangle
 graphene = MaterialCatalog.get("graphene")
 flake = graphene.cut_flake(Triangle(10, armchair = True, shift = [10,10]), plot=False)
-flake_with_atom = flake + atom
-pz_orbital = flake_with_atom[8]
+flake_with_adatom = flake + adatom
+pz_orbital = flake_with_adatom[8]
 top = pz_orbital.position + jnp.array([0, 0, 1])
-flake_with_atom.set_position(top, atom)
-flake_with_atom.show_3d(show_index=True)
+flake_with_adatom.set_position(top, adatom)
+flake_with_adatom.show_3d(show_index=True)
 # -
 
-# We set the couplings
+# We set the couplings and inspect the resulting energy levels
 
 # +
-flake_with_atom.set_hamiltonian_element(pz_orbital, atom[0], 1)
-flake_with_atom.set_hamiltonian_element(pz_orbital, atom[1], 1)
+flake_with_adatom.set_hamiltonian_element(pz_orbital, adatom, 3.5)
+flake_with_adatom.show_energies()
+# -
+
+# Identify the energy gap
+
+# +
+homo = flake_with_adatom.homo
+delta_e = flake_with_adatom.energies[homo + 1] - flake_with_adatom.energies[homo]
 # -
 
 # Now, the time evolution of the composite system
 
 # +
-flake_with_atom.show_energies()
-result = flake_with_atom.td_run(
+wave = Wave(amplitudes=[0, 0.05, 0], frequency=delta_e)
+result = flake_with_adatom.master_equation(
     grid = 10,
     end_time=50,
     illumination=wave,
@@ -83,5 +92,5 @@ result = flake_with_atom.td_run(
     coulomb_strength = 0.0,
     density_matrix = ["occ_e"],
 )
-flake_with_atom.show_res( result, plot_only = [9,10], show_illumination = False )
+flake_with_adatom.show_res( result, plot_only = [homo,homo+1], plot_labels = ["homo", "lumo"], show_illumination = False )
 # -

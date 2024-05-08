@@ -53,7 +53,7 @@ from granad import Pulse
 pulse = Pulse(
     amplitudes=[1e-5, 0, 0], frequency=2.3, peak=5, fwhm=2
 )
-result = flake.td_run(
+result = flake.master_equation(
     illumination=pulse,
     expectation_values = [flake.velocity_operator],
     end_time=40,

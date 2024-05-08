@@ -321,16 +321,17 @@ def mean_field( channel, rho ):
 def electric_potential(dipole_operator, electric_field):
     return jnp.einsum("Kij,iK->ij", dipole_operator, electric_field.real)
 
-# TODO: this could be improved
+# TODO: this could be improved, allocates 3 potentially big intermediate matrices
 def electric_potential_rwa(dipole_operator, electric_field):
-    # the missing real part is crucial here! the RPA (for real dipole moments) makes the fields complex
+    # the missing real part is crucial here! the RWA (for real dipole moments) makes the fields complex and divides by 2
     total_field_potential = jnp.einsum("Kij,iK->ij", dipole_operator, electric_field)
 
     # Get the indices for the lower triangle, excluding the diagonal
     lower_indices = jnp.tril_indices(total_field_potential.shape[0], -1)
 
     # Replace elements in the lower triangle with their complex conjugates    
-    tmp = total_field_potential.at[lower_indices].set( jnp.conj(total_field_potential[lower_indices]))
+    tmp = total_field_potential.at[lower_indices].set( jnp.conj(total_field_potential[lower_indices]) )
+    
     # make hermitian again
     return tmp - 1j*jnp.diag(tmp.diagonal().imag)
 

@@ -1080,7 +1080,7 @@ class OrbitalList:
         return illumination, relaxation_function
     
     @recomputes
-    def td_run(            
+    def master_equation(            
             self,
             *,
             end_time : float,

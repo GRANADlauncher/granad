@@ -61,7 +61,7 @@ pulse = Pulse(
 # We then compute the TD dipole moment and Fourier transform it.
 
 # +
-result = flake.td_run(
+result = flake.master_equation(
     expectation_values = [ flake.dipole_operator ],
     end_time=40,
     relaxation_rate=1/10,

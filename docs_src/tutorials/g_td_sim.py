@@ -29,7 +29,7 @@ pulse = Pulse(
 
 operators = [flake.dipole_operator, flake.velocity_operator]
 
-result = flake.td_run(
+result = flake.master_equation(
     relaxation_rate = 1/10,
     illumination = pulse,
     expectation_values = operators,
@@ -91,7 +91,7 @@ print(result.td_illumination.shape)
 # If we want to only get density matrices, we can simply omit the operator list. The result object then contains a one-element list.
 
 # +
-result = flake.td_run(
+result = flake.master_equation(
     relaxation_rate = 1/10,
     illumination = pulse,
     end_time = 40,
@@ -113,7 +113,7 @@ print(density_matrix_e.shape)
 # We can extract only site occupations
 
 # +
-result = flake.td_run(
+result = flake.master_equation(
     relaxation_rate = 1/10,
     illumination = pulse,
     density_matrix = ["occ_x"],
@@ -130,7 +130,7 @@ print(occ_x.shape)
 # +
 flake.set_excitation( flake.homo, flake.homo + 1, 1)
 flake.show_energies()
-result = flake.td_run(
+result = flake.master_equation(
     relaxation_rate = 1/10,
     density_matrix = ["occ_e"],
     end_time = 40,
@@ -143,7 +143,7 @@ flake.show_res(result, plot_only = [flake.homo, flake.homo+1], plot_labels = ["h
 # We can also extract multiple things at the same time
 
 # +
-result = flake.td_run(
+result = flake.master_equation(
     relaxation_rate = 1/10,
     density_matrix = ["full", "occ_x"],
     expectation_values = [flake.dipole_operator],

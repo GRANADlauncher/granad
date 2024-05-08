@@ -158,10 +158,10 @@ print( my_first_illumination( 0.0) ) # initial value of the field
 print(my_first_flake.dipole_operator.shape)
 # -
 
-# We want to compute its expectation value, so we have to wrap it in a list and pass it to the TD simulation, called `td_run`
+# We want to compute its expectation value, so we have to wrap it in a list and pass it to the TD simulation, called `master_equation`
 
 # +
-result = my_first_flake.td_run(
+result = my_first_flake.master_equation(
     end_time=40, # the start is set to 0 by default 
     relaxation_rate=1 / 10,
     illumination=my_first_illumination,
