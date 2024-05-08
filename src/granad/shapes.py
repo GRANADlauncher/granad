@@ -25,7 +25,7 @@ def _edge_type(vertex_func):
                   'shift' (list of float): Adjusts the x and y coordinates by specified amounts.
                   'armchair' (bool): If True, rotates the shape to the armchair orientation, typically by 90 degrees.
 
-    Usage:
+    Note:
         This decorator is used to add functionality to basic geometric shape functions, allowing for
         easy manipulation of the shape's position and orientation in a plane.
     """
@@ -60,7 +60,8 @@ def Triangle(side_length):
                            including the starting vertex repeated at the end to facilitate
                            drawing closed shapes.
 
-    Example:
+    Note:
+        ```python
         # Create a triangle with side length of 1.0 angstrom, no shift or rotation
         triangle = Triangle(1.0)
 
@@ -69,6 +70,7 @@ def Triangle(side_length):
 
         # Create a triangle with side length of 1.0 angstrom, rotated by 90 degrees (armchair orientation)
         triangle_rotated = Triangle(1.0, armchair=True)
+        ```
     """
     vertices = side_length * jnp.array(
         [
@@ -97,9 +99,11 @@ def Rectangle(length_x, length_y):
         jax.numpy.ndarray: An array of shape (5, 2), representing the vertices of the rectangle,
                            starting and ending at the same vertex to facilitate drawing closed shapes.
 
-    Example:
+    Note:
+        ```python
         # Rectangle with length 2.0 and height 1.0 angstroms
         rectangle = Rectangle(2.0, 1.0)
+        ```
     """
     vertices = jnp.array(
         [
@@ -128,9 +132,11 @@ def Hexagon(length):
         jax.numpy.ndarray: An array of shape (7, 2), representing the vertices of the hexagon,
                            including the starting vertex repeated at the end for drawing closed shapes.
 
-    Example:
+    Note:
+        ```python
         # Hexagon with side length of 1.0 angstrom
         hexagon = Hexagon(1.0)
+        ```
     """
     n = 6
     s = 1
@@ -160,9 +166,11 @@ def Rhomboid(base, height):
         jax.numpy.ndarray: An array of shape (5, 2), representing the vertices of the rhomboid,
                            starting and ending at the same vertex to complete the shape.
 
-    Example:
+    Note:
+        ```python
         # Rhomboid with base 2.0 angstroms and height 1.0 angstrom
         rhomboid = Rhomboid(2.0, 1.0)
+        ```
     """
     angle = jnp.radians(30)
     vertices = jnp.array(

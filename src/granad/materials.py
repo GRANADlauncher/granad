@@ -13,10 +13,37 @@ from granad.orbitals import Orbital, OrbitalList
 from granad._plotting import _display_lattice_cut
 
 def zero_coupling(d):
-    """Zero coupling"""
+    """
+    Returns a zero coupling constant as a complex number.
+
+    Args:
+        d (float): A parameter (typically representing distance or some other factor) that is ignored by the function, as the output is always zero.
+
+    Returns:
+        complex: Returns 0.0 as a complex number (0.0j).
+    """
     return 0.0j
 
 def ohno_potential( offset = 0, start = 14.399 ):
+    """
+    Generates a callable that represents a regularized Coulomb-like potential.
+
+    The potential function is parameterized to provide flexibility in adjusting the starting value and an offset,
+    which can be used to avoid singularities at zero distance.
+
+    Args:
+        offset (float): The offset added to the distance to prevent division by zero and to regularize the potential at short distances. Defaults to 0.
+        start (float): The initial strength or scaling factor of the potential. Defaults to 14.399.
+
+    Returns:
+        Callable[[float], complex]: A function that takes a distance 'd' and returns the computed Coulomb-like potential as a complex number.
+
+    Note:
+        ```python
+        potential = ohno_potential()
+        print(potential(1))  # Output: (14.399 + 0j) if default parameters used
+        ```
+    """
     def inner(d):
         """Coupling with a (regularized) Coulomb-like potential"""
         return start / (d + offset) + 0j
@@ -69,7 +96,7 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
     Returns:
         list: A list of orbitals positioned within the specified polygon and satisfying the neighbor condition.
 
-    Details:
+    Note:
         The function first translates the polygon into the positive xy-plane to avoid negative coordinates,
         then calculates the extent of the grid needed to cover the polygon based on the material's lattice basis.
         Atom positions are then pruned based on the minimum neighbor count using the `_prune_neighbors` nested function,
@@ -208,13 +235,13 @@ class Material:
                                          an optional mathematical expression defining the interaction for the coupling beyound 
                                          the len(parameters) - th nearest neighbor.
 
-    Usage:
+    Note:
         The `Material` class is used to define a material's structure and properties step-by-step.
         An example is constructing the material graphene, with specific lattice properties,
         orbitals corresponding to carbon's p_z orbitals, and defining hamiltonian and Coulomb interactions
         among these orbitals. 
 
-    Example:
+        ```python
         graphene = (
             Material("graphene")
             .lattice_constant(2.46)
@@ -228,15 +255,16 @@ class Material:
             .add_interaction(
                 "hamiltonian",
                 participants=("pz", "pz"),
-                parameters=[0.0, 2.66], # no expression given => we online look at onsite and nearest neighbors
+                parameters=[0.0, 2.66],
             )
             .add_interaction(
                 "coulomb",
                 participants=("pz", "pz"),
-                parameters=[16.522, 8.64, 5.333], # we look at onsite, nn, nnn couplings
-                expression=lambda d: 14.399 / d # for nnnn and more, we apply the coulomb law
+                parameters=[16.522, 8.64, 5.333],
+                expression=lambda r : 1/r + 0j
             )
         )
+        ```
     """
     def __init__(self, name):
         self.name = name

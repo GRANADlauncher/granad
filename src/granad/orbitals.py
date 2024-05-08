@@ -15,8 +15,6 @@ from granad import _numerics, _plotting, _watchdog
 @dataclass
 class Orbital:
     """
-    Represents the quantum state of an electron in an atom with specific properties.
-
     Attributes:
         position (jax.Array): The position of the orbital in space, initialized by default to a zero position.
                               This field is not used in hashing or comparison of instances.
@@ -36,12 +34,6 @@ class Orbital:
         group_id (int): A group identifier for the orbital, automatically assigned by a Watchdog class
                         default factory method. For example, all pz orbitals in a single graphene flake get the same 
                         group_id.
-
-    Key Functionality:
-        The most important attributes of an orbtial are
-         
-        group_id (automatically generated, not recommended to be set it by the user)
-        tag (user-defined or predefined for existing materials)
     """
     position: jax.Array = field(default_factory=lambda : jnp.array([0, 0, 0]), hash=False, compare=False)
     layer_index: Optional[int] = None
@@ -127,7 +119,7 @@ class _SortedTupleDict(dict):
 @dataclass
 class Params:
     """
-    A data class for storing parameters necessary for running a simulation involving electronic states and transitions.
+    Stores parameters characterizing a given structure.
 
     Attributes:
         excitation (jax.Array): from state, to state, excited electrons 
@@ -160,6 +152,15 @@ class Params:
 # rule: new couplings are registered here
 @dataclass
 class Couplings:
+    """
+    A data class for representing orbital couplings.
+
+    Attributes:
+        hamiltonian (_SortedTupleDict): A dictionary-like container holding Hamiltonian terms.
+        coulomb (_SortedTupleDict): A dictionary-like container for Coulomb interaction terms.
+        dipole_transitions (_SortedTupleDict): A dictionary-like container for storing dipole transition elements.
+    """
+
     hamiltonian : _SortedTupleDict = field(default_factory=_SortedTupleDict)
     coulomb : _SortedTupleDict = field(default_factory=_SortedTupleDict)
     dipole_transitions : _SortedTupleDict = field(default_factory=_SortedTupleDict)
@@ -178,16 +179,61 @@ class Couplings:
                 
 @dataclass
 class TDResult:
+    """
+    A data class for storing the results of time-dependent simulations.
+
+    Attributes:
+        td_illumination (jax.Array): An array containing the time-dependent illumination function applied to the system,
+                                     typically representing an external electromagnetic field.
+        time_axis (jax.Array): An array representing the time points at which the simulation was evaluated.
+        final_density_matrix (jax.Array): The resulting density matrix at the end of the simulation, representing the
+                                          state of the system.
+        output (list[jax.Array]): A list of arrays containing various output data from the simulation, such as observables
+                                  over time.
+
+    """
+
     td_illumination : jax.Array
     time_axis : jax.Array
     final_density_matrix : jax.Array
     output : list[jax.Array]
 
     def ft_output( self, omega_max, omega_min ):
+        """
+        Computes the Fourier transform of each element in the output data across a specified frequency range.
+
+        Args:
+            omega_max (float): The maximum frequency bound for the Fourier transform.
+            omega_min (float): The minimum frequency bound for the Fourier transform.
+
+        Returns:
+            list[jax.Array]: A list of Fourier transformed arrays corresponding to each element in the `output` attribute,
+                              evaluated over the specified frequency range.
+
+        Note:
+            This method applies a Fourier transform to each array in the `output` list to analyze the frequency components
+            between `omega_min` and `omega_max`.
+        """
         ft = lambda o : _numerics.get_fourier_transform(self.time_axis, o, omega_max, omega_min, False)
         return [ft(o) for o in self.output]
 
     def ft_illumination( self, omega_max, omega_min, return_omega_axis = True ):
+        """
+        Calculates the Fourier transform of the time-dependent illumination function over a specified frequency range,
+        with an option to return the frequency axis.
+
+        Args:
+            omega_max (float): The maximum frequency limit for the Fourier transform.
+            omega_min (float): The minimum frequency limit for the Fourier transform.
+            return_omega_axis (bool): If True, the function also returns the frequency axis along with the Fourier
+                                      transformed illumination function. Defaults to True.
+
+        Returns:
+            jax.Array, optional[jax.Array]: The Fourier transformed illumination function. If `return_omega_axis` is True,
+                                            a tuple containing the Fourier transformed data and the corresponding frequency
+                                            axis is returned. Otherwise, only the Fourier transformed data is returned.
+
+        """
         return _numerics.get_fourier_transform(self.time_axis, self.td_illumination, omega_max, omega_min, return_omega_axis)
 
     
@@ -238,11 +284,12 @@ class OrbitalList:
     The class exposes simulation methods.
      
     Attributes:
-        orbitals (list): The underlying list that stores the orbitals.
-        couplings (dict): A dictionary where keys are tuples of orbital identifiers and values are the couplings
+        _list (list) : the underlying list that contains the orbitals
+        params (Params): Simulation parameters like electron count and temperature.
+        couplings (_SortedTupleDict): A (customized) dictionary where keys are tuples of orbital identifiers and values are the couplings
                           (either float values or functions).
 
-    Key Functionalities:
+    Note:
         - **Orbital Identification**: Orbitals can be identified either by their group_id, a direct
           reference to the orbital object itself, or via a user-defined tag.
         - **Index Access**: Orbitals can be accessed and managed by their index in the list, allowing for
@@ -250,10 +297,6 @@ class OrbitalList:
         - **Coupling Definition**: Allows for the definition and adjustment of couplings between pairs of orbitals,
           identified by a tuple of their respective identifiers. These couplings can dynamically represent the
           interaction strength or be a computational function that defines the interaction.
-
-    Note:
-        The coupling values can be dynamically modified. When two orbital lists are added, their couplings are merged, 
-        and their simulation parameters are wiped.
     """
     def __init__( self, orbs = None, couplings = None, params = None, recompute = True):
         self._list = orbs if orbs is not None else []
@@ -409,7 +452,7 @@ class OrbitalList:
             orb_or_group_id2 (int or Orbital): Identifier or orbital for the second group.
             func (callable): Function that defines the hamiltonian interaction.
 
-        Notes:
+        Note:
             The function `func` should be complex-valued.
         """
         self._set_coupling(
@@ -425,7 +468,7 @@ class OrbitalList:
             orb_or_group_id2 (int or Orbital): Identifier or orbital for the second group.
             func (callable): Function that defines the Coulomb interaction.
 
-        Notes:
+        Note:
             The function `func` should be complex-valued.
         """
         self._set_coupling(
@@ -596,7 +639,7 @@ class OrbitalList:
             tag_or_group_id (str or int or list[int]): The tag, group_id to match orbitals.
             translation_vector (jax.Array): The vector by which to translate the orbital positions.
 
-        Notes:
+        Note:
             This operation mutates the positions of the matched orbitals.
         """
         filtered_orbs = self.filter_orbs( orb_id, Orbital ) if orb_id is not None else self
@@ -612,7 +655,7 @@ class OrbitalList:
             tag (str): The tag to match orbitals.
             position (jax.Array): The vector at which to move the orbitals
 
-        Notes:
+        Note:
             This operation mutates the positions of the matched orbitals.
         """
         filtered_orbs = self.filter_orbs( orb_id, Orbital ) if orb_id is not None else self
@@ -641,7 +684,7 @@ class OrbitalList:
             to_state (int, list, or jax.Array): The final state index or indices.
             excited_electrons (int, list, or jax.Array): The indices of electrons to be excited.
 
-        Notes:
+        Note:
             The states and electron indices may be specified as scalars, lists, or arrays.
         """
         def maybe_int_to_arr(maybe_int):
@@ -843,7 +886,8 @@ class OrbitalList:
         Calculates the charge distribution from a given density matrix or from the initial density matrix if not specified.
 
         Parameters:
-           density_matrix (jax.Array, optional): The density matrix to use for calculating charge.
+           density_matrix (jax.Array, optional): The density matrix to use for calculating charge. 
+                                                 If omitted, the initial density matrix is used.
 
         Returns:
            jax.Array: A diagonal array representing charges at each site.
@@ -1042,7 +1086,7 @@ class OrbitalList:
             end_time : float,
             start_time : float = 0.0,
             dt : float = 1e-4,
-            grid : int = 100,
+            grid : Union[int, jax.Array] = 100,
             max_mem_gb : float = 0.5,
 
             initial_density_matrix : Optional[jax.Array] = None,
@@ -1066,11 +1110,32 @@ class OrbitalList:
             stepsize_controller = diffrax.PIDController(rtol=1e-10,atol=1e-10),
 
     ):
-
         """
-        Simulates the time evolution of the density matrix for a given system under specified conditions and external fields.
+        Simulates the time evolution of the density matrix, computing observables, density matrices or extracting custom information.
 
-        Parameters:
+        Args:
+            end_time (float): The final time for the simulation.
+            start_time (float): The starting time for the simulation. Defaults to 0.0.
+            dt (float): The time step size for the simulation. Defaults to 1e-4.
+            grid (Union[int, jax.Array]): Determines the output times for the simulation results. If an integer, results
+                                          are saved every 'grid'-th time step. If an array, results are saved at the
+                                          specified times.
+            max_mem_gb (float): Maximum memory in gigabytes allowed for each batch of intermediate density matrices.
+            initial_density_matrix (Optional[jax.Array]): The initial state of the density matrix. If not provided,
+                                                          `self.initial_density_matrix` is used.
+            coulomb_strength (float): Scaling factor for the Coulomb interaction matrix.
+            illumination (Callable): Function describing the time-dependent external illumination applied to the system.
+            saturation (Callable): Function for Lindblad relaxation saturation. May be deprecated.
+            relaxation_rate (Union[float, jax.Array, Callable]): Specifies the relaxation dynamics. A float indicates a
+                                                                 uniform decoherence time, an array provides state-specific
+                                                                 rates, and a callable should implement custom dynamics.
+            compute_at (Optional[jax.Array]): Specific time indices to consider for evaluating external fields' impact.
+            expectation_values (Optional[list[jax.Array]]): Expectation values to compute during the simulation.
+            density_matrix (Optional[list[str]]): Tags for additional density matrix computations. "full", "occ_x", "occ_e". May be deprecated.
+            computation (Optional[Callable]): Additional computation to be performed at each step.
+            use_rwa (bool): Whether to use the rotating wave approximation. Defaults to False.
+            solver: The numerical solver instance to use for integrating the differential equations.
+            stepsize_controller: Controller for adjusting the solver's step size based on error tolerance.
 
         Returns:
             ResultTD

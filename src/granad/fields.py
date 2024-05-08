@@ -10,12 +10,12 @@ def Wave(
 ):
     """Function for computing time-harmonic electric fields.
 
-        - `amplitudes`: electric field amplitudes in xyz-components
-        - `frequency`: frequency
+    Args:
+        amplitudes: electric field amplitudes in xyz-components
+        frequency: frequency
 
-    **Returns:**
-
-    Function that computes the electric field as a functon of time
+    Returns:
+       Function that computes the electric field as a functon of time
     """
     static_part = jnp.array(amplitudes)
     return lambda t: (jnp.exp(1j * frequency * t) * static_part)
@@ -29,14 +29,14 @@ def Ramp(
 ):
     """Function for computing ramping up time-harmonic electric fields.
 
-        - `amplitudes`: electric field amplitudes in xyz-components
-        - `frequency`: frequency
-        - `ramp_duration`: specifies how long does the electric field ramps up
-        - `time_ramp`: specifies time at which the field starts to ramp up
+    Args:
+        amplitudes: electric field amplitudes in xyz-components
+        frequency: frequency
+        ramp_duration: specifies how long does the electric field ramps up
+        time_ramp: specifies time at which the field starts to ramp up
 
-    **Returns:**
-
-    Function that computes the electric field as a functon of time
+    Returns:
+       Function that computes the electric field as a functon of time
     """
     static_part = jnp.array(amplitudes)
     p = 0.99
@@ -56,14 +56,14 @@ def Pulse(
 ):
     """Function for computing temporally located time-harmonics electric fields. The pulse is implemented as a temporal Gaussian.
 
-        - `amplitudes`: electric field amplitudes in xyz-components
-        - `frequency`: frequency of the electric field
-        - `peak`: time where the pulse reaches its peak
-        - `fwhm`: full width at half maximum
+    Args:
+        amplitudes: electric field amplitudes in xyz-components
+        frequency: frequency of the electric field
+        peak: time where the pulse reaches its peak
+        fwhm: full width at half maximum
 
-    **Returns:**
-
-    Function that computes the electric field
+    Returns:
+       Function that computes the electric field
     """
 
     static_part = jnp.array(amplitudes)
