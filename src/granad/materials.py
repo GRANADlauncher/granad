@@ -417,7 +417,7 @@ class Material:
         positions_2 = self._get_positions_in_lattice(pos_uc_2, grid )
         
         distances = jnp.unique(
-            jnp.round(jnp.linalg.norm(positions_1 - positions_2[:, None, :], axis=2), 8)
+            jnp.round(jnp.linalg.norm(positions_1 - positions_2[:, None, :], axis=2), 5)
         )[: len(couplings)]
 
         def inner(d):
