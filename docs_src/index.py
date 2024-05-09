@@ -25,10 +25,27 @@
 # ### Installation
 #
 
+# Just the package on Linux or WSL
+
 # + {"cell_type": "markdown"}
 # ```bash
 # pip install git+https://github.com/GRANADlauncher/granad.git
 # ```
+
+### Linux
+
+# The recommended way is to install with (mini-)conda.
+
+# 1. Set up miniconda: https://docs.anaconda.com/free/miniconda/index.html
+# 2. Create a fresh environment: conda create -n granad 'python==3.11'
+# 3. Activate: conda env activate granad
+# 4. Finally, the package is installed with: pip install git+https://github.com/GRANADlauncher/granad.git
+
+# If you want to use Jupyter notebooks, in the granad environment do: conda install jupyter. 
+
+### Windows
+
+# To install on Windows, set up [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) first. Then, follow the instructions above.
 
 # ### Quickstart
 

@@ -656,17 +656,65 @@ _metal_1d = (
 )
 
 class MaterialCatalog:
+    """
+    A class to manage and access built-in material properties within a simulation or modeling framework.
+    
+    This class provides a central repository for predefined materials, allowing for easy retrieval
+    and description of their properties.
+
+    Attributes:
+        _materials (dict): A private dictionary that maps material names to their respective data objects.
+                           This dictionary is pre-populated with several example materials such as graphene and MoS2.
+
+    Methods:
+        get(material): Retrieves the data object associated with the given material name.
+        describe(material): Prints a description or the data object of the specified material.
+        available(): Prints a list of all available materials stored in the catalog.
+    """
     _materials = {"graphene" : _graphene, "ssh" : _ssh, "metal_1d" : _metal_1d, "MoS2" : _MoS2, "hBN" : _hBN }
 
     @staticmethod
-    def get(material):
+    def get(material : str):
+        """
+        Retrieves the material data object for the specified material.
+
+        Args:
+            material (str): The name of the material to retrieve.
+
+        Returns:
+            The data object associated with the specified material.
+
+        Example:
+            ```python
+            graphene_data = MaterialCatalog.get('graphene')
+            ```
+        """
         return MaterialCatalog._materials[material]
     
     @staticmethod
-    def describe(material):
+    def describe(material : str):
+        """
+        Prints a description or the raw data of the specified material from the catalog.
+
+        Args:
+            material (str): The name of the material to describe.
+
+        Example:
+            ```python
+            MaterialCatalog.describe('graphene')
+            ```
+        """
         print(MaterialCatalog._materials[material])
     
     @staticmethod
     def available():
+        """
+        Prints a list of all materials available in the catalog.
+
+        Example:
+            ```python
+            MaterialCatalog.available()
+            ```
+        """
         available_materials = "\n".join(MaterialCatalog._materials.keys())
         print(f"Available materials:\n{available_materials}")
