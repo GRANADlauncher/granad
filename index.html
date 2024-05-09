@@ -47,8 +47,6 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#quickstart">Quickstart</a>
-    </li>
     </ul>
                 </li>
               </ul>
@@ -121,8 +119,20 @@
 <li>Relies on <a href="https://jax.readthedocs.io/en/latest/">JAX</a> for performance and differentiability</li>
 </ul>
 <h3 id="installation">Installation</h3>
+<p>Just the package on Linux or WSL</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/GRANADlauncher/granad.git
 </span></code></pre></div>
+<h2 id="linux">Linux</h2>
+<p>The recommended way is to install with (mini-)conda.</p>
+<ol>
+<li>Set up miniconda: https://docs.anaconda.com/free/miniconda/index.html</li>
+<li>Create a fresh environment: conda create -n granad 'python==3.11'</li>
+<li>Activate: conda env activate granad</li>
+<li>Finally, the package is installed with: pip install git+https://github.com/GRANADlauncher/granad.git</li>
+</ol>
+<p>If you want to use Jupyter notebooks, in the granad environment do: conda install jupyter. </p>
+<h2 id="windows">Windows</h2>
+<p>To install on Windows, set up <a href="https://learn.microsoft.com/en-us/windows/wsl/install">WSL</a> first. Then, follow the instructions above.</p>
 <h3 id="quickstart">Quickstart</h3>
 <p>Set up the simulation</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -156,7 +166,7 @@
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Absorption Spectrum as a Function of Photon Energy&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="index_files/index_7_0.png" /></p>
+<p><img alt="png" src="index_files/index_8_0.png" /></p>
               
             </div>
           </div><footer>
@@ -208,5 +218,5 @@
 
 <!--
 MkDocs version : 1.6.0
-Build Date UTC : 2024-05-08 16:53:00.167877+00:00
+Build Date UTC : 2024-05-09 09:31:55.263394+00:00
 -->
