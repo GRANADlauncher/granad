@@ -1227,7 +1227,7 @@ class OrbitalList:
 
         if args is None:
             args = self.get_args(relaxation_rate = relaxation_rate, coulomb_strength = coulomb_strength, propagator = None)
-        alpha = _numerics.rpa_polarizability_function(args, polarization, phi_ext, hungry)
+        alpha = _numerics.rpa_polarizability_function(args, polarization, hungry, phi_ext)
         if omegas.ndim == 1:        
             return jax.lax.map(alpha, omegas)
         else:

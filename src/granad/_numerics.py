@@ -386,7 +386,7 @@ def td_run(d_ini, integrator, time_axis):
     
 
 def rpa_polarizability_function(
-    args, polarization, phi_ext=None, hungry=2
+        args, polarization, hungry, phi_ext=None
 ):
     def _polarizability(omega):
         ro = sus(omega) @ phi_ext
@@ -398,7 +398,7 @@ def rpa_polarizability_function(
     return _polarizability
 
 
-def rpa_susceptibility_function(args, hungry=2):
+def rpa_susceptibility_function(args, hungry):
     def _rpa_susceptibility(omega):
         x = sus(omega)
         return x @ jnp.linalg.inv(one - args.coulomb_scaled @ x)
@@ -408,7 +408,7 @@ def rpa_susceptibility_function(args, hungry=2):
 
     return _rpa_susceptibility
 
-def bare_susceptibility_function(args, hungry=2):
+def bare_susceptibility_function(args, hungry):
 
     def _sum_subarrays(arr):
         """Sums subarrays in 1-dim array arr. Subarrays are defined by n x 2 array indices as [ [start1, end1], [start2, end2], ... ]"""
@@ -438,7 +438,7 @@ def bare_susceptibility_function(args, hungry=2):
             Sf1 = jnp.fft.hfft(b)[:-1]
             Sf = -Sf1[::-1] + Sf1
                         
-            eq = spin_degeneracy * Sf / (omega - omega_grid_extended + 1j * args.relaxation_rate )
+            eq = spin_degeneracy * Sf / (omega - omega_grid_extended + 1j * relaxation_rate )
             return -jnp.sum(eq)
                 
         if hungry == 2:
@@ -458,7 +458,8 @@ def bare_susceptibility_function(args, hungry=2):
     
     # unpacking
     energies = args.energies.real
-    eigenvectors = args.eigenvectors.real    
+    eigenvectors = args.eigenvectors.real
+    relaxation_rate = args.relaxation_rate
     occupation = jnp.diag(args.eigenvectors.conj().T @ args.initial_density_matrix @ args.eigenvectors).real * args.electrons / args.spin_degeneracy
     spin_degeneracy = args.spin_degeneracy
     sites = jnp.arange(energies.size)
