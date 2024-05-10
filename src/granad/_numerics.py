@@ -309,220 +309,81 @@ def get_coulomb_field_to_from(source_positions, target_positions, compute_at=Non
     
     return coulomb_field_to_from_final
 
-#COMPLEXTIY: the following functions have quadratic complexity and are used inside the time propagation
-def induced_electric_field(propagator, charge):
-    # sum up up all charges weighted like \sum_r q_r r/|r-r'|
-    # read: field to i from j
-    return jnp.einsum("ijK,j->iK", propagator, charge)
+def get_time_axis( mat_size, grid, start_time, end_time, max_mem_gb, dt ):
 
-def mean_field( channel, rho ):
-    return jnp.diag(channel @ rho.diagonal())
+    # if grid is an array, sample these times, else subsample time axis
+    time_axis = grid
+    if not isinstance(grid, jax.Array):
+        steps_time = jnp.ceil( (end_time - start_time) / dt ).astype(int)
+        time_axis = jnp.linspace(start_time, end_time, steps_time)[::grid]
 
-def electric_potential(dipole_operator, electric_field):
-    return jnp.einsum("Kij,iK->ij", dipole_operator, electric_field.real)
+    # number of rhos in a single RAM batch 
+    matrices_per_batch = jnp.floor( max_mem_gb / mat_size  ).astype(int).item()
+    assert matrices_per_batch > 0, "Density matrix exceeds allowed max memory."
 
-# TODO: this could be improved, allocates 3 potentially big intermediate matrices
-def electric_potential_rwa(dipole_operator, electric_field):
-    # the missing real part is crucial here! the RWA (for real dipole moments) makes the fields complex and divides by 2
-    total_field_potential = jnp.einsum("Kij,iK->ij", dipole_operator, electric_field)
+    # batch time axis accordingly, stretch to make array
+    splits = jnp.ceil(time_axis.size /  matrices_per_batch ).astype(int).item()
+    tmp = jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] )        
+    if len(tmp[0]) != len(tmp[-1]):
+        tmp[-1] = tmp[-2][-1] + (time_axis[1] - time_axis[0]) + tmp[0]
 
-    # Get the indices for the lower triangle, excluding the diagonal
-    lower_indices = jnp.tril_indices(total_field_potential.shape[0], -1)
+    return jnp.array( tmp )
 
-    # Replace elements in the lower triangle with their complex conjugates    
-    tmp = total_field_potential.at[lower_indices].set( jnp.conj(total_field_potential[lower_indices]) )
-    
-    # make hermitian again
-    return tmp - 1j*jnp.diag(tmp.diagonal().imag)
-
-def paramagnetic(q, velocity_operator, vector_potential):
-    # ~ A p
-    return -q * jnp.einsum("Kij, iK -> ij", velocity_operator, vector_potential)
-
-def diamagnetic(q, m, velocity_operator, vector_potential):
-    # ~ A^2
-    return jnp.diag(q**2 / m * 0.5 * jnp.sum(vector_potential**2, axis=1))
-
-def decoherence_time(relaxation_rate):
-    """Function for modelling dissipation according to the relaxation approximation.
-
-        - `relaxation_time`: relaxation time
-
-    **Returns:**
-
-    -compiled closure that is needed for computing the dissipative part of the lindblad equation
-    """
-    return lambda r, rs: -(r - rs) * relaxation_rate
-
-# TODO: I probably broke this, also this has cubic complexity
-def saturation_lindblad(eigenvectors, gamma, saturation, electrons, static):
-    """Function for modelling dissipation according to the saturated lindblad equation as detailed in https://link.aps.org/doi/10.1103/PhysRevA.109.022237.
-
-        - `stack`: object representing the state of the system
-        - `gamma`: symmetric (or lower triangular) NxN matrix. The element gamma[i,j] corresponds to the transition rate from state i to state j
-        - `saturation`: a saturation functional to apply, defaults to a sharp turn-off
-
-    **Returns:**
-
-    -compiled closure that is needed for computing the dissipative part of the lindblad equation
-    """
-
-    gamma_matrix = gamma.astype(complex)
-    saturation_vmapped = jax.vmap(saturation, 0, 0)
-
-    def inner(r, rs):
-        # convert rho to energy basis
-        r = eigenvectors.conj().T @ r @ eigenvectors - static
-
-        # extract occupations
-        diag = jnp.diag(r) * electrons
-
-        # apply the saturation functional to turn off elements in the gamma matrix
-        gamma = gamma_matrix * saturation_vmapped(diag)[None, :]
-
-        a = jnp.diag(gamma.T @ jnp.diag(r))
-        mat = jnp.diag(jnp.sum(gamma, axis=1))
-        b = -1 / 2 * (mat @ r + r @ mat)
-        val = a + b
-
-        return eigenvectors @ val @ eigenvectors.conj().T
-
-    return inner
-
-#COMPLEXTIY: this function has one (!) cubic part in it, which is H @ rho
-def setup_rhs( is_vec_pot, add_induced, use_rwa, relax_fun, illu_fun ):
-    
-    # the external potential can be one of the following:
-    # 1. E \cdot P in the dipole gauge
-    # 2. E \cdot P in the dipole gauge + RPA
-    # 3. ~pA - A^2 in the coulomb gauge    
-    phi_ext = lambda t, p: electric_potential(p, illu_fun(t).reshape(1,3))
-    
-    if use_rwa == True:
-        phi_ext = lambda t, p : electric_potential_rwa(p, illu_fun(t).reshape(1,3))
-        
-    if is_vec_pot == True:
-        phi_ext = lambda t, j: paramagnetic(1, j, illu_fun(t)) + diamagnetic(1, 1, j, illu_fun(t))
-
-    # the induced potential is either discarded or given by sum(charges * coulomb_terms)
-    phi_ind = lambda p, prop, rho : 0.0
-    if add_induced == True:
-        phi_ind = lambda p, prop, rho: phi_ext( p, induced_electric_field( prop, -rho.diagonal() ) )
-
-    # the non hermitian term is an input 
-    non_hermitian_term = relax_fun
-
-    # we are now ready to define the rhs: it takes only arrays as arguments (enclosing the arrays in its scope leaks memory, likely related to JAX and probably this issue https://github.com/patrick-kidger/diffrax/issues/142)
+def setup_rhs( hamiltonian_func, dissipator_func ):
     @jax.jit
     def rhs( time, density_matrix, args ):
         print("RHS compiled")
-
-        # we unpack all arguments, p_or_j is either dipole operator or velocity operator, depending on the gauge we choose
-        hamiltonian, coulomb, stationary_density_matrix, electrons, dipole_operator, p_or_j, propagator = args
-
-        # effective density matrix that enters charge and mf computations
-        d_eff = (density_matrix - stationary_density_matrix) * electrons
-        
-        # the hamiltonian is given by
-        # 1. "bare", static mf hamiltonian
-        # 2. external potential
-        # 3. mean field contributions (coulomb channel, but exchange also possible)
-        # 4. induced contributions
-        h_total = (
-            hamiltonian
-            + phi_ext(time, p_or_j)
-            + mean_field(coulomb, d_eff)  
-            + phi_ind(dipole_operator, propagator, d_eff)
-        )
-
-        # this computes the commutator [H, r]. Since (Hr)^{\dagger} = rH, we only need to do one matrix multiplication
+        h_total = sum(f(time, density_matrix, args) for f in hamiltonian_func)
         h_times_d = h_total @ density_matrix
         hermitian_term = -1j * (h_times_d  - h_times_d.conj().T)        
-        return hermitian_term + non_hermitian_term(density_matrix, stationary_density_matrix)
+        return hermitian_term + sum(f(time, density_matrix, args) for f in dissipator_func)
 
     return rhs
 
-# TODO: rework this, especially the billions of arguments I just did this to make really sure no memory leaks
-def integrator_diffrax( pp_fun_list, term, solver, stepsize_controller, xs ):
-    i, rho_0, ts, dt, args = xs
-    dms = diffrax.diffeqsolve( term,
-                            solver,
-                            t0=ts[i].min(),
-                            t1=ts[i].max(),
-                            dt0=dt,
-                            y0=rho_0,
-                            saveat=diffrax.SaveAt(ts=ts[i]),
-                            stepsize_controller=stepsize_controller,
-                            args = args
-                            ).ys
-
-    return (i + 1, dms[-1], ts, dt, args), [ postprocess(dms) for postprocess in pp_fun_list ]
-
-def integrator_old( pp_fun_list, rhs, xs ):
-    i, rho_0, ts, dt, args = xs
-    kernel = lambda r, t: (r + dt * rhs(t, r, args), r) 
-    _, density_matrices = jax.lax.scan(kernel, initial_density_matrix, ts[i])
-    return (i + 1, density_matrices[-1], ts, dt, args), [ postprocess(density_matrices) for postprocess in pp_fun_list ]
-
-def integrate_master_equation(
-    hamiltonian,
-    coulomb,
-    dipole_operator,
-    electrons,
-    velocity_operator,
-    initial_density_matrix,
-    stationary_density_matrix,
-    time_axis,
-    illumination,
-    relaxation_function,
-    coulomb_field_to_from,
-    use_rwa,
-    solver,
-    stepsize_controller,
-    dt,
-    pp_fun_list,
-):
-    # a space dependent illumination indicates we should use a vector potential
-    is_vector_potential = illumination(0).ndim != 1
-    
-    # vector potential couples to j, electric field couples to p
-    p_or_j = velocity_operator if is_vector_potential else dipole_operator
-    
-    # these arguments will be passed to the rhs function on every integration call
-    args = (hamiltonian, coulomb, stationary_density_matrix, electrons, dipole_operator, p_or_j, coulomb_field_to_from)
-
-    # if there is a propagator, we need to add induced fields
-    add_induced = coulomb_field_to_from is not None
-    
-    # this sets up the rhs of the von Neumann equation
-    rhs = setup_rhs( is_vector_potential, add_induced, use_rwa, relaxation_function, illumination )
-    
-    # diffrax coolness
+def get_integrator( hamiltonian, dissipator, postprocesses, args, solver, stepsize_controller, dt):
+    rhs = setup_rhs( hamiltonian, dissipator )
     term = diffrax.ODETerm(rhs)
-    
-    # first order RK or diffrax coolness
-    integrator = lambda args : integrator_diffrax(pp_fun_list, term, solver, stepsize_controller, args)
+
+    @jax.jit
+    def integrator_diffrax( d_ini, ts ):
+        dms = diffrax.diffeqsolve(term,
+                                  solver,
+                                  t0=ts.min(),
+                                  t1=ts.max(),
+                                  dt0=dt,
+                                  y0=d_ini,
+                                  saveat=diffrax.SaveAt(ts=ts),
+                                  stepsize_controller=stepsize_controller,
+                                  args = args,
+                                ).ys
+        
+        return dms[-1], [ p(dms, args) for p in postprocesses ]
+
+    @jax.jit
+    def integrator_old( d_ini, ts ):
+        kernel = lambda r, t: (r + dt * rhs(t, r, args), r) 
+        _, density_matrices = jax.lax.scan(kernel, initial_density_matrix, ts[i])
+        return (i + 1, density_matrices[-1], ts, dt, args), [ p(density_matrices) for p in postprocesses ]
+
     if solver is None and stepsize_controller is None:
-        integrator = lambda args : integrator_old(pp_fun_list, rhs, args)
+        return integrator_old
+    
+    return integrator_diffrax
 
-    # setup arguments to the integrator, these contain the args to the rhs
-    integrator_args = (0, initial_density_matrix, time_axis, dt, args)
-
-    # TODO: uff, this is dirtier than quck
-    # TODO: JAXify?
-    # TODO: check for mem leak and clear cache ?
+# TODO: result handling
+def td_run(d_ini, integrator, time_axis):
     shapes_known = False
-    while integrator_args[0] < len(time_axis):
-        integrator_args, res = integrator( integrator_args )
+    for ts in time_axis:
+        d_ini, res = integrator( d_ini, ts )
         if shapes_known == False:
             result = res
             shapes_known = True
         else:
             for i, res_part in enumerate(res):
-                result[i] = jnp.concatenate( (result[i], res_part) )
-        ts = integrator_args[2]
-        print(f"{ts[integrator_args[0]][-1] / jnp.max(time_axis) * 100} %")            
-    return integrator_args[1], result
+                result[i] = jnp.concatenate( (result[i], res_part) )            
+        print(f"{ts[-1] / jnp.max(time_axis) * 100} %")
+    return d_ini, result 
+    
 
 def rpa_polarizability_function(
     orbs, relaxation_rate, polarization, coulomb_strength, phi_ext=None, hungry=True
@@ -537,6 +398,7 @@ def rpa_polarizability_function(
     return _polarizability
 
 
+# TODO: take `args` object as time domain function does
 def rpa_susceptibility_function(orbs, relaxation_rate, coulomb_strength, hungry=2):
     def _rpa_susceptibility(omega):
         x = sus(omega)

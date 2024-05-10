@@ -3,13 +3,13 @@ from collections import Counter, defaultdict
 from dataclasses import dataclass, field, replace
 from functools import wraps
 from pprint import pformat
-from typing import Callable, Optional, Union
+from typing import Callable, NamedTuple, Optional, Union
 
 import diffrax
 import jax
 import jax.numpy as jnp
 
-from granad import _numerics, _plotting, _watchdog
+from granad import _numerics, _plotting, _watchdog, potentials, dissipators
 
 
 @dataclass
@@ -176,7 +176,20 @@ class Couplings:
                 _SortedTupleDict(self.dipole_transitions | other.dipole_transitions)
             )
         raise ValueError        
-                
+
+    
+class TDArgs(NamedTuple):
+    hamiltonian : jax.Array 
+    coulomb_scaled : jax.Array
+    initial_density_matrix : jax.Array
+    stationary_density_matrix : jax.Array
+    eigenvectors : jax.Array
+    dipole_operator : jax.Array
+    electrons : jax.Array
+    relaxation_rate : jax.Array
+    propagator : jax.Array
+    
+
 @dataclass
 class TDResult:
     """
@@ -1015,70 +1028,65 @@ class OrbitalList:
             correction - density_matrix,
         )
 
+    def get_args( self, relaxation_rate, coulomb_strength, propagator):
+        return TDArgs(
+            self.hamiltonian,
+            self.coulomb * coulomb_strength,
+            self.initial_density_matrix,
+            self.stationary_density_matrix,
+            self.eigenvectors,
+            self.dipole_operator,
+            self.electrons,
+            relaxation_rate,
+            propagator
+            )
 
-    # TODO: rewrite _td functions
-    def _td_postprocessing_func_list(self, expectation_values, density_matrix, custom_computation ):
-        """Builds the list of funtions to be applied to the density matrix in postprocessing.
-        """
-        
-        computation = []
+    @staticmethod
+    def get_hamiltonian(illumination, use_rwa, add_induced):
+        """Dict holding terms of the default hamiltonian: bare + coulomb + dipole gauge coupling to external field  + (optional) induced field (optionally in RWA)"""
+        contents = {}
+        contents["bare_hamiltonian"] = potentials.BareHamiltonian()
+        contents["coulomb"] = potentials.Coulomb()
+        contents["potential"] = potentials.DipoleGauge(illumination, use_rwa)        
+        contents["induced"] = potentials.Induced( add_induced )
+        return contents
+
+    # TODO: default saturation
+    @staticmethod
+    def get_dissipator(relaxation_rate, saturation):
+        """Dict holding the term of the default dissipator: either decoherence time from relaxation_rate as float and ignored saturation or lindblad from relaxation_rate as array and saturation function"""
+        if relaxation_rate is None:
+            return {"no_dissipation" : lambda t, r, args : 0.0}
+        if isinstance(relaxation_rate, float):
+            return { "decoherence_time" : dissipators.DecoherenceTime() }
+        return {"lindblad" : dissipators.SaturationLindblad(saturation) }        
+
+    # TODO: rewrite, should be static, leaks mem
+    def get_postprocesses( self, expectation_values, density_matrix ):
+        postprocesses = {}
+        if isinstance(expectation_values, jax.Array):
+            expectation_values = [expectation_values]
         if expectation_values is not None:
-            if isinstance(expectation_values, jax.Array):
-                expectation_values = [expectation_values]
             ops = jnp.concatenate( expectation_values)
-            computation.append( lambda rho : self.get_expectation_value(operator = ops, density_matrix = rho) )
-        if density_matrix is not None:            
-            if isinstance(density_matrix, str):
-                density_matrix = [density_matrix]
-            for option in density_matrix:
-                if option == "occ_x":
-                    computation.append( lambda rho : self.electrons * jnp.diagonal(rho, axis1=-1, axis2=-2) )
-                elif option == "occ_e":
-                    computation.append( lambda rho : self.electrons * jnp.diagonal( self.transform_to_energy_basis(rho), axis1=-1, axis2=-2) )
-                elif option == "full":
-                    computation.append( lambda rho : rho )
-        if custom_computation is not None:
-            if callable(custom_computation):
-                custom_computation = [custom_computation]
-            computation.extend( custom_computation )
-        assert len(computation) > 0, "Specify what to compute!"
-        return [jax.jit(f) for f in computation]
+            postprocesses["expectation_values"] = lambda rho, args: self.get_expectation_value(operator=ops,density_matrix=rho)
 
-    def _td_time_axis( self, grid, start_time, end_time, dt, max_mem_gb):
-        # if grid is an array, sample these times, else subsample time axis
-        time_axis = grid
-        if not isinstance(grid, jax.Array):
-            steps_time = jnp.ceil( (end_time - start_time) / dt ).astype(int)
-            time_axis = jnp.linspace(start_time, end_time, steps_time)[::grid]
-        # number of rhos in a single RAM batch 
-        size = (self.initial_density_matrix.size * self.initial_density_matrix.itemsize) / 1e9
-        matrices_per_batch = jnp.floor( max_mem_gb / size  ).astype(int).item()
-        assert matrices_per_batch > 0, "Density matrix exceeds allowed max memory."
+        if density_matrix is None:
+            return postprocesses
 
-        # batch time axis accordingly, stretch to make array
-        splits = jnp.ceil(time_axis.size /  matrices_per_batch ).astype(int).item()
-        tmp = jnp.array_split(time_axis, [matrices_per_batch * i for i in range(1, splits)] )        
-        if len(tmp[0]) != len(tmp[-1]):
-            tmp[-1] = tmp[-2][-1] + (time_axis[1] - time_axis[0]) + tmp[0]
-        return jnp.array( tmp )
+        if isinstance(density_matrix, str):
+            density_matrix = [density_matrix]
+        for option in density_matrix:
+            if option == "occ_x":
+                postprocesses[option] = lambda rho, args: args.electrons * jnp.diagonal(rho, axis1=-1, axis2=-2) 
+            elif option == "occ_e":
+                postprocesses[option] = lambda rho, args: args.electrons * jnp.diagonal( args.eigenvectors.conj().T @ rho @ args.eigenvectors, axis1=-1, axis2=-2) 
+            elif option == "full":
+                postprocesses[option] = lambda rho, args: rho
 
-    def _td_dynamic_functions( self, relaxation_rate, illumination, saturation ):
-        relaxation_rate = relaxation_rate if relaxation_rate is not None else 0.0                        
-        if callable(relaxation_rate):
-            relaxation_function = relaxation_rate
-        elif isinstance(relaxation_rate, jax.Array):
-            # TODO: check leak
-            relaxation_function = _numerics.saturation_lindblad( self.eigenvectors, relaxation_rate, saturation, self.electrons )
-        else:
-            relaxation_function = _numerics.decoherence_time( relaxation_rate )
+        return postprocesses
 
-        if illumination is None:
-            illumination = lambda t : jnp.array([0.,0.,0.])            
-        if not callable(illumination):
-            raise TypeError("Provide a function for e-field")
 
-        return illumination, relaxation_function
-    
+    # TODO: illumination is too implicit, args may be too implicit, but idk what else to do rn
     @recomputes
     def master_equation(            
             self,
@@ -1095,19 +1103,22 @@ class OrbitalList:
             
             illumination : Callable = None,
             
-            saturation : Callable = None,
-            relaxation_rate : Union[float, jax.Array, Callable] = None,
+            relaxation_rate : float = None,
 
             compute_at : Optional[jax.Array] = None,
 
             expectation_values : Optional[list[jax.Array]] = None,
             density_matrix : Optional[list[str]] = None,
-            computation : Optional[Callable] = None,
 
             use_rwa : bool = False,
 
             solver = diffrax.Dopri5(),
             stepsize_controller = diffrax.PIDController(rtol=1e-10,atol=1e-10),
+
+            hamiltonian : dict = None,
+            dissipator : dict = None,
+            postprocesses : dict = None,
+            rhs_args = None,
 
     ):
         """
@@ -1125,65 +1136,62 @@ class OrbitalList:
                                                           `self.initial_density_matrix` is used.
             coulomb_strength (float): Scaling factor for the Coulomb interaction matrix.
             illumination (Callable): Function describing the time-dependent external illumination applied to the system.
-            saturation (Callable): Function for Lindblad relaxation saturation. May be deprecated.
             relaxation_rate (Union[float, jax.Array, Callable]): Specifies the relaxation dynamics. A float indicates a
                                                                  uniform decoherence time, an array provides state-specific
-                                                                 rates, and a callable should implement custom dynamics.
-            compute_at (Optional[jax.Array]): Specific time indices to consider for evaluating external fields' impact.
+                                                                 rates.
+            compute_at (Optional[jax.Array]): The orbitals indexed by this array will experience induced fields.
             expectation_values (Optional[list[jax.Array]]): Expectation values to compute during the simulation.
             density_matrix (Optional[list[str]]): Tags for additional density matrix computations. "full", "occ_x", "occ_e". May be deprecated.
             computation (Optional[Callable]): Additional computation to be performed at each step.
             use_rwa (bool): Whether to use the rotating wave approximation. Defaults to False.
             solver: The numerical solver instance to use for integrating the differential equations.
             stepsize_controller: Controller for adjusting the solver's step size based on error tolerance.
+            hamiltonian: dict of functions representing terms in the hamiltonian. functions must have signature `t, r, args->jax.Array`. keys don't matter.
+            dissipator:: dict of functions representing terms in the dissipator. functions must have signature `t, r, args->jax.Array`. keys don't matter.
+            postprocesses: (bool): dict of functions representing information to extract from the simulation. functions must have signature `r, args->jax.Array`. keys don't matter.
+            rhs_args: arguments passed to hamiltonian, dissipator, postprocesses during the simulation. namedtuple.
 
         Returns:
             ResultTD
         """
 
-        # external functions
-        illumination, relaxation = self._td_dynamic_functions(relaxation_rate, illumination, saturation)
 
-        # batched time axis 
-        time_axis = self._td_time_axis(grid, start_time, end_time, dt, max_mem_gb)
+        # arguments to evolution function
+        if rhs_args is None:
+            rhs_args = self.get_args( relaxation_rate,
+                                      coulomb_strength,
+                                      _numerics.get_coulomb_field_to_from(self.positions, self.positions, compute_at) )
 
-        # applied to density matrix batch
-        pp_fun_list = self._td_postprocessing_func_list(expectation_values, density_matrix, computation)
-        
-        # coulomb field propagator, if any
-        coulomb_field_to_from = _numerics.get_coulomb_field_to_from(
-            self.positions, self.positions, compute_at
-        )
+        if illumination is None:
+            illumination = lambda t : jnp.array( [0j, 0j, 0j] )
 
-        # we start with the flake dm if nothing else is supplied
-        initial_density_matrix = self.initial_density_matrix if initial_density_matrix is None else initial_density_matrix        
+        # each of these functions is applied to a density matrix batch
+        postprocesses = self.get_postprocesses( expectation_values, density_matrix ) if postprocesses is None else postprocesses
+
+        # hermitian rhs
+        hamiltonian = self.get_hamiltonian(illumination, use_rwa, compute_at is not None) if hamiltonian is None else hamiltonian
+
+        # non hermitian rhs
+        dissipator = self.get_dissipator(relaxation_rate, lambda t,r,args : 0j) if dissipator is None else dissipator
+
+        # set reasonable default 
+        initial_density_matrix = initial_density_matrix if initial_density_matrix is not None else rhs_args.initial_density_matrix
+
+        # batched time axis to save memory 
+        mat_size = initial_density_matrix.size * initial_density_matrix.itemsize / 1e9
+        time_axis = _numerics.get_time_axis( mat_size = mat_size, grid = grid, start_time = start_time, end_time = end_time, max_mem_gb = max_mem_gb, dt = dt )
 
         ## integrate
-        final_density_matrix, output = _numerics.integrate_master_equation(
-            self.hamiltonian,
-            self.coulomb * coulomb_strength,
-            self.dipole_operator,
-            self.electrons,
-            self.velocity_operator,
-            self.initial_density_matrix,
-            self.stationary_density_matrix,
-            time_axis,
-            illumination,
-            relaxation,
-            coulomb_field_to_from,
-            use_rwa,
-            solver,
-            stepsize_controller,
-            dt,    
-            pp_fun_list,
-        )
-
-        time_axis_conc = jnp.concatenate(time_axis)
+        final, output = _numerics.td_run(
+            initial_density_matrix,
+            _numerics.get_integrator(list(hamiltonian.values()), list(dissipator.values()), list(postprocesses.values()), rhs_args, solver, stepsize_controller, dt),
+            time_axis)
+        
         return TDResult(
-            time_axis = time_axis_conc,
-            td_illumination = jax.vmap(illumination)(time_axis_conc),
-            final_density_matrix = final_density_matrix,
+            td_illumination = jax.vmap(illumination)(jnp.concatenate(time_axis)) ,
             output = output,
+            final_density_matrix = final,
+            time_axis = jnp.concatenate( time_axis )
         )
 
     # TODO: decouple rpa numerics from orbital datataype
