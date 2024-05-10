@@ -1,6 +1,6 @@
 import os
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field, replace, asdict
 from functools import wraps
 from pprint import pformat
 from typing import Callable, NamedTuple, Optional, Union
@@ -250,6 +250,14 @@ class TDResult:
 
         """
         return _numerics.get_fourier_transform(self.time_axis, self.td_illumination, omega_max, omega_min, return_omega_axis)
+
+    def save( self, name ):
+        jnp.savez(f"{name}.npz", **asdict(self) )
+
+    @classmethod
+    def load( cls, name ):
+        with jnp.load(f'{name}.npz') as data:
+            return cls( **data )
 
     
 def mutates(func):
