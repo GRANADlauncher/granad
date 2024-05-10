@@ -340,12 +340,12 @@ def setup_rhs( hamiltonian_func, dissipator_func ):
 
     return rhs
 
-def get_integrator( hamiltonian, dissipator, postprocesses, args, solver, stepsize_controller, dt):
+def get_integrator( hamiltonian, dissipator, postprocesses, solver, stepsize_controller, dt):
     rhs = setup_rhs( hamiltonian, dissipator )
     term = diffrax.ODETerm(rhs)
 
     @jax.jit
-    def integrator_diffrax( d_ini, ts ):
+    def integrator( d_ini, ts, args ):
         dms = diffrax.diffeqsolve(term,
                                   solver,
                                   t0=ts.min(),
@@ -358,23 +358,14 @@ def get_integrator( hamiltonian, dissipator, postprocesses, args, solver, stepsi
                                 ).ys
         
         return dms[-1], [ p(dms, args) for p in postprocesses ]
-
-    @jax.jit
-    def integrator_old( d_ini, ts ):
-        kernel = lambda r, t: (r + dt * rhs(t, r, args), r) 
-        _, density_matrices = jax.lax.scan(kernel, initial_density_matrix, ts[i])
-        return (i + 1, density_matrices[-1], ts, dt, args), [ p(density_matrices) for p in postprocesses ]
-
-    if solver is None and stepsize_controller is None:
-        return integrator_old
     
-    return integrator_diffrax
+    return integrator
 
 # TODO: result handling
-def td_run(d_ini, integrator, time_axis):
+def td_run(d_ini, integrator, time_axis, args):
     shapes_known = False
     for ts in time_axis:
-        d_ini, res = integrator( d_ini, ts )
+        d_ini, res = integrator( d_ini, ts, args )
         if shapes_known == False:
             result = res
             shapes_known = True

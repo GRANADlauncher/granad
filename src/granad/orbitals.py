@@ -1197,8 +1197,9 @@ class OrbitalList:
         ## integrate
         final, output = _numerics.td_run(
             initial_density_matrix,
-            _numerics.get_integrator(list(hamiltonian.values()), list(dissipator.values()), list(postprocesses.values()), rhs_args, solver, stepsize_controller, dt),
-            time_axis)
+            _numerics.get_integrator(list(hamiltonian.values()), list(dissipator.values()), list(postprocesses.values()), solver, stepsize_controller, dt),
+            time_axis,
+            rhs_args)
         
         return TDResult(
             td_illumination = jax.vmap(illumination)(jnp.concatenate(time_axis)) ,
