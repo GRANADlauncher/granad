@@ -179,7 +179,8 @@ class Couplings:
 
     
 class TDArgs(NamedTuple):
-    hamiltonian : jax.Array 
+    hamiltonian : jax.Array
+    energies : jax.Array
     coulomb_scaled : jax.Array
     initial_density_matrix : jax.Array
     stationary_density_matrix : jax.Array
@@ -188,7 +189,8 @@ class TDArgs(NamedTuple):
     electrons : jax.Array
     relaxation_rate : jax.Array
     propagator : jax.Array
-    
+    spin_degeneracy : jax.Array
+    positions : jax.Array
 
 @dataclass
 class TDResult:
@@ -1031,6 +1033,7 @@ class OrbitalList:
     def get_args( self, relaxation_rate, coulomb_strength, propagator):
         return TDArgs(
             self.hamiltonian,
+            self.energies,
             self.coulomb * coulomb_strength,
             self.initial_density_matrix,
             self.stationary_density_matrix,
@@ -1038,7 +1041,9 @@ class OrbitalList:
             self.dipole_operator,
             self.electrons,
             relaxation_rate,
-            propagator
+            propagator,
+            self.spin_degeneracy,
+            self.positions
             )
 
     @staticmethod
@@ -1194,15 +1199,15 @@ class OrbitalList:
             time_axis = jnp.concatenate( time_axis )
         )
 
-    # TODO: decouple rpa numerics from orbital datataype
     def get_polarizability_rpa(
         self,
         omegas,            
-        relaxation_rate,
         polarization,
         coulomb_strength=1.0,
+        relaxation_rate=1/10,
         hungry=0,
         phi_ext=None,
+        args = None,
     ):
         """
         Calculates the random phase approximation (RPA) polarizability of the system at given frequencies under specified conditions.
@@ -1214,21 +1219,22 @@ class OrbitalList:
            coulomb_strength (float): The strength of Coulomb interaction in the calculations.
            hungry (int): speed up the simulation up, higher numbers (max 2) increase RAM usage.
            phi_ext (Optional[jax.Array]): External potential influences, if any.
+           args (Optional): numeric representation of an orbital list, as obtained by `get_args`
 
         Returns:
            jax.Array: The calculated polarizabilities at the specified frequencies.
         """
 
-        alpha = _numerics.rpa_polarizability_function(
-            self, relaxation_rate, polarization, coulomb_strength, phi_ext, hungry
-        )
+        if args is None:
+            args = self.get_args(relaxation_rate = relaxation_rate, coulomb_strength = coulomb_strength, propagator = None)
+        alpha = _numerics.rpa_polarizability_function(args, polarization, phi_ext, hungry)
         if omegas.ndim == 1:        
             return jax.lax.map(alpha, omegas)
         else:
             return jnp.concatenate( [ jax.vmap(alpha)(omega) for omega in omegas ] )
 
     def get_susceptibility_rpa(
-            self, omegas, relaxation_rate, coulomb_strength=1.0, hungry=0
+            self, omegas, relaxation_rate=1/10, coulomb_strength=1.0, hungry=0, args = None,
     ):
         """
         Computes the random phase approximation (RPA) susceptibility of the system over a range of frequencies.
@@ -1238,14 +1244,14 @@ class OrbitalList:
            relaxation_rate (float): The relaxation time affecting susceptibility calculations.
            coulomb_strength (float): The strength of Coulomb interactions considered in the calculations.
            hungry (int): speed up the simulation up, higher numbers (max 2) increase RAM usage.
+           args (Optional): numeric representation of an orbital list, as obtained by `get_args`
 
         Returns:
            jax.Array: The susceptibility values at the given frequencies.
         """
-
-        sus = _numerics.rpa_polarizability_function(
-            self, relaxation_rate, coulomb_strength, hungry
-        )
+        if args is None:
+            args = self.get_args(relaxation_rate = relaxation_rate, coulomb_strength = coulomb_strength, propagator = None)
+        sus = _numerics.rpa_polarizability_function( args, hungry )
         return jax.lax.map(sus, omegas)    
 
     def get_mean_field_hamiltonian( self, overlap = None ):

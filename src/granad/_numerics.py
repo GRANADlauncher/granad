@@ -386,31 +386,29 @@ def td_run(d_ini, integrator, time_axis):
     
 
 def rpa_polarizability_function(
-    orbs, relaxation_rate, polarization, coulomb_strength, phi_ext=None, hungry=True
+    args, polarization, phi_ext=None, hungry=2
 ):
     def _polarizability(omega):
         ro = sus(omega) @ phi_ext
         return -pos @ ro
 
-    pos = orbs.positions[:, polarization]
+    pos = args.positions[:, polarization]
     phi_ext = pos if phi_ext is None else phi_ext
-    sus = rpa_susceptibility_function(orbs, relaxation_rate, coulomb_strength, hungry)
+    sus = rpa_susceptibility_function(args, hungry)
     return _polarizability
 
 
-# TODO: take `args` object as time domain function does
-def rpa_susceptibility_function(orbs, relaxation_rate, coulomb_strength, hungry=2):
+def rpa_susceptibility_function(args, hungry=2):
     def _rpa_susceptibility(omega):
         x = sus(omega)
-        return x @ jnp.linalg.inv(one - c @ x)
+        return x @ jnp.linalg.inv(one - args.coulomb_scaled @ x)
 
-    sus = bare_susceptibility_function(orbs, relaxation_rate, hungry)        
-    c = orbs.coulomb * coulomb_strength
-    one = jnp.identity(orbs.hamiltonian.shape[0])
+    sus = bare_susceptibility_function(args, hungry)        
+    one = jnp.identity(args.hamiltonian.shape[0])
 
     return _rpa_susceptibility
 
-def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
+def bare_susceptibility_function(args, hungry=2):
 
     def _sum_subarrays(arr):
         """Sums subarrays in 1-dim array arr. Subarrays are defined by n x 2 array indices as [ [start1, end1], [start2, end2], ... ]"""
@@ -440,7 +438,7 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
             Sf1 = jnp.fft.hfft(b)[:-1]
             Sf = -Sf1[::-1] + Sf1
                         
-            eq = spin_degeneracy * Sf / (omega - omega_grid_extended + 1j * relaxation_rate )
+            eq = spin_degeneracy * Sf / (omega - omega_grid_extended + 1j * args.relaxation_rate )
             return -jnp.sum(eq)
                 
         if hungry == 2:
@@ -459,13 +457,13 @@ def bare_susceptibility_function(orbs, relaxation_rate, hungry=2):
             )
     
     # unpacking
-    energies = orbs.energies.real
-    eigenvectors = orbs.eigenvectors.real    
-    occupation = jnp.diag(orbs.initial_density_matrix_e).real * orbs.electrons / orbs.spin_degeneracy
-    spin_degeneracy = orbs.spin_degeneracy
+    energies = args.energies.real
+    eigenvectors = args.eigenvectors.real    
+    occupation = jnp.diag(args.eigenvectors.conj().T @ args.initial_density_matrix @ args.eigenvectors).real * args.electrons / args.spin_degeneracy
+    spin_degeneracy = args.spin_degeneracy
     sites = jnp.arange(energies.size)
     freq_number = 2**12
-    omega_max = jnp.real(max(orbs.energies[-1], -orbs.energies[0])) + 0.1
+    omega_max = jnp.real(max(args.energies[-1], -args.energies[0])) + 0.1
     omega_grid = jnp.linspace(-omega_max, omega_max, freq_number)
 
     # build two arrays sandwiching the energy values: omega_low contains all frequencies bounding energies below, omega_up bounds above
