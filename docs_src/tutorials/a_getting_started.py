@@ -109,7 +109,7 @@ print(my_first_flake)
 # There is an extra option for dealing with graphene-like lattices we can pass to the built-in shape, which is the armchair boolean. It just rotates the shape to get the correct edge type. The optional "shift" argument lets you shift the shape in the plane.
 
 # +
-triangle_ac = Triangle(18, armchair = True, shift = [10,10])
+triangle_ac = Triangle(18, armchair = True)
 my_first_flake = graphene.cut_flake(triangle_ac, plot = True)
 # -
 

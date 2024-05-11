@@ -29,10 +29,10 @@ from granad import MaterialCatalog, Triangle
 graphene = MaterialCatalog.get( "graphene" )
 
 # cut a 15 Angström wide triangle from the lattice (can also be an arbitrary polygon)
-flake = graphene.cut_flake( Triangle(15)  ) 
+flake = graphene.cut_flake( Triangle(15), plot = True  ) 
 
 # frequencies
-omegas_rpa = jnp.linspace( 0, 5, 40 )
+omegas_rpa = jnp.linspace( 0, 6, 40 )
 # -
 
 
