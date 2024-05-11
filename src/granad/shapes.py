@@ -41,6 +41,37 @@ def _edge_type(vertex_func):
 
     return wrapper
 
+def Circle(radius, n_vertices = 8):
+    """
+    Generates the vertices of a polygon that approximates a circle, given the radius and the number of vertices.
+
+    The circle approximation is created by calculating points along the circumference using the radius provided. The number of vertices specifies how many sides the polygon will have, thus controlling the granularity of the approximation. By default, an octagon is generated.
+
+    Parameters:
+        radius (float): The radius of the circle to approximate, in arbitrary units.
+        n_vertices (int): The number of vertices (or sides) of the approximating polygon. Default is 8.
+
+    Returns:
+        jax.numpy.ndarray: An array of shape (n_vertices+1, 2), representing the vertices of the polygon,
+                           including the first vertex repeated at the end to close the shape.
+
+    Note:
+        The accuracy of the circle approximation improves with an increase in the number of vertices. For a smoother circle, increase the number of vertices.
+
+        ```python
+        # Create an approximate circle with a radius of 20 units and default vertices
+        circle_octagon = Circle(20)
+
+        # Create an approximate circle with a radius of 15 units using 12 vertices
+        circle_dodecagon = Circle(15, 12)
+        ```
+    """
+    circle = jnp.array([
+        (radius * jnp.cos(2 * jnp.pi * i / n_vertices), radius * jnp.sin(2 * jnp.pi * i / n_vertices))
+        for i in range(n_vertices)
+    ])
+    
+    return jnp.vstack([circle, circle[0]])
 
 @_edge_type
 def Triangle(side_length):

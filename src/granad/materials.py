@@ -97,10 +97,7 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
         list: A list of orbitals positioned within the specified polygon and satisfying the neighbor condition.
 
     Note:
-        The function first translates the polygon into the positive xy-plane to avoid negative coordinates,
-        then calculates the extent of the grid needed to cover the polygon based on the material's lattice basis.
-        Atom positions are then pruned based on the minimum neighbor count using the `_prune_neighbors` nested function,
-        which iteratively prunes atoms until the neighbor count condition is met or no further pruning can be done.
+        The function assumes the underlying lattice to be in the xy-plane.
     """
     def _prune_neighbors(
             positions, minimum_neighbor_number, remaining_old=jnp.inf
@@ -132,32 +129,25 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
                 positions[mask], minimum_neighbor_number, remaining
             )
 
-    # shift the polygon into the positive xy plane
-    min_values = jnp.min(polygon, axis=0)
-    translation = jnp.where(min_values < 0, -min_values, 0)
-    polygon += translation 
+    # to cover the plane, we solve the linear equation P = L C, where P are the polygon vertices, L is the lattice basis and C are the coefficients
+    L = material._lattice_basis[material.periodic,:2] * material.lattice_constant
+    coeffs = jnp.linalg.inv(L.T) @ polygon.T
 
-    # we compute the maximum extension of the polyon
-    max_values = jnp.max(polygon, axis=0)
-    max_dim = max_values.argmax()
-    max_vec = jnp.abs(material._lattice_basis)[material.periodic, max_dim].argmax()
-    n = max_values[max_dim] / material._lattice_basis[material.periodic,:][max_vec, max_dim].item() / 2
-    n_rounded = jnp.ceil(jnp.abs(n)) + 1
-    n = int(jnp.sign(n) * n_rounded)
-    grid = material._get_grid( [ (0,n), (0,n) ] )
-    
+    # we just take the largest extent of the shape
+    u1, u2 = jnp.ceil( coeffs ).max( axis = 1)
+    l1, l2 = jnp.floor( coeffs ).min( axis = 1)
+    grid = material._get_grid( [ (int(l1), int(u1)), (int(l2), int(u2)) ]  )
+
     # get atom positions in the unit cell in fractional coordinates
     orbital_positions =  material._get_positions_in_uc()
     unit_cell_fractional_atom_positions = jnp.unique(
         jnp.round(orbital_positions, 6), axis=0
             )
 
-    # get all atom positions in a plane completely covering the polygon
     initial_atom_positions = material._get_positions_in_lattice(
         unit_cell_fractional_atom_positions, grid
-    )
-    
-    # get atom positions within the polygon
+    ) 
+
     polygon_path = Path(polygon)
     flags = polygon_path.contains_points(initial_atom_positions[:, :2])
     
