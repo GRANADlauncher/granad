@@ -202,10 +202,7 @@ cut_flake_2d(material, polygon, plot=False, minimum_neighbor_number: int = 2)
         list: A list of orbitals positioned within the specified polygon and satisfying the neighbor condition.
 
     Note:
-        The function first translates the polygon into the positive xy-plane to avoid negative coordinates,
-        then calculates the extent of the grid needed to cover the polygon based on the material&#39;s lattice basis.
-        Atom positions are then pruned based on the minimum neighbor count using the `_prune_neighbors` nested function,
-        which iteratively prunes atoms until the neighbor count condition is met or no further pruning can be done.
+        The function assumes the underlying lattice to be in the xy-plane.
 </code></pre></div>
 <p>This is more complex. We can give an arbitrary polygon to the cutting function, so let's do this by approximating a potato (this is an internal joke in Carsten's group).</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>

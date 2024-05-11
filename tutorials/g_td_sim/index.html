@@ -143,6 +143,9 @@
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 
 
+49.992928864375614 %
+
+
 100.0 %
 </code></pre></div>
 <p>The result object stores this info. Operators are concatenated in the order you passed them in.</p>
@@ -150,17 +153,17 @@
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>1
-(4000, 6)
+(7072, 6)
 </code></pre></div>
 <p>The induced dipole moment at timestep 10 is given by</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,:</span><span class="mi">3</span><span class="p">])</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>[9.05330966e-13+0.j 1.58297657e-13+0.j 0.00000000e+00+0.j]
+<div class="language-text highlight"><pre><span></span><code>[5.19272438e-13+0.j 7.16792153e-14+0.j 0.00000000e+00+0.j]
 </code></pre></div>
 <p>Induced current at timestep 10</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,</span><span class="mi">3</span><span class="p">:])</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>[ 1.33103192e-11+6.17228924e-15j -1.09182314e-14-9.83546108e-15j
+<div class="language-text highlight"><pre><span></span><code>[ 1.41707761e-11-5.33512817e-15j -4.31137844e-15+8.93268929e-15j
   0.00000000e+00+0.00000000e+00j]
 </code></pre></div>
 <p>We can access the Fourier transform as</p>
@@ -181,7 +184,7 @@
 <p>The field is also accessible</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">td_illumination</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>(4000, 3)
+<div class="language-text highlight"><pre><span></span><code>(7072, 3)
 </code></pre></div>
 <p><em>WARNING: The following behavior might change and the density_matrix argument may be removed</em></p>
 <h2 id="density-matrices">Density matrices</h2>
@@ -198,14 +201,17 @@
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 
 
+49.992928864375614 %
+
+
 100.0 %
-(4000, 87, 87)
+(7072, 94, 94)
 </code></pre></div>
 <p>We can convert them to energy basis</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">density_matrix_e</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">transform_to_energy_basis</span><span class="p">(</span> <span class="n">density_matrix</span> <span class="p">)</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">density_matrix_e</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>(4000, 87, 87)
+<div class="language-text highlight"><pre><span></span><code>(7072, 94, 94)
 </code></pre></div>
 <h2 id="occupations">Occupations</h2>
 <p>We can extract only site occupations</p>
@@ -221,8 +227,11 @@
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 
 
+49.992928864375614 %
+
+
 100.0 %
-(4000, 87)
+(7072, 94)
 </code></pre></div>
 <p>We can extract only energy occupations</p>
 <p><em>DANGER</em>: this introduces additional cubic complexity </p>
@@ -239,9 +248,12 @@
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 
 
+49.992928864375614 %
+
+
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_27_3.png" /></p>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_27_4.png" /></p>
 <h2 id="combinations">Combinations</h2>
 <p>We can also extract multiple things at the same time</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
@@ -255,6 +267,9 @@
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 
 
+49.992928864375614 %
+
+
 100.0 %
 </code></pre></div>
 <p>The output will now contain three arrays: induced dipole moments, site occupations and full density matrices</p>
@@ -264,9 +279,9 @@
 </span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># we specified [&quot;full&quot;, &quot;occ_x&quot;] =&gt; site occupations</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>3
-(4000, 3)
-(4000, 87, 87)
-(4000, 87)
+(7072, 3)
+(7072, 94, 94)
+(7072, 94)
 </code></pre></div>
 <h2 id="custom-computations">Custom computations</h2>
 <p>TBD</p>
