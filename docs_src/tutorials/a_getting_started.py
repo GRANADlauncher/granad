@@ -117,7 +117,7 @@ my_first_flake = graphene.cut_flake(triangle_ac, plot = True)
 
 ### A first simulation
 
-# Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix $\rho(t)$ of a system by integrating a nonlinear master equation. Once the time dependent density matrix is known, dynamical expectation values can be computed. Say you have a Hermitian operator epresented by a matrix $A$ and the solution of the master equation $\rho(t)$. The expectation value is then just $a(t) = \text{Tr][\rho(t) A]$. We will illustrate this at the example of the dipole moment in the small graphene flake we created above.
+# Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix $\rho(t)$ of a system by integrating a nonlinear master equation. Once the time dependent density matrix is known, dynamical expectation values can be computed. Say you have a Hermitian operator epresented by a matrix $A$ and the solution of the master equation $\rho(t)$. The expectation value is then just $a(t) = \text{Tr}[\rho(t) A]$. We will illustrate this at the example of the dipole moment in the small graphene flake we created above.
 
 # But before we dive into exploring the dynamics of the flake, we first inspect its energies
 
