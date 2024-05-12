@@ -116,19 +116,19 @@ sigma = 1
 t0 = 4
 def pulsed_potential( time, density_matrix, args ):
     field = (amplitudes * jnp.cos(omega * time) * jnp.exp( -(time-t0)**2 / sigma**2 ) )
-    diagonal_part = field @ positions
+    diagonal_part = args.positions @ field
     return jnp.diag( diagonal_part )
 
 # Now, we replace the built-in with our potential
 
 # +
-hamiltonian_model["potential"] = pot
+hamiltonian_model["potential"] = pulsed_potential
 # -
 
 # To run a time-domain simulation, we just pass the modified hamiltonian dictionary directly, as demonstrated in the first section
 
 # +
-result = flake.master_equation( hamiltonian = hamiltonian_model, relaxation_rate = 1/10, end_time = 40 )
+result = flake.master_equation( hamiltonian = hamiltonian_model, expectation_values = [flake.dipole_operator], relaxation_rate = 1/10, end_time = 40)
 flake.show_res( result )
 # -
 

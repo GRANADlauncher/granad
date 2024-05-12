@@ -114,9 +114,9 @@ result = flake.master_equation( end_time = 40.0,
 flake.show_res( result )
 # -
 
-# You can simulate any number of dipoles (or terms) by just adding more keys to the dictionary. Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.
+# You can simulate any number of dipoles (or terms) by just adding more keys to the dictionary. **Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.**
 
-# *DANGER* We did not need the illumination argument and so the `result` object contains no information on it. It is populated with zeroes by default
+# **DANGER: We did not need the illumination argument and so the `result` object contains no information on it. It is populated with zeroes by default**
 
 # +
 print(result.td_illumination)
