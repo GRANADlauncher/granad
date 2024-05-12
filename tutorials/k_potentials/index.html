@@ -76,6 +76,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../i_master/">Custom Time Evolution</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Potentials</a>
@@ -144,7 +146,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">hamiltonian_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_hamiltonian</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7fc9b8a8e8e0&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7fc9b8a8eac0&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f9b3c8a28e0&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f9b3c8a2ac0&gt;}
 </code></pre></div>
 <p>We see that it is just a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian. You can tell which one by looking at the keys again</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -193,8 +195,8 @@
 100.0 %
 </code></pre></div>
 <p><img alt="png" src="../k_potentials_files/k_potentials_30_2.png" /></p>
-<p>You can simulate any number of dipoles (or terms) by just adding more keys to the dictionary. Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.</p>
-<p><em>DANGER</em> We did not need the illumination argument and so the <code>result</code> object contains no information on it. It is populated with zeroes by default</p>
+<p>You can simulate any number of dipoles (or terms) by just adding more keys to the dictionary. <strong>Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.</strong></p>
+<p><strong>DANGER: We did not need the illumination argument and so the <code>result</code> object contains no information on it. It is populated with zeroes by default</strong></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">td_illumination</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>[[0.+0.j 0.+0.j 0.+0.j]
