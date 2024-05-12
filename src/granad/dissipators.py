@@ -6,7 +6,7 @@ def DecoherenceTime():
     """
     return lambda t,r,args: -(r - args.stationary_density_matrix) * args.relaxation_rate
 
-def SaturationLindblad(staturation):
+def SaturationLindblad(saturation):
     """Function for modelling dissipation according to the saturated lindblad equation as detailed in https://link.aps.org/doi/10.1103/PhysRevA.109.022237.
     """
     saturation = jax.vmap(saturation, 0, 0)
