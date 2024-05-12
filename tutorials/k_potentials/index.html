@@ -76,8 +76,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../i_master/">Custom Time Evolution</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Potentials</a>
@@ -87,6 +85,8 @@
     <li class="toctree-l2"><a class="reference internal" href="#built-in-potentials">Built-in Potentials</a>
     </li>
     </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
                   </li>
@@ -119,14 +119,14 @@
 <p>GRANAD lets you specify coupling to external light using (an arbitrary combination of) electromagnetic potentials. You do this by modifying GRANAD's internal representation of the Hamiltonian, which is just a dictionary.</p>
 <h2 id="background">Background</h2>
 <p>Consider GRANAD's master equation </p>
-<div class="arithmatex">\[\dot{\rho(t)} = -i [H[t,\rho(t)], \rho] + \mathcal{D}[t, \rho]\]</div>
+<div class="arithmatex">\[\dot{\rho}(t) = -i [H[t,\rho(t)], \rho] + \mathcal{D}[t, \rho]\]</div>
 <p>By default, GRANAD simulates the following dipole-gauge expression for the Hamiltonian including an external electric field <span class="arithmatex">\(\vec{E}\)</span></p>
 <div class="arithmatex">\[H[t,\rho(t)] = h^{0} + \vec{E} \vec{P} + C(\rho(t) - \rho^{0})\]</div>
 <p>where</p>
 <ol>
 <li><span class="arithmatex">\(h^{0}\)</span> is the unperturbed or bare Hamiltonian constructed from localized orbitals.</li>
 <li><span class="arithmatex">\(\vec{P}\)</span> is the polarization operator depending on space <span class="arithmatex">\(\vec{r}\)</span> and transition dipole moments <span class="arithmatex">\(\vec{d}\)</span>, leading to an interatomic potential <span class="arithmatex">\(\vec{E}\vec{r}\)</span> and an intra-atomic potential <span class="arithmatex">\(\vec{E} \vec{d}\)</span>.</li>
-<li><span class="arithmatex">\(\rho^{0}\)</span> is the stationary density matrix of the system's ground state, and <span class="arithmatex">\(C\)</span> is the Coulomb matrix (a subset of direct-channel ERIs).</li>
+<li><span class="arithmatex">\(\rho^{0}\)</span> is the stationary density matrix of the system's ground state, and <span class="arithmatex">\(C\)</span> is the Coulomb matrix (a subset of ERIs).</li>
 </ol>
 <p>You can modify GRANAD's internal representation of the Hamiltonian to include your own potential terms. Here, you have two options:</p>
 <ol>
@@ -146,7 +146,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">hamiltonian_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_hamiltonian</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f9b3c8a28e0&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f9b3c8a2ac0&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f550cc828e0&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f550cc82ac0&gt;}
 </code></pre></div>
 <p>We see that it is just a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian. You can tell which one by looking at the keys again</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -213,7 +213,7 @@
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../j_defining_materials/" class="btn btn-neutral float-left" title="Defining Materials"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../xyz/" class="btn btn-neutral float-right" title="Exporting and Importing">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../l_master/" class="btn btn-neutral float-right" title="Custom Time Evolution">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -239,7 +239,7 @@
       <span><a href="../j_defining_materials/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../xyz/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../l_master/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

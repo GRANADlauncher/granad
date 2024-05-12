@@ -14,7 +14,7 @@
       <script>
         // Current page data
         var mkdocs_page_name = "Custom Time Evolution";
-        var mkdocs_page_input_path = "tutorials/i_master.md";
+        var mkdocs_page_input_path = "tutorials/l_master.md";
         var mkdocs_page_url = null;
       </script>
     
@@ -76,6 +76,10 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../k_potentials/">Potentials</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Custom Time Evolution</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#hamiltonian">Hamiltonian</a>
@@ -93,10 +97,6 @@
     <li class="toctree-l2"><a class="reference internal" href="#postprocesses">Postprocesses</a>
     </li>
     </ul>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
-                  </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../k_potentials/">Potentials</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
                   </li>
@@ -223,7 +223,7 @@ looks like <code>term: time, density_matrix, args -&gt; matrix</code>.</p>
 
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../i_master_files/i_master_35_2.png" /></p>
+<p><img alt="png" src="../l_master_files/l_master_35_2.png" /></p>
 <p>That's it.</p>
 <h2 id="custom-argument-objects">Custom Argument Objects</h2>
 <p>TBD</p>
@@ -238,7 +238,7 @@ looks like <code>term: time, density_matrix, args -&gt; matrix</code>.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">dissipator_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_dissipator</span><span class="p">(</span> <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span> <span class="p">)</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">print</span><span class="p">(</span> <span class="n">dissipator_model</span> <span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;decoherence_time&#39;: &lt;function DecoherenceTime.&lt;locals&gt;.&lt;lambda&gt; at 0x7fd1995719e0&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;decoherence_time&#39;: &lt;function DecoherenceTime.&lt;locals&gt;.&lt;lambda&gt; at 0x7fac5d0f16c0&gt;}
 </code></pre></div>
 <h2 id="postprocesses">Postprocesses</h2>
 <p>You can define custom postprocesses. These are functions with the signature <code>postprocess : density_matrix_batch, args -&gt; array</code>. The <code>density_marix_batch</code> is an array of shape <code>TxNxN</code>, where <code>T</code> encodes time.</p>
@@ -259,8 +259,8 @@ looks like <code>term: time, density_matrix, args -&gt; matrix</code>.</p>
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../i_linear_response/" class="btn btn-neutral float-left" title="Linear response"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../j_defining_materials/" class="btn btn-neutral float-right" title="Defining Materials">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../k_potentials/" class="btn btn-neutral float-left" title="Potentials"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../xyz/" class="btn btn-neutral float-right" title="Exporting and Importing">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>
@@ -283,10 +283,10 @@ looks like <code>term: time, density_matrix, args -&gt; matrix</code>.</p>
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../i_linear_response/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../k_potentials/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
-      <span><a href="../j_defining_materials/" style="color: #fcfcfc">Next &raquo;</a></span>
+      <span><a href="../xyz/" style="color: #fcfcfc">Next &raquo;</a></span>
     
   </span>
 </div>

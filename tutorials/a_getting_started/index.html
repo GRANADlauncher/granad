@@ -88,11 +88,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../i_master/">Custom Time Evolution</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../k_potentials/">Potentials</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
                   </li>
@@ -245,7 +245,7 @@ For now, we will use a built-in shape: an hexagon with a base length of 10 Angst
 <p><img alt="png" src="../a_getting_started_files/a_getting_started_23_0.png" /></p>
 <p>For more information on cutting, including different edge types and how to keep dangling atoms, have a look at the corresponding tutorial.</p>
 <h2 id="a-first-simulation">A first simulation</h2>
-<p>Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix <span class="arithmatex">\(\rho(t)\)</span> of a system by integrating a nonlinear master equation. Once the time dependent density matrix is known, dynamical expectation values can be computed. Say you have a Hermitian operator epresented by a matrix <span class="arithmatex">\(A\)</span> and the solution of the master equation <span class="arithmatex">\(\rho(t)\)</span>. The expectation value is then just <span class="arithmatex">\(a(t) = \text{Tr][\rho(t) A]\)</span>. We will illustrate this at the example of the dipole moment in the small graphene flake we created above.</p>
+<p>Physical observables are expectation values of Hermitian operators. GRANAD offers access to the time-resolved density matrix <span class="arithmatex">\(\rho(t)\)</span> of a system by integrating a nonlinear master equation. Once the time dependent density matrix is known, dynamical expectation values can be computed. Say you have a Hermitian operator epresented by a matrix <span class="arithmatex">\(A\)</span> and the solution of the master equation <span class="arithmatex">\(\rho(t)\)</span>. The expectation value is then just <span class="arithmatex">\(a(t) = \text{Tr}[\rho(t) A]\)</span>. We will illustrate this at the example of the dipole moment in the small graphene flake we created above.</p>
 <p>But before we dive into exploring the dynamics of the flake, we first inspect its energies</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">my_first_flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
 </span></code></pre></div>
