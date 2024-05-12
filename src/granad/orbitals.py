@@ -1038,7 +1038,7 @@ class OrbitalList:
             correction - density_matrix,
         )
 
-    def get_args( self, relaxation_rate, coulomb_strength, propagator):
+    def get_args( self, relaxation_rate = 0.0, coulomb_strength = 1.0, propagator = None):
         return TDArgs(
             self.hamiltonian,
             self.energies,
@@ -1055,24 +1055,26 @@ class OrbitalList:
             )
 
     @staticmethod
-    def get_hamiltonian(illumination, use_rwa, add_induced):
+    def get_hamiltonian(illumination = None, use_rwa = False, add_induced = False):
         """Dict holding terms of the default hamiltonian: bare + coulomb + dipole gauge coupling to external field  + (optional) induced field (optionally in RWA)"""
         contents = {}
         contents["bare_hamiltonian"] = potentials.BareHamiltonian()
         contents["coulomb"] = potentials.Coulomb()
-        contents["potential"] = potentials.DipoleGauge(illumination, use_rwa)        
-        contents["induced"] = potentials.Induced( add_induced )
+        if illumination is not None:
+            contents["potential"] = potentials.DipoleGauge(illumination, use_rwa)
+        if add_induced == True:
+            contents["induced"] = potentials.Induced( )
         return contents
 
     # TODO: default saturation
     @staticmethod
-    def get_dissipator(relaxation_rate, saturation):
+    def get_dissipator(relaxation_rate = None, saturation = None):
         """Dict holding the term of the default dissipator: either decoherence time from relaxation_rate as float and ignored saturation or lindblad from relaxation_rate as array and saturation function"""
-        if relaxation_rate is None:
+        if relaxation_rate is None and saturation is None:
             return {"no_dissipation" : lambda t, r, args : 0.0}
         if isinstance(relaxation_rate, float):
             return { "decoherence_time" : dissipators.DecoherenceTime() }
-        return {"lindblad" : dissipators.SaturationLindblad(saturation) }        
+        return {"lindblad" : dissipators.SaturationLindblad( lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x))) ) }        
 
     # TODO: rewrite, should be static, leaks mem
     def get_postprocesses( self, expectation_values, density_matrix ):
@@ -1185,11 +1187,16 @@ class OrbitalList:
         hamiltonian = self.get_hamiltonian(illumination, use_rwa, compute_at is not None) if hamiltonian is None else hamiltonian
 
         # non hermitian rhs
-        dissipator = self.get_dissipator(relaxation_rate, lambda t,r,args : 0j) if dissipator is None else dissipator
+        dissipator = self.get_dissipator(relaxation_rate, None) if dissipator is None else dissipator
 
         # set reasonable default 
         initial_density_matrix = initial_density_matrix if initial_density_matrix is not None else rhs_args.initial_density_matrix
 
+        return self._integrate_master_equation( list(hamiltonian.values()), list(dissipator.values()), list(postprocesses.values()), rhs_args, illumination, solver, stepsize_controller, initial_density_matrix, start_time, end_time, grid, max_mem_gb, dt )
+
+    @staticmethod
+    def _integrate_master_equation( hamiltonian, dissipator, postprocesses, rhs_args, illumination, solver, stepsize_controller, initial_density_matrix, start_time, end_time, grid, max_mem_gb, dt ):
+        
         # batched time axis to save memory 
         mat_size = initial_density_matrix.size * initial_density_matrix.itemsize / 1e9
         time_axis = _numerics.get_time_axis( mat_size = mat_size, grid = grid, start_time = start_time, end_time = end_time, max_mem_gb = max_mem_gb, dt = dt )
@@ -1197,7 +1204,7 @@ class OrbitalList:
         ## integrate
         final, output = _numerics.td_run(
             initial_density_matrix,
-            _numerics.get_integrator(list(hamiltonian.values()), list(dissipator.values()), list(postprocesses.values()), solver, stepsize_controller, dt),
+            _numerics.get_integrator(hamiltonian, dissipator, postprocesses, solver, stepsize_controller, dt),
             time_axis,
             rhs_args)
         
