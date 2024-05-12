@@ -16,6 +16,8 @@
 #
 # GRANAD lets you customize the Master Equation you simulate and extract any information from it.
 
+# *Note*: Please consult the tutorial on potentials first.
+
 # *Note*: While a bit more complicated, this tutorial can help you make your simulations not only more versatile, but also increase their efficiency.
 
 # *Note*: This is still rough. In the future, I might package the functions into a "Term" object or sth like that, but this will be purely cosmetic. The underlying functions won't change.
@@ -34,7 +36,7 @@ hamiltonian_model = flake.get_hamiltonian(illumination = wave)
 print(hamiltonian_model.keys())
 # -
 
-# Again, the default Hamiltonian just has three terms:
+# As discussed, the default Hamiltonian just has three terms:
 
 # 1. a bare hamiltonian.
 # 2. an induced coulomb interaction.
@@ -46,7 +48,7 @@ print(hamiltonian_model.keys())
 # 2. the density matrix at this time
 # 3. an argument object `args`. It contains all required "static" information, like relaxation rates, energies or operators (remember we use the Schrödinger picture, so, e.g. the dipole operator does not depend on time).
 
-# Every function maps these arguments to a complex matrix. Before a simulation, the functions in the dictionary get turned into a list `func_list`. 
+# Every function maps these arguments to a complex matrix. Before running a simulation, the functions in the dictionary get turned into a list `func_list`. 
 
 # The matrix representation of the Hamiltonian is then given by applying and adding these functions, like so `H[time] = sum( f(times[time], density_matrix[time], args) for f in func_list )`.
 
@@ -118,8 +120,9 @@ def pulsed_potential( time, density_matrix, args ):
     field = (amplitudes * jnp.cos(omega * time) * jnp.exp( -(time-t0)**2 / sigma**2 ) )
     diagonal_part = args.positions @ field
     return jnp.diag( diagonal_part )
+# -
 
-# Now, we replace the built-in with our potential
+# Now, we replace the default potential with our custom term, just as we did before in the case of the pulsed dipole.
 
 # +
 hamiltonian_model["potential"] = pulsed_potential
@@ -155,7 +158,7 @@ print( dissipator_model )
 
 ### Postprocesses
 
-# You can define custom postprocesses. These are functions with the signature `postprocess : density_matrix_batch, args -> array`. The `density_marix_batch` is an array of shape `TxNxN`, where `T` encodes time.
+# You can define custom postprocesses. These are functions with the signature `postprocess : density_matrix_batch, args -> array`. The `density_matrix_batch` is an array of shape `TxNxN`, where `T` encodes time.
 
 # For example, if you are only interested in the occupation of the 0-th state
 
