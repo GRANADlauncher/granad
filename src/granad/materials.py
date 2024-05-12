@@ -562,17 +562,17 @@ _hBN = (
         parameters=[-2.16],  # Hypothetical hamiltonian parameter
     )
     .add_interaction(
-        "hamiltonian",
+        "coulomb",
         participants=("pz_boron", "pz_boron"),
         expression = ohno_potential(1)
     )
     .add_interaction(
-        "hamiltonian",
+        "coulomb",
         participants=("pz_nitrogen", "pz_nitrogen"),
         expression = ohno_potential(1)
     )
     .add_interaction(
-        "hamiltonian",
+        "coulomb",
         participants=("pz_boron", "pz_nitrogen"),
         expression = ohno_potential(1)
     )
