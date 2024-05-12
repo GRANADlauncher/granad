@@ -460,8 +460,8 @@ class OrbitalList:
         Sets a dipole transition for specified orbital or index pairs.
 
         Parameters:
-            orb_or_index1 (int or Orbital): Identifier or orbital for the first part of the transition.
-            orb_or_index2 (int or Orbital): Identifier or orbital for the second part of the transition.
+            orb1: Identifier for orbital(s) for the first part of the transition.
+            orb2: Identifier for orbital(s) for the second part of the transition.
             arr (jax.Array): The 3-element array containing dipole transition elements.
         """
         self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), jnp.array(arr).astype(complex), self.couplings.dipole_transitions)
@@ -471,8 +471,8 @@ class OrbitalList:
         Sets the hamiltonian coupling between two groups of orbitals.
 
         Parameters:
-            orb_or_group_id1 (int or Orbital): Identifier or orbital for the first group.
-            orb_or_group_id2 (int or Orbital): Identifier or orbital for the second group.
+            orb1: Identifier for orbital(s) for the first group.
+            orb2: Identifier for orbital(s) for the second group.
             func (callable): Function that defines the hamiltonian interaction.
 
         Note:
@@ -487,8 +487,8 @@ class OrbitalList:
         Sets the Coulomb coupling between two groups of orbitals.
 
         Parameters:
-            orb_or_group_id1 (int or Orbital): Identifier or orbital for the first group.
-            orb_or_group_id2 (int or Orbital): Identifier or orbital for the second group.
+            orb1: Identifier for orbital(s) for the first group.
+            orb2: Identifier for orbital(s) for the second group.
             func (callable): Function that defines the Coulomb interaction.
 
         Note:
@@ -503,8 +503,8 @@ class OrbitalList:
         Sets an element of the Hamiltonian matrix between two orbitals or indices.
 
         Parameters:
-            orb_or_index1 (int or Orbital): Identifier or orbital for the first element.
-            orb_or_index2 (int or Orbital): Identifier or orbital for the second element.
+            orb1: Identifier for orbital(s) for the first element.
+            orb2: Identifier for orbital(s) for the second element.
             val (complex): The complex value to set for the Hamiltonian element.
         """
         self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), self._ensure_complex(val), self.couplings.hamiltonian)
@@ -514,8 +514,8 @@ class OrbitalList:
         Sets a Coulomb interaction element between two orbitals or indices.
 
         Parameters:
-            orb_or_index1 (int or Orbital): Identifier or orbital for the first element.
-            orb_or_index2 (int or Orbital): Identifier or orbital for the second element.
+            orb1: Identifier for orbital(s) for the first element.
+            orb2: Identifier for orbital(s) for the second element.
             val (complex): The complex value to set for the Coulomb interaction element.
         """
         self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), self._ensure_complex(val), self.couplings.coulomb)
@@ -659,8 +659,8 @@ class OrbitalList:
         Shifts all orbitals with a specific tag by a given vector.
 
         Parameters:
-            tag_or_group_id (str or int or list[int]): The tag, group_id to match orbitals.
-            translation_vector (jax.Array): The vector by which to translate the orbital positions.
+            translation_vector (list or jax.Array): The vector by which to translate the orbital positions.
+            orb_id: Identifier for the orbital(s) to shift.
 
         Note:
             This operation mutates the positions of the matched orbitals.
@@ -675,8 +675,8 @@ class OrbitalList:
         Sets the position of all orbitals with a specific tag.
 
         Parameters:
-            tag (str): The tag to match orbitals.
-            position (jax.Array): The vector at which to move the orbitals
+            position (list or jax.Array): The vector at which to move the orbitals
+            orb_id: Identifier for the orbital(s) to shift.
 
         Note:
             This operation mutates the positions of the matched orbitals.

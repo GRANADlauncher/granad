@@ -59,8 +59,8 @@ def WavePulse( amplitudes, omega, sigma, t0 = 0.0, kick = False ):
     
 # TODO: clean up, RWA messy, allocates 3 potentially big intermediate matrices
 def DipoleGauge(illumination, use_rwa = False, intra_only = False):     
-    """Dipole gauge coupling to an external electric field, represented as $\sim \vec{E} \hat{\vec{P}}$. The dipole / polarization operator is
-    defined by $P^{c}_{ij} = <i|\hat{r}_c|j>$, where $i,j$ correspond to localized (TB) orbitals, such that $\hat{r}_c|i> = r_{c,i}|i>$ in absence of dipole transitions.
+    """Dipole gauge coupling to an external electric field, represented as $E \cdot \hat{P}$. The dipole / polarization operator is
+    defined by $P^{c}_{ij} = <i|\hat{r}_c|j>$, where $i,j$ correspond to localized (TB) orbitals, such that $\hat{r}^c|i> = r^c{i}|i>$ in absence of dipole transitions.
 
     Args:
         illumination (callable): Function that returns the electric field at a given time.
@@ -109,7 +109,7 @@ def Induced():
     return inner
 
 def Paramagnetic(vector_potential):
-    """Paramagnetic Coulomb gauge coupling to an external vector potential represented as $\sim A \hat{\vec{v}}$. 
+    """Paramagnetic Coulomb gauge coupling to an external vector potential represented as $\sim A \hat{v}$. 
 
     Args:
         vector_potential (callable): Function that returns the vector potential at a given time.
@@ -139,7 +139,7 @@ def Diamagnetic(vector_potential):
     return inner
 
 def Coulomb():
-    """Calculates the induced Coulomb potential based on deviations from a stationary density matrix, represented as $\sim \lambda C(\rho-\rho_0)$. Here, $\lambda$ is a scaling factor.
+    """Calculates the induced Coulomb potential based on deviations from a stationary density matrix, represented as $\sim \lambda C(\\rho-\\rho_0)$. Here, $\lambda$ is a scaling factor.
 
     Returns:
         Function: Computes the Coulomb interaction scaled by deviations from the stationary state.
