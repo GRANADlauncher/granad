@@ -42,7 +42,7 @@ def WavePulse( amplitudes, omega = None, sigma = None, t0 = 0.0, kick = False ):
         omega: Angular frequency of the wave oscillation (default is None).
         sigma: Standard deviation of the Gaussian pulse in time (default is None).
         t0: Central time around which the pulse peaks (default is 0.0).
-        kick: If set to True, an instantaneous spike is added to the pulse at time `t0` instead of the Gaussian modulated cosine wave (default is False).
+        kick: If True, lets the spatial profile of the wave kick only at time t0 (default is False) and discards omega, sigma.
 
     Returns:
         Function that computes the potential at a given time and location, incorporating the wave characteristics and specified modulations.
