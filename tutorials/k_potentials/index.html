@@ -146,7 +146,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">hamiltonian_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_hamiltonian</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f2d8cd1ea20&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f2d8cd1ec00&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f65c88328e0&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f65c8832ac0&gt;}
 </code></pre></div>
 <p>We see that it is just a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian. You can tell which one by looking at the keys again</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -199,6 +199,11 @@
 </code></pre></div>
 <p><img alt="png" src="../k_potentials_files/k_potentials_30_2.png" /></p>
 <p>You can simulate any number of dipoles (or terms) by just adding more keys to the dictionary. <strong>Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.</strong></p>
+<p>Note: The dipole potential above is purely diagonal, i.e. it will miss the intra-atomic dipolar contribution between orbitals <span class="arithmatex">\(i\)</span> and <span class="arithmatex">\(j\)</span> connected by a transition dipole moment <span class="arithmatex">\(\vec{d}_{ij\)</span>.</p>
+<p>In dipole gauge, this term is expressed as <span class="arithmatex">\(\vec{E} \vec{d}_{ij}\)</span>. If you want to include this term explicitly, add another potential to the Hamiltonian.</p>
+<p>To do so, define a function evaluating the electric field of your dipole at the positions of the orbitals like so <code>dipole_electric_field : time -&gt; 3xN-Array</code>.</p>
+<p>You can use the built-in dipole gauge like <code>potentials.DipoleGauge( illumination = dipole_electric_field, intra_only = True )</code>.</p>
+<p>If you place the dipole at the position of an orbital, the potential is set to zero there.</p>
 <p><strong>DANGER: We did not need the illumination argument and so the <code>result</code> object contains no information on it. It is populated with zeroes by default</strong></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">td_illumination</span><span class="p">)</span>
 </span></code></pre></div>
