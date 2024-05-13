@@ -15,6 +15,9 @@ def DipolePulse( dipole_moment, source_location, omega, sigma, t0 = 0.0, kick = 
 
     Returns:
         Function that computes the dipole potential at a given time and location, with adjustments for distance and orientation relative to the dipole.
+
+    Note:
+       Recommended only with solver=diffrax.Dopri8.
     """
     
     loc = jnp.array( source_location )[:,None]

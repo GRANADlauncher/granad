@@ -107,9 +107,12 @@ hamiltonian_model["dipole_pulse"] = dip_pulse
 # To simulate this Hamiltonian instead of the default one, we have to pass it explicitly to the TD simulation function
 
 # +
+import diffrax
 result = flake.master_equation( end_time = 40.0,
                                 hamiltonian = hamiltonian_model,
-                                expectation_values = [flake.dipole_operator]
+                                expectation_values = [flake.dipole_operator],
+                                relaxation_rate = 1/10,
+                                solver = diffrax.Dopri8() # high accuracy explicit solver to avoid oscillating tails
                                )
 flake.show_res( result )
 # -
