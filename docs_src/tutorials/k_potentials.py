@@ -119,6 +119,16 @@ flake.show_res( result )
 
 # You can simulate any number of dipoles (or terms) by just adding more keys to the dictionary. **Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.**
 
+# Note: The dipole potential above is purely diagonal, i.e. it will miss the intra-atomic dipolar contribution between orbitals $i$ and $j$ connected by a transition dipole moment $\vec{d}_{ij$.
+
+# In dipole gauge, this term is expressed as $\vec{E} \vec{d}_{ij}$. If you want to include this term explicitly, add another potential to the Hamiltonian.
+
+# To do so, define a function evaluating the electric field of your dipole at the positions of the orbitals like so `dipole_electric_field : time -> 3xN-Array`.
+
+# You can use the built-in dipole gauge like `potentials.DipoleGauge( illumination = dipole_electric_field, intra_only = True )`.
+
+# If you place the dipole at the position of an orbital, the potential is set to zero there.
+
 # **DANGER: We did not need the illumination argument and so the `result` object contains no information on it. It is populated with zeroes by default**
 
 # +

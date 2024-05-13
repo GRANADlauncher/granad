@@ -2,16 +2,17 @@ import jax
 import jax.numpy as jnp
 
 # TODO: not really pythonic naming style ...        
-def DipolePulse( dipole_moment, source_location, omega, sigma, t0 = 0.0, kick = False ):
+def DipolePulse( dipole_moment, source_location, omega = None, sigma = None, t0 = 0.0, kick = False ):
     """Function to compute the potential due to a pulsed dipole. The potential can optionally include a 'kick' which is an instantaneous spike at a specific time.
+    If the dipole is placed at a position occupied by orbitals, its contribution will be set to zero.
 
     Args:
         dipole_moment: Vector representing the dipole moment in xyz-components.
         source_location: Location of the source of the dipole in xyz-coordinates.
-        omega: Angular frequency of the oscillation.
-        sigma: Standard deviation of the pulse's temporal Gaussian profile.
+        omega: Angular frequency of the oscillation (default is None).
+        sigma: Standard deviation of the pulse's temporal Gaussian profile (default is None).
         t0: Time at which the pulse is centered (default is 0.0).
-        kick: If True, adds an instantaneous spike to the pulse at time t0 (default is False).
+        kick: If True, lets the spatial profile of the dipole kick only at time t0 (default is False) and discards omega, sigma.
 
     Returns:
         Function that computes the dipole potential at a given time and location, with adjustments for distance and orientation relative to the dipole.
@@ -33,13 +34,13 @@ def DipolePulse( dipole_moment, source_location, omega, sigma, t0 = 0.0, kick = 
 
     return pot
 
-def WavePulse( amplitudes, omega, sigma, t0 = 0.0, kick = False ):
+def WavePulse( amplitudes, omega = None, sigma = None, t0 = 0.0, kick = False ):
     """Function to compute the wave potential using amplitude modulation. This function creates a pulse with temporal Gaussian characteristics and can include an optional 'kick' which introduces an instantaneous amplitude peak.
 
     Args:
         amplitudes: List of amplitudes for the wave components in xyz-directions.
-        omega: Angular frequency of the wave oscillation.
-        sigma: Standard deviation of the Gaussian pulse in time.
+        omega: Angular frequency of the wave oscillation (default is None).
+        sigma: Standard deviation of the Gaussian pulse in time (default is None).
         t0: Central time around which the pulse peaks (default is 0.0).
         kick: If set to True, an instantaneous spike is added to the pulse at time `t0` instead of the Gaussian modulated cosine wave (default is False).
 
