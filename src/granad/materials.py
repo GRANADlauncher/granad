@@ -131,7 +131,7 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
 
     # to cover the plane, we solve the linear equation P = L C, where P are the polygon vertices, L is the lattice basis and C are the coefficients
     L = material._lattice_basis[material.periodic,:2] * material.lattice_constant
-    coeffs = jnp.linalg.inv(L.T) @ polygon.T
+    coeffs = jnp.linalg.inv(L.T) @ polygon.T*1.1
 
     # we just take the largest extent of the shape
     u1, u2 = jnp.ceil( coeffs ).max( axis = 1)
@@ -544,8 +544,8 @@ _hBN = (
     ])
     .add_orbital_species("pz_boron", l=1, atom='B')
     .add_orbital_species("pz_nitrogen", l=1, atom='N')
-    .add_orbital(position=(0, 0), tag="sublattice_boron", species="pz_boron")
-    .add_orbital(position=(-1/3, -2/3), tag="sublattice_nitrogen", species="pz_nitrogen")
+    .add_orbital(position=(0, 0), tag="B", species="pz_boron")
+    .add_orbital(position=(-1/3, -2/3), tag="N", species="pz_nitrogen")
     .add_interaction(
         "hamiltonian",
         participants=("pz_boron", "pz_boron"),

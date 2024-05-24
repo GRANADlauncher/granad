@@ -31,13 +31,14 @@ def _edge_type(vertex_func):
     """
     @wraps(vertex_func)
     def wrapper(*args, **kwargs):
-        shift = kwargs.pop( "shift", [0,0])
+        shift = jnp.array(kwargs.pop( "shift", [0,0]))
         vertices = vertex_func(
             *args, **{key: val for key, val in kwargs.items() if key != "armchair"}
         )
         if "armchair" in kwargs and kwargs["armchair"] == True:
             vertices = _rotate_vertices(vertices, 90)
-        return vertices + jnp.array( shift )
+            shift += jnp.array([10,10])
+        return vertices + shift
 
     return wrapper
 

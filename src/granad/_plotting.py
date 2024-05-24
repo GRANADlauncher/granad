@@ -19,16 +19,18 @@ def _plot_wrapper(plot_func):
     return wrapper
 
 @_plot_wrapper
-def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None):
+def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3):
     """
     Generates a 2D scatter plot representing the positions of orbitals in the xy-plane,
-    filtered by specified tags. Optionally colors points by eigenvector amplitudes.
+    filtered by specified tags. Optionally colors and sizes points by, e.g., eigenvector
+    amplitudes.
 
     Parameters:
     - orbs (list): List of orbital objects, each with attributes 'tag' and 'position'.
     - show_tags (list of str, optional): Tags used to filter orbitals for display.
     - show_index (bool): If True, indexes of the orbitals will be shown on the plot.
     - display: N-element array to display
+    - circle_size (float): larger values mean larger circles 
 
     Returns:
     - None: A 2D scatter plot is displayed.
@@ -55,9 +57,9 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     fig, ax = plt.subplots()
     
     if display is not None:
-        cmap = plt.cm.viridis if cmap is None else cmap
+        cmap = plt.cm.bwr if cmap is None else cmap
         colors = scale_vals(display) 
-        scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap)
+        scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
         cbar = fig.colorbar(scatter, ax=ax)
     else:
         # Color by tags if no show_state is given
@@ -83,16 +85,18 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     ax.axis('equal')
 
 @_plot_wrapper
-def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None):
+def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3):
     """
     Generates a 3D scatter plot representing the positions of orbitals in 3D space,
-    filtered by specified tags. Optionally colors points by eigenvector amplitudes.
+    filtered by specified tags. Optionally colors and sizes points by, e.g., eigenvector
+    amplitudes.
 
     Parameters:
     - orbs (list): List of orbital objects, each with attributes 'tag', 'position', and 'eigenvectors'.
     - show_tags (list of str, optional): Tags used to filter orbitals for display.
     - show_index (bool): If True, indexes of the orbitals will be shown on the plot.
     - display: N-element array to display
+    - circle_scale: larger values means larger circles
 
     Returns:
     - None: A 3D scatter plot is displayed.
@@ -119,9 +123,9 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     ax = fig.add_subplot(111, projection='3d')
     
     if display is not None:
-        cmap = plt.cm.viridis if cmap is None else cmap
+        cmap = plt.cm.bwr if cmap is None else cmap
         colors = scale_vals( display )
-        scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], [orb.position[2] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, depthshade=True)
+        scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], [orb.position[2] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, depthshade=True, s = circle_scale*jnp.abs(display))
         cbar = fig.colorbar(scatter, ax=ax)
         cbar.set_label('Eigenvector Magnitude')
     else:
