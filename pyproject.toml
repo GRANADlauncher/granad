@@ -20,5 +20,5 @@ dependencies = [
   'jax==0.4.26',
   'jaxlib==0.4.26',
   'diffrax',
-  'matplotlib'
+  'matplotlib==3.9'
 ]
