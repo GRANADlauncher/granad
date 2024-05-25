@@ -60,13 +60,23 @@
               <ul class="current">
                   <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">Basis Handling</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">Cutting</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">Time-Domain simulations</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">Rabi Oscillations</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../k_potentials/">Potentials</a>
                   </li>
@@ -229,7 +239,7 @@ RHS compiled
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">dissipator_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_dissipator</span><span class="p">(</span> <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span> <span class="p">)</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">print</span><span class="p">(</span> <span class="n">dissipator_model</span> <span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;decoherence_time&#39;: &lt;function DecoherenceTime.&lt;locals&gt;.&lt;lambda&gt; at 0x7f72ecd38680&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;decoherence_time&#39;: &lt;function DecoherenceTime.&lt;locals&gt;.&lt;lambda&gt; at 0x7f2950d739c0&gt;}
 </code></pre></div>
 <h2 id="postprocesses">Postprocesses</h2>
 <p>You can define custom postprocesses. These are functions with the signature <code>postprocess : density_matrix_batch, args -&gt; array</code>. The <code>density_matrix_batch</code> is an array of shape <code>TxNxN</code>, where <code>T</code> encodes time.</p>
