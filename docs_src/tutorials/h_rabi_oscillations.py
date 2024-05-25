@@ -58,7 +58,7 @@ adatom.show_res(result, plot_only = [adatom.homo, adatom.homo+1], plot_labels = 
 import jax.numpy as jnp
 from granad import MaterialCatalog, Triangle
 graphene = MaterialCatalog.get("graphene")
-flake = graphene.cut_flake(Triangle(10, armchair = True, shift = [10,10]), plot=False)
+flake = graphene.cut_flake(Triangle(10, armchair = True), plot=True)
 flake_with_adatom = flake + adatom
 pz_orbital = flake_with_adatom[8]
 top = pz_orbital.position + jnp.array([0, 0, 1])
