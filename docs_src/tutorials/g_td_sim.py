@@ -161,10 +161,6 @@ print(result.output[1].shape) # we specified ["full", "occ_x"] => full density m
 print(result.output[2].shape) # we specified ["full", "occ_x"] => site occupations
 # -
 
-### Custom computations
-
-# TBD
-
 ### Automatic Convergence Check
 
 # TBD
