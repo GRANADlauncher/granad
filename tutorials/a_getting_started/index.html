@@ -184,31 +184,7 @@ hBN
 <p>Let's inspect a material.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>Material: graphene
-  Lattice Constant: 2.46 Å
-  Lattice Basis: 
-[[ 1.         0.         0.       ]
- [-0.5        0.8660254  0.       ]]
-  Orbital Species:
-    pz characterized by (n,l,m,s, atom name) = (0, 1, 0, 0, &#39;C&#39;)
-  Orbitals:
-    Position: (0, 0), Tag: sublattice_1, Species: pz
-    Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
-  Interactions:
-   Type: hamiltonian, Participants: (&#39;pz&#39;, &#39;pz&#39;):
-                    NN Couplings: 0.0, 2.66
-                    Other neighbors: 
-    Returns a zero coupling constant as a complex number.
-
-    Args:
-        d (float): A parameter (typically representing distance or some other factor) that is ignored by the function, as the output is always zero.
-
-    Returns:
-        complex: Returns 0.0 as a complex number (0.0j).
-
-   Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;):
-                    NN Couplings: 16.522, 8.64, 5.333
-                    Other neighbors: Coupling with a (regularized) Coulomb-like potential
+<div class="language-text highlight"><pre><span></span><code>&lt;function get_graphene at 0x7fbbb229f060&gt;
 </code></pre></div>
 <p>There are parameters regarding the geometry, the type of the involved orbitals (the built-in graphene model contains only a single pz orbital per atom), the position of orbitals in the unit cell and the interactions (currently, GRANAD supports hoppings and Coulomb interactions). Let's pick a concrete material.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">graphene</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
