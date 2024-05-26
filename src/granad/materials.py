@@ -131,7 +131,7 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
 
     # to cover the plane, we solve the linear equation P = L C, where P are the polygon vertices, L is the lattice basis and C are the coefficients
     L = material._lattice_basis[material.periodic,:2] * material.lattice_constant
-    coeffs = jnp.linalg.inv(L.T) @ polygon.T*1.1
+    coeffs = jnp.linalg.inv(L.T) @ polygon.T * 1.1
 
     # we just take the largest extent of the shape
     u1, u2 = jnp.ceil( coeffs ).max( axis = 1)
@@ -489,7 +489,7 @@ class Material:
         self._set_couplings(orbital_list.set_coulomb_groups, "coulomb")
         return orbital_list
     
-def make_mos2():
+def get_mos2():
     return (Material("MoS2")
             .lattice_constant(3.16)  # Approximate lattice constant of monolayer MoS2
             .lattice_basis([
@@ -535,7 +535,7 @@ def make_mos2():
             )
 
     
-def make_hbn():
+def get_hbn():
     return (Material("hBN")
             .lattice_constant(2.50)  # Approximate lattice constant of hBN
             .lattice_basis([
@@ -579,7 +579,7 @@ def make_hbn():
             )
 
     
-def make_graphene():
+def get_graphene():
     return (Material("graphene")
             .lattice_constant(2.46)
             .lattice_basis([
@@ -602,7 +602,7 @@ def make_graphene():
             )
             )
 
-def make_ssh(delta = 0.2, displacement = 0.8):
+def get_ssh(delta = 0.2, displacement = 0.8):
     return (Material("ssh")
             .lattice_constant(2.46)
             .lattice_basis([
@@ -624,7 +624,7 @@ def make_ssh(delta = 0.2, displacement = 0.8):
             )
             )
 
-def make_metal_1d():
+def get_metal_1d():
     return (Material("metal_1d")
             .lattice_constant(2.46)
             .lattice_basis([
@@ -661,7 +661,7 @@ class MaterialCatalog:
         describe(material): Prints a description or the data object of the specified material.
         available(): Prints a list of all available materials stored in the catalog.
     """
-    _materials = {"graphene" : make_graphene, "ssh" : make_ssh, "metal_1d" : make_metal_1d, "MoS2" : make_mos2, "hBN" : make_hbn }
+    _materials = {"graphene" : get_graphene, "ssh" : get_ssh, "metal_1d" : get_metal_1d, "MoS2" : get_mos2, "hBN" : get_hbn }
 
     @staticmethod
     def get(material : str):
