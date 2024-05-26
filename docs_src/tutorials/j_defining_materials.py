@@ -95,7 +95,7 @@ print(graphene_haldane)
 # The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes
 
 # +
-hexagon =  Hexagon(30, armchair = False)
+hexagon =  Hexagon(31, armchair = True)
 flake_topological = graphene_haldane.cut_flake(hexagon, plot = True )
 delta = 0.3
 for orb_1 in [orb for orb in flake_topological if orb.tag == 'sublattice_1']:
@@ -106,7 +106,7 @@ for orb_1 in [orb for orb in flake_topological if orb.tag == 'sublattice_1']:
 
 # +
 import jax.numpy as jnp
-idx = jnp.argwhere(jnp.abs(flake_topological.energies) < 1e-2)[0].item()
+idx = jnp.argwhere(jnp.abs(flake_topological.energies) < 1e-1)[0].item()
 flake_topological.show_2d( display = flake_topological.eigenvectors[:, idx], scale = True  )
 # -
 
