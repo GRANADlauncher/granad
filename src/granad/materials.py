@@ -489,161 +489,161 @@ class Material:
         self._set_couplings(orbital_list.set_coulomb_groups, "coulomb")
         return orbital_list
     
-_MoS2 = (
-    Material("MoS2")
-    .lattice_constant(3.16)  # Approximate lattice constant of monolayer MoS2
-    .lattice_basis([
-        [1, 0, 0],
-        [-0.5, jnp.sqrt(3)/2, 0],  # Hexagonal lattice
-        [0, 0, 1],
-    ], periodic = [0,1])
-    .add_orbital_species("d_molybdenum", l=2, atom='Mo')
-    .add_orbital_species("p_sulfur", l=1, atom='S')
-    .add_orbital(position=(0, 0, 0), tag="sublattice_molybdenum", species="d_molybdenum")
-    .add_orbital(position=(1/3, 2/3, -1.5), tag="sublattice_sulfur_top", species="p_sulfur")
-    .add_orbital(position=(1/3, 2/3, 1.5), tag="sublattice_sulfur_bottom", species="p_sulfur")
-    .add_interaction(
-        "hamiltonian",
-        participants=("d_molybdenum", "p_sulfur"),
-        parameters=[-3.352]  # Hypothetical hamiltonian parameter
-    )
-    .add_interaction(
-        "hamiltonian",
-        participants=("p_sulfur", "p_sulfur"),
-        parameters=[-2., 0.1, 0.1]  # Hypothetical hamiltonian parameter
-    )
-    .add_interaction(
-        "hamiltonian",
-        participants=("d_molybdenum", "d_molybdenum"),
-        parameters=[0.201, 0.2175]  # Hypothetical hamiltonian parameter
-    )
-    .add_interaction(
-        "coulomb",
-        participants=("d_molybdenum", "p_sulfur"),
-        expression = ohno_potential(1)
-    )
-    .add_interaction(
-        "coulomb",
-        participants=("p_sulfur", "p_sulfur"),
-        expression = ohno_potential(1)
-    )
-    .add_interaction(
-        "coulomb",
-        participants=("d_molybdenum", "d_molybdenum"),
-        expression = ohno_potential(1)
-    )
-)
+def make_mos2():
+    return (Material("MoS2")
+            .lattice_constant(3.16)  # Approximate lattice constant of monolayer MoS2
+            .lattice_basis([
+                [1, 0, 0],
+                [-0.5, jnp.sqrt(3)/2, 0],  # Hexagonal lattice
+                [0, 0, 1],
+            ], periodic = [0,1])
+            .add_orbital_species("d_molybdenum", l=2, atom='Mo')
+            .add_orbital_species("p_sulfur", l=1, atom='S')
+            .add_orbital(position=(0, 0, 0), tag="sublattice_molybdenum", species="d_molybdenum")
+            .add_orbital(position=(1/3, 2/3, -1.5), tag="sublattice_sulfur_top", species="p_sulfur")
+            .add_orbital(position=(1/3, 2/3, 1.5), tag="sublattice_sulfur_bottom", species="p_sulfur")
+            .add_interaction(
+                "hamiltonian",
+                participants=("d_molybdenum", "p_sulfur"),
+                parameters=[-3.352]  # Hypothetical hamiltonian parameter
+            )
+            .add_interaction(
+                "hamiltonian",
+                participants=("p_sulfur", "p_sulfur"),
+                parameters=[-2., 0.1, 0.1]  # Hypothetical hamiltonian parameter
+            )
+            .add_interaction(
+                "hamiltonian",
+                participants=("d_molybdenum", "d_molybdenum"),
+                parameters=[0.201, 0.2175]  # Hypothetical hamiltonian parameter
+            )
+            .add_interaction(
+                "coulomb",
+                participants=("d_molybdenum", "p_sulfur"),
+                expression = ohno_potential(1)
+            )
+            .add_interaction(
+                "coulomb",
+                participants=("p_sulfur", "p_sulfur"),
+                expression = ohno_potential(1)
+            )
+            .add_interaction(
+                "coulomb",
+                participants=("d_molybdenum", "d_molybdenum"),
+                expression = ohno_potential(1)
+            )
+            )
 
     
-_hBN = (
-    Material("hBN")
-    .lattice_constant(2.50)  # Approximate lattice constant of hBN
-    .lattice_basis([
-        [1, 0, 0],
-        [-0.5, jnp.sqrt(3)/2, 0],  # Hexagonal lattice
-    ])
-    .add_orbital_species("pz_boron", l=1, atom='B')
-    .add_orbital_species("pz_nitrogen", l=1, atom='N')
-    .add_orbital(position=(0, 0), tag="B", species="pz_boron")
-    .add_orbital(position=(-1/3, -2/3), tag="N", species="pz_nitrogen")
-    .add_interaction(
-        "hamiltonian",
-        participants=("pz_boron", "pz_boron"),
-        parameters=[2.46, -0.04],  # Hypothetical hamiltonian parameter
-    )
-    .add_interaction(
-        "hamiltonian",
-        participants=("pz_nitrogen", "pz_nitrogen"),
-        parameters=[-2.55, -0.04],  # Hypothetical hamiltonian parameter
-    )
-    .add_interaction(
-        "hamiltonian",
-        participants=("pz_boron", "pz_nitrogen"),
-        parameters=[-2.16],  # Hypothetical hamiltonian parameter
-    )
-    .add_interaction(
-        "coulomb",
-        participants=("pz_boron", "pz_boron"),
-        expression = ohno_potential(1)
-    )
-    .add_interaction(
-        "coulomb",
-        participants=("pz_nitrogen", "pz_nitrogen"),
-        expression = ohno_potential(1)
-    )
-    .add_interaction(
-        "coulomb",
-        participants=("pz_boron", "pz_nitrogen"),
-        expression = ohno_potential(1)
-    )
-)
+def make_hbn():
+    return (Material("hBN")
+            .lattice_constant(2.50)  # Approximate lattice constant of hBN
+            .lattice_basis([
+                [1, 0, 0],
+                [-0.5, jnp.sqrt(3)/2, 0],  # Hexagonal lattice
+            ])
+            .add_orbital_species("pz_boron", l=1, atom='B')
+            .add_orbital_species("pz_nitrogen", l=1, atom='N')
+            .add_orbital(position=(0, 0), tag="B", species="pz_boron")
+            .add_orbital(position=(-1/3, -2/3), tag="N", species="pz_nitrogen")
+            .add_interaction(
+                "hamiltonian",
+                participants=("pz_boron", "pz_boron"),
+                parameters=[2.46, -0.04],  # Hypothetical hamiltonian parameter
+            )
+            .add_interaction(
+                "hamiltonian",
+                participants=("pz_nitrogen", "pz_nitrogen"),
+                parameters=[-2.55, -0.04],  # Hypothetical hamiltonian parameter
+            )
+            .add_interaction(
+                "hamiltonian",
+                participants=("pz_boron", "pz_nitrogen"),
+                parameters=[-2.16],  # Hypothetical hamiltonian parameter
+            )
+            .add_interaction(
+                "coulomb",
+                participants=("pz_boron", "pz_boron"),
+                expression = ohno_potential(1)
+            )
+            .add_interaction(
+                "coulomb",
+                participants=("pz_nitrogen", "pz_nitrogen"),
+                expression = ohno_potential(1)
+            )
+            .add_interaction(
+                "coulomb",
+                participants=("pz_boron", "pz_nitrogen"),
+                expression = ohno_potential(1)
+            )
+            )
 
     
-_graphene = (
-    Material("graphene")
-    .lattice_constant(2.46)
-    .lattice_basis([
-        [1, 0, 0],
-        [-0.5, jnp.sqrt(3)/2, 0]
-    ])
-    .add_orbital_species("pz", l=1, atom='C')
-    .add_orbital(position=(0, 0), tag="sublattice_1", species="pz")
-    .add_orbital(position=(-1/3, -2/3), tag="sublattice_2", species="pz")
-    .add_interaction(
-        "hamiltonian",
-        participants=("pz", "pz"),
-        parameters=[0.0, 2.66],
-    )
-    .add_interaction(
-        "coulomb",
-        participants=("pz", "pz"),
-        parameters=[16.522, 8.64, 5.333],
-        expression=ohno_potential(0)
-    )
-)
+def make_graphene():
+    return (Material("graphene")
+            .lattice_constant(2.46)
+            .lattice_basis([
+                [1, 0, 0],
+                [-0.5, jnp.sqrt(3)/2, 0]
+            ])
+            .add_orbital_species("pz", l=1, atom='C')
+            .add_orbital(position=(0, 0), tag="sublattice_1", species="pz")
+            .add_orbital(position=(-1/3, -2/3), tag="sublattice_2", species="pz")
+            .add_interaction(
+                "hamiltonian",
+                participants=("pz", "pz"),
+                parameters=[0.0, 2.66],
+            )
+            .add_interaction(
+                "coulomb",
+                participants=("pz", "pz"),
+                parameters=[16.522, 8.64, 5.333],
+                expression=ohno_potential(0)
+            )
+            )
 
-_ssh = (
-    Material("ssh")
-    .lattice_constant(2.46)
-    .lattice_basis([
-        [1, 0, 0],
-    ])
-    .add_orbital_species("pz", l=1, atom='C')
-    .add_orbital(position=(0,), tag="sublattice_1", species="pz")
-    .add_orbital(position=(0.8,), tag="sublattice_2", species="pz")
-    .add_interaction(
-        "hamiltonian",
-        participants=("pz", "pz"),
-        parameters=[0.0, 1 + 0.2, 1 - 0.2],
-    )
-    .add_interaction(
-        "coulomb",
-        participants=("pz", "pz"),
-        parameters=[16.522, 8.64, 5.333],
-        expression=ohno_potential(0)
-    )
-)
+def make_ssh(delta = 0.2, displacement = 0.8):
+    return (Material("ssh")
+            .lattice_constant(2.46)
+            .lattice_basis([
+                [1, 0, 0],
+            ])
+            .add_orbital_species("pz", l=1, atom='C')
+            .add_orbital(position=(0,), tag="sublattice_1", species="pz")
+            .add_orbital(position=(displacement,), tag="sublattice_2", species="pz")
+            .add_interaction(
+                "hamiltonian",
+                participants=("pz", "pz"),
+                parameters=[0.0, 1 + delta, 1 - delta],
+            )
+            .add_interaction(
+                "coulomb",
+                participants=("pz", "pz"),
+                parameters=[16.522, 8.64, 5.333],
+                expression=ohno_potential(0)
+            )
+            )
 
-_metal_1d = (
-    Material("metal_1d")
-    .lattice_constant(2.46)
-    .lattice_basis([
-        [1, 0, 0],
-    ])
-    .add_orbital_species("pz", l=1, atom='C')
-    .add_orbital(position=(0,), tag="", species="pz")
-    .add_interaction(
-        "hamiltonian",
-        participants=("pz", "pz"),
-        parameters=[0.0, 2.66],
-    )
-    .add_interaction(
-        "coulomb",
-        participants=("pz", "pz"),
-        parameters=[16.522, 8.64, 5.333],
-        expression=ohno_potential(0)
-    )
-)
+def make_metal_1d():
+    return (Material("metal_1d")
+            .lattice_constant(2.46)
+            .lattice_basis([
+                [1, 0, 0],
+            ])
+            .add_orbital_species("pz", l=1, atom='C')
+            .add_orbital(position=(0,), tag="", species="pz")
+            .add_interaction(
+                "hamiltonian",
+                participants=("pz", "pz"),
+                parameters=[0.0, 2.66],
+            )
+            .add_interaction(
+                "coulomb",
+                participants=("pz", "pz"),
+                parameters=[16.522, 8.64, 5.333],
+                expression=ohno_potential(0)
+            )
+            )
 
 class MaterialCatalog:
     """
@@ -661,7 +661,7 @@ class MaterialCatalog:
         describe(material): Prints a description or the data object of the specified material.
         available(): Prints a list of all available materials stored in the catalog.
     """
-    _materials = {"graphene" : _graphene, "ssh" : _ssh, "metal_1d" : _metal_1d, "MoS2" : _MoS2, "hBN" : _hBN }
+    _materials = {"graphene" : make_graphene, "ssh" : make_ssh, "metal_1d" : make_metal_1d, "MoS2" : make_mos2, "hBN" : make_hbn }
 
     @staticmethod
     def get(material : str):
@@ -679,7 +679,7 @@ class MaterialCatalog:
             graphene_data = MaterialCatalog.get('graphene')
             ```
         """
-        return MaterialCatalog._materials[material]
+        return MaterialCatalog._materials[material]()
     
     @staticmethod
     def describe(material : str):
