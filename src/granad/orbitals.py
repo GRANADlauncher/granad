@@ -1270,16 +1270,6 @@ class OrbitalList:
         sus = _numerics.rpa_polarizability_function( args, hungry )
         return jax.lax.map(sus, omegas)    
 
-    def get_mean_field_hamiltonian( self, overlap = None ):
-        """convert an orbital list to a set of parameters usable for the rhf procedure. 
-        currently, only an empirical direct channel interaction specified specified in a 
-        the list's coulomb dict is taken into account.
-        """
-        # Since we consider <1i|U|i1> => U_{11ii}
-        eri = self.coulomb[None, None]
-        overlap = overlap if overlap is not None else jnp.eye(self.hamiltonian.shape[0])
-        return _rhf( self.hamiltonian, eri, overlap, self.electrons )
-    
     @property
     def atoms( self ):
         atoms_pos = defaultdict(list)
