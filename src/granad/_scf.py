@@ -41,29 +41,32 @@ def get_atomic_charges():
         'Sg': 106, 'Bh': 107, 'Hs': 108, 'Mt': 109, 'Ds': 110, 'Rg': 111, 'Cn': 112,
         'Nh': 113, 'Fl': 114, 'Mc': 115, 'Lv': 116, 'Ts': 117, 'Og': 118
     }
-    
+
+# TODO: tail-call for n > len(vals)
 def double_factorial(n):
-    rng = jnp.arange(1,20)
-    arr = jnp.where(rng < n - 1, rng, 1)
-    return arr[::2].prod()
+    vals = jnp.array([1,1,2,3,8,15,48,105,384,945,3840,10395,46080,135135,645120,2027025])
+    n_max = vals.size
+    rng = jnp.arange(n_max)
+    return (n > 0) * jnp.where(rng == n, vals[rng], 0).sum() + (n < 0)
 
 def factorial(n):
-    rng = jnp.arange(1,20)
-    arr = jnp.where(rng < n - 1, rng, 1)
-    return arr.prod()
+    vals = jnp.array([1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800,87178291200,1307674368000])
+    rng = jnp.arange(vals.size)
+    return jnp.where(rng == n, vals[rng], 0).sum()
 
 def binom(n, m):
-    return factorial(n) / (factorial(n - m) * factorial(m))
+    return (n > 0) * (m > 0) * (n > m) * (factorial(n) / (factorial(n - m) * factorial(m)) - 1) + 1
 
 def gaussian_1d(o1, o2, x1, x2, gamma):
     """computes 1D gaussian integral"""
     
     def prefactor(i):
         s = 2*i
-        arr = jnp.where( jnp.logical_and(s-o1 <= rng, rng <= o2), rng, -1)
+        cond = jnp.logical_and( rng < s + 1, jnp.logical_and(s-o1 <= rng, rng <= o2) )
+        arr = jnp.where(cond, rng, -1)
         return jax.lax.map(
             lambda t : jax.lax.cond(
-                t > 0,
+                t >= 0,
                 lambda t : binom(o1, s-t)*binom(o2, t)*jnp.power(x1,(o1-s+t))*jnp.power(x2,(o2-t)),
                 lambda t : 0.0,
                 t),
@@ -71,13 +74,13 @@ def gaussian_1d(o1, o2, x1, x2, gamma):
     
     def term(i):
         return prefactor(i)*double_factorial(2*i-1)/jnp.power(2*gamma,i)
-    
+
     rng = jnp.arange(20)
     arr = jnp.where(rng < 1 + jnp.floor(0.5*(o1+o2)), rng, -1)
 
     return jax.lax.map(
         lambda i : jax.lax.cond(
-            i > 0,
+            i >= 0,
             lambda i : term(i),
             lambda  i : 0.0,
             i),
@@ -91,21 +94,21 @@ def gaussian_3d(lmn1, lmn2, a1, a2, r1, r2, r):
     pre = jnp.power((jnp.pi/gamma),1.5) * jnp.exp(-a1*a2*r/gamma)
     
     # gaussian integral as function of cartesian index
-    f = lambda i : gaussian_1d(lmn1[i], lmn2[i], r1[i], r2[i], gamma)
+    f = lambda i : gaussian_1d(lmn1[i], lmn2[i],  center[i] - r1[i],  center[i] - r2[i], gamma)
 
-    return pre * jax.vmap(f)(jnp.arange(3)).sum()
+    return pre * jax.vmap(f)(jnp.arange(3)).prod()
 
 def gaussian_kinetic_term(lmn1, lmn2, a1, a2, r1, r2, r):
     """computes gaussian kinetic term for two GTOs"""
 
     term0  = a2 * (2.0*lmn2.sum()+3.0) * gaussian_3d(lmn1, lmn2, a1, a2, r1, r2, r)
 
-    term1 = -2.0 * jnp.pow(a1, 2.0) * (gaussian_3d(lmn1, lmn2.at[0].set(lmn2[0]+2), a1, a2, r1, r2, r)
+    term1 = -2.0 * jnp.pow(a2, 2.0) * (gaussian_3d(lmn1, lmn2.at[0].set(lmn2[0]+2), a1, a2, r1, r2, r)
                                        + gaussian_3d(lmn1, lmn2.at[1].set(lmn2[1]+2), a1, a2, r1, r2, r)
                                        + gaussian_3d(lmn1, lmn2.at[2].set(lmn2[2]+2), a1, a2, r1, r2, r)
                                        )
 
-    prefac = lmn1*(lmn2 - 1)
+    prefac = lmn2*(lmn2 - 1)
     term2 = -0.5 * (prefac[0]*gaussian_3d(lmn1, lmn2.at[0].set(lmn2[0]-2), a1, a2, r1, r2, r)
                     + prefac[1]*gaussian_3d(lmn1, lmn2.at[1].set(lmn2[1]-2), a1, a2, r1, r2, r)
                     + prefac[2]*gaussian_3d(lmn1, lmn2.at[2].set(lmn2[2]-2), a1, a2, r1, r2, r)
@@ -213,6 +216,8 @@ def expand_gaussian(orb_list, expansion):
     
     kinetic = jax.jit(lambda orb1, orb2: kinetic_gaussian(size, orb1, orb2))
     kinetic(orbitals[0], orbitals[0])
+
+    # kinetic = overlap = None
     
     return overlap, kinetic, orbitals, nuclei, orbitals_to_nuclei
 
@@ -258,6 +263,7 @@ sto_3g = {
             jnp.array( [ 0,0,1 ]) )
     }
 
+
 def get_reference(flake, expansion):
     """constructs PyQInt reference list of CGFs"""
     ang2bohr = 1 #1.8897259886
@@ -271,26 +277,7 @@ def get_reference(flake, expansion):
         cgfs.append( cgf1 )
     return cgfs
 
-def test_elements( jax_func, orbitals, pyqint_func, cgfs, i, j ):
-    print( "JAX", jax_func(orbitals[i], orbitals[j]) )
-    print( "PyQint",  pyqint_func(cgfs[i], cgfs[j]) )    
-    print( "delta", jnp.abs(jax_func(orbitals[i], orbitals[j])) - pyqint_func(cgfs[i], cgfs[j]))    
-
-def test_matrix( jax_func, orbitals, pyqint_func, cgfs ):
-    
-    func = jax.jax.vmap(jax.vmap(overlap, (None,0)), (0, None))
-    start = time.time()
-    S = jax_func(orbitals, orbitals)
-    print(time.time() - start)
-    
-    start = time.time()
-    for i in range(len(flake)):
-        for j in range(len(flake)):
-            res = pyqint_func(cgfs[i], cgfs[j])
-    print(time.time()-start)
-
-        
-if __name__ == '__main__':
+def test_elements():
     # set up flake    
     flake = MaterialCatalog.get("graphene").cut_flake(Triangle(10))
 
@@ -300,8 +287,102 @@ if __name__ == '__main__':
     # prepare data and functions for matrix element evaluation    
     overlap, kinetic, orbitals, nuclei, orbs_to_nuclei = expand_gaussian(flake, expansion)
     
-    integrator = PyQInt()
-    
-    test_elements(overlap, orbitals, integrator.overlap, get_reference(flake, expansion), 0, 0)    
-    test_elements(kinetic, orbitals, integrator.kinetic, get_reference(flake, expansion), 0, 0)
+    integrator = PyQInt()    
 
+    i, j = 0, 3  
+    cgfs = get_reference(flake, expansion)    
+    cfg1, cfg2 = cgfs[i], cgfs[j]
+
+    jax_s = overlap(orbitals[i], orbitals[j])
+    pyqint_s = integrator.overlap(cfg1, cfg2)
+
+    print("###OVERLAP###")
+    print( "JAX", jax_s)
+    print( "PyQint",  pyqint_s)    
+    print( "delta", jnp.abs(jax_s - pyqint_s) )    
+
+    jax_s = kinetic(orbitals[i], orbitals[j])
+    pyqint_s = integrator.kinetic(cfg1, cfg2)
+    
+    print("###KINETIC###")    
+    print( "JAX", jax_s)
+    print( "PyQint",  pyqint_s)    
+    print( "delta", jnp.abs(jax_s - pyqint_s) )    
+
+def test_matrix():
+    # set up flake    
+    flake = MaterialCatalog.get("graphene").cut_flake(Triangle(10))
+
+    # modelling only pz orbs
+    expansion = { flake[0].group_id : sto_3g["pz"] }
+
+    # prepare data and functions for matrix element evaluation    
+    overlap, kinetic, orbitals, nuclei, orbs_to_nuclei = expand_gaussian(flake, expansion)
+    
+    cgfs = get_reference(flake, expansion)
+    integrator = PyQInt()    
+
+    get_s = jax.jit(jax.vmap(jax.vmap(lambda o1, o2 : overlap(o1, o2), (0, None), 0), (None, 0), 0))
+    start = time.time()
+    jax_s = get_s(orbitals, orbitals)
+    print(time.time() - start)
+    
+    pyqint_s = np.zeros_like(jax_s)
+    start = time.time()
+    for i in range(len(flake)):
+        for j in range(len(flake)):
+            pyqint_s[i,j] = integrator.overlap(cgfs[i], cgfs[j])
+    print(time.time()-start)
+
+    print("###OVERLAP###")
+    print( "delta", jnp.linalg.norm(jax_s - pyqint_s) )    
+
+
+def test_cgfs():
+    # set up flake    
+    flake = MaterialCatalog.get("graphene").cut_flake(Triangle(10))
+
+    # modelling only pz orbs
+    expansion = { flake[0].group_id : sto_3g["pz"] }
+
+    # prepare data and functions for matrix element evaluation    
+    overlap, kinetic, orbitals, nuclei, orbs_to_nuclei = expand_gaussian(flake, expansion)
+    
+    integrator = PyQInt()    
+
+    cgfs = get_reference(flake, expansion)
+    
+    i, j = 0, 1
+    gto1 = cgfs[i].gtos[0]
+    gto2 = cgfs[j].gtos[0]
+    print(gto1, gto2)
+    
+    n = 3
+    orbital_1, orbital_2 = orbitals[i], orbitals[j]    
+    coefficients_1, alphas_1, lmn_1, r_1 = orbital_1[:n], orbital_1[n:2*n], orbital_1[-6:-3], orbital_1[-3:]
+    coefficients_2, alphas_2, lmn_2, r_2 = orbital_2[:n], orbital_2[n:2*n], orbital_2[-6:-3], orbital_2[-3:]
+    a_1, a_2 = alphas_1[i], alphas_2[i]    
+    r = jnp.linalg.norm(r_1 - r_2)**2    
+
+    vals1 = jnp.array([2,1,2])
+    vals2 = jnp.array([1,1,2])
+    
+    gto1.l = vals1[0]
+    gto1.m = vals1[1]
+    gto1.n = vals1[2]
+    gto1.p = r_1.tolist()
+
+    gto2.l = vals2[0]
+    gto2.m = vals2[1]
+    gto2.n = vals2[2]
+    gto2.p = r_2.tolist()
+
+    print(gaussian_3d(lmn_1.at[:3].set(vals1), lmn_2.at[:3].set(vals2), a_1, a_2, r_1, r_2, r))
+    print(integrator.overlap_gto(gto1, gto2))
+    print(gaussian_kinetic_term(lmn_1.at[:3].set(vals1), lmn_2.at[:3].set(vals2), a_1, a_2, r_1, r_2, r))
+    print(integrator.kinetic_gto(gto1, gto2))    
+        
+if __name__ == '__main__':
+    # test_cgfs()
+    # test_elements()
+    test_matrix()
