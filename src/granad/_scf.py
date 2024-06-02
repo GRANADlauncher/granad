@@ -42,6 +42,7 @@ def get_atomic_charges():
         'Nh': 113, 'Fl': 114, 'Mc': 115, 'Lv': 116, 'Ts': 117, 'Og': 118
     }
 
+# TODO: I suspect all these functions suck in terms of performance
 # TODO: tail-call for n > len(vals)
 def double_factorial(n):
     vals = jnp.array([1,1,2,3,8,15,48,105,384,945,3840,10395,46080,135135,645120,2027025])
@@ -86,6 +87,7 @@ def gaussian_1d(o1, o2, x1, x2, gamma):
             i),
         arr).sum()
 
+# TODO: cache locality
 def gaussian_3d(lmn1, lmn2, a1, a2, r1, r2, r):
     """computes 3D gaussian integral"""
     
@@ -116,6 +118,18 @@ def gaussian_kinetic_term(lmn1, lmn2, a1, a2, r1, r2, r):
     
     return term0 + term1 + term2
 
+def gaussian_nuclear_term(lmn1, lmn2, a1, a2, r1, r2, r, r_nc, nuc):    
+    """computes gaussian nuclear term for two GTOs and one nucleus"""
+    
+    gamma = a1+a2
+    center = (a1*r1+a2*r2)/gamma
+    r_nc = jnp.linalg.norm(center-nuc)**2
+    pre = -2.0 * jnp.pi/gamma * jnp.exp(-a1*a2*r/gamma)
+
+    jax.vmap( jax.lax.gammainc() )
+
+    return term0 + term1 + term2
+
 def gaussian_norm(lmn, alphas):
     nom = jax.vmap(lambda a : jnp.pow(2.0, 2.0*(lmn.sum()) + 1.5) * jnp.pow(a, lmn.sum() + 1.5))(alphas)
     denom = (jax.vmap(lambda i : double_factorial(2*i-1))(lmn)).prod() * jnp.pow(jnp.pi, 1.5)
@@ -127,11 +141,29 @@ def two_body_gaussian(n, orbital_i, orbital_j, orbital_k, orbital_l):
     print("Compiling gaussian two body")
     return
 
-def nuclear_gaussian(n, orbitals, nuclei):
+def nuclear_gaussian(n, orbitals, nucleus):
     r"""1 body matrix element in gaussian basis
-    $U_{ij} = \int dx \overline{\phi_i(x)} \sum_{x_n} 1/|x_n - x| \phi_j(x)$"""
+    $U_{ij} = \int dx \overline{\phi_i(x)} 1/|x_n - x| \phi_j(x)$"""
     print("Compiling gaussian nuclear")
-    return
+
+    # unpack array
+    coefficients_i, alphas_i, lmn_i, pos_i = orbital_i[:n], orbital_i[n:2*n], orbital_i[-6:-3], orbital_i[-3:]
+    coefficients_j, alphas_j, lmn_j, pos_j = orbital_j[:n], orbital_j[n:2*n], orbital_j[-6:-3], orbital_j[-3:]
+    
+    # normalization 
+    norms_i = gaussian_norm(lmn_i, alphas_i)
+    norms_j = gaussian_norm(lmn_j, alphas_j)
+    
+    # scalar distance is loop invariant
+    r = jnp.linalg.norm(pos_i - pos_j)**2
+
+    # vectorized integration as a matrix
+    integral = jax.vmap(jax.vmap(lambda a, b : gaussian_nuclear_term(lmn_i, lmn_j, a, b, pos_i, pos_j, r), (0, None), 0), (None, 0), 0)
+
+    # corresponding prefactor matrix
+    prefac = norms_i[:, None] * norms_j * coefficients_i[:, None] * coefficients_j
+    
+    return (prefac * integral(alphas_i, alphas_j) ).sum()
 
 def kinetic_gaussian(n, orbital_i, orbital_j):
     r"""1 body matrix element in gaussian basis
@@ -217,7 +249,10 @@ def expand_gaussian(orb_list, expansion):
     kinetic = jax.jit(lambda orb1, orb2: kinetic_gaussian(size, orb1, orb2))
     kinetic(orbitals[0], orbitals[0])
 
-    # kinetic = overlap = None
+    nuclear = jax.jit(lambda orb1, orb2, nuc: nuclear_gaussian(size, orb1, orb2, nuc))
+    nuclear(orbitals[0], orbitals[0], nuclei[0])
+    
+    # kinetic = overlap = nuclear = None
     
     return overlap, kinetic, orbitals, nuclei, orbitals_to_nuclei
 
@@ -255,6 +290,11 @@ def scf(hamiltonian, cooper, coulomb, exchange):
     # cooper channel => build PH symmetric ham
     # else, start loop
     return NotImplemented
+
+def transform_loop(f, *xs):
+    loop = lambda s, *indices : s + f(*indices)
+    
+    
 
 # convention used for built-in gaussian basis: tuples have the form (coefficients, alphas, lmn), where lmn is exponent of cartesian coordinates x,y,z
 sto_3g = {
@@ -311,7 +351,7 @@ def test_elements():
 
 def test_matrix():
     # set up flake    
-    flake = MaterialCatalog.get("graphene").cut_flake(Triangle(10))
+    flake = MaterialCatalog.get("graphene").cut_flake(Triangle(30))
 
     # modelling only pz orbs
     expansion = { flake[0].group_id : sto_3g["pz"] }
@@ -381,7 +421,7 @@ def test_cgfs():
     print(integrator.overlap_gto(gto1, gto2))
     print(gaussian_kinetic_term(lmn_1.at[:3].set(vals1), lmn_2.at[:3].set(vals2), a_1, a_2, r_1, r_2, r))
     print(integrator.kinetic_gto(gto1, gto2))    
-        
+    
 if __name__ == '__main__':
     # test_cgfs()
     # test_elements()
