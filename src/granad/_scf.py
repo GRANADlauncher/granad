@@ -1,11 +1,7 @@
 import time
 import jax
 import jax.numpy as jnp
-
-# reference
-from pyqint import PyQInt, cgf
-import numpy as np
-from copy import deepcopy
+from jax.scipy.special import gamma, gammainc
 
 from granad import *
 
@@ -23,8 +19,8 @@ from granad import *
 # TODO: put norms into orbital array?
 # TODO: DRY norm unpacking same in all mat elem procedures
 
-def get_atomic_charges():
-    return {
+def get_atomic_charge(atom):
+    charges = {
         'H': 1, 'He': 2, 'Li': 3, 'Be': 4, 'B': 5, 'C': 6, 'N': 7, 'O': 8, 'F': 9, 'Ne': 10,
         'Na': 11, 'Mg': 12, 'Al': 13, 'Si': 14, 'P': 15, 'S': 16, 'Cl': 17, 'Ar': 18,
         'K': 19, 'Ca': 20, 'Sc': 21, 'Ti': 22, 'V': 23, 'Cr': 24, 'Mn': 25, 'Fe': 26,
@@ -41,6 +37,7 @@ def get_atomic_charges():
         'Sg': 106, 'Bh': 107, 'Hs': 108, 'Mt': 109, 'Ds': 110, 'Rg': 111, 'Cn': 112,
         'Nh': 113, 'Fl': 114, 'Mc': 115, 'Lv': 116, 'Ts': 117, 'Og': 118
     }
+    return charges[atom]
 
 # TODO: I suspect all these functions suck in terms of performance
 # TODO: tail-call for n > len(vals)
@@ -58,77 +55,9 @@ def factorial(n):
 def binom(n, m):
     return (n > 0) * (m > 0) * (n > m) * (factorial(n) / (factorial(n - m) * factorial(m)) - 1) + 1
 
-def gaussian_1d(o1, o2, x1, x2, gamma):
-    """computes 1D gaussian integral"""
-    
-    def prefactor(i):
-        s = 2*i
-        cond = jnp.logical_and( rng < s + 1, jnp.logical_and(s-o1 <= rng, rng <= o2) )
-        arr = jnp.where(cond, rng, -1)
-        return jax.lax.map(
-            lambda t : jax.lax.cond(
-                t >= 0,
-                lambda t : binom(o1, s-t)*binom(o2, t)*jnp.power(x1,(o1-s+t))*jnp.power(x2,(o2-t)),
-                lambda t : 0.0,
-                t),
-            arr).sum()
-    
-    def term(i):
-        return prefactor(i)*double_factorial(2*i-1)/jnp.power(2*gamma,i)
-
-    rng = jnp.arange(20)
-    arr = jnp.where(rng < 1 + jnp.floor(0.5*(o1+o2)), rng, -1)
-
-    return jax.lax.map(
-        lambda i : jax.lax.cond(
-            i >= 0,
-            lambda i : term(i),
-            lambda  i : 0.0,
-            i),
-        arr).sum()
-
-# TODO: cache locality
-def gaussian_3d(lmn1, lmn2, a1, a2, r1, r2, r):
-    """computes 3D gaussian integral"""
-    
-    gamma = a1+a2
-    center = (a1*r1+a2*r2)/gamma
-    pre = jnp.power((jnp.pi/gamma),1.5) * jnp.exp(-a1*a2*r/gamma)
-    
-    # gaussian integral as function of cartesian index
-    f = lambda i : gaussian_1d(lmn1[i], lmn2[i],  center[i] - r1[i],  center[i] - r2[i], gamma)
-
-    return pre * jax.vmap(f)(jnp.arange(3)).prod()
-
-def gaussian_kinetic_term(lmn1, lmn2, a1, a2, r1, r2, r):
-    """computes gaussian kinetic term for two GTOs"""
-
-    term0  = a2 * (2.0*lmn2.sum()+3.0) * gaussian_3d(lmn1, lmn2, a1, a2, r1, r2, r)
-
-    term1 = -2.0 * jnp.pow(a2, 2.0) * (gaussian_3d(lmn1, lmn2.at[0].set(lmn2[0]+2), a1, a2, r1, r2, r)
-                                       + gaussian_3d(lmn1, lmn2.at[1].set(lmn2[1]+2), a1, a2, r1, r2, r)
-                                       + gaussian_3d(lmn1, lmn2.at[2].set(lmn2[2]+2), a1, a2, r1, r2, r)
-                                       )
-
-    prefac = lmn2*(lmn2 - 1)
-    term2 = -0.5 * (prefac[0]*gaussian_3d(lmn1, lmn2.at[0].set(lmn2[0]-2), a1, a2, r1, r2, r)
-                    + prefac[1]*gaussian_3d(lmn1, lmn2.at[1].set(lmn2[1]-2), a1, a2, r1, r2, r)
-                    + prefac[2]*gaussian_3d(lmn1, lmn2.at[2].set(lmn2[2]-2), a1, a2, r1, r2, r)
-                    )
-    
-    return term0 + term1 + term2
-
-def gaussian_nuclear_term(lmn1, lmn2, a1, a2, r1, r2, r, r_nc, nuc):    
-    """computes gaussian nuclear term for two GTOs and one nucleus"""
-    
-    gamma = a1+a2
-    center = (a1*r1+a2*r2)/gamma
-    r_nc = jnp.linalg.norm(center-nuc)**2
-    pre = -2.0 * jnp.pi/gamma * jnp.exp(-a1*a2*r/gamma)
-
-    jax.vmap( jax.lax.gammainc() )
-
-    return term0 + term1 + term2
+def boys(n, x):
+    r"""Computes $F_n(T) = \int_0^1 dx x^{2m} e^{-Tx^2}$"""
+    return gamma(0.5 + n) * gammainc(0.5 + n, x) / (2*x**(0.5 + n))
 
 def gaussian_norm(lmn, alphas):
     nom = jax.vmap(lambda a : jnp.pow(2.0, 2.0*(lmn.sum()) + 1.5) * jnp.pow(a, lmn.sum() + 1.5))(alphas)
@@ -141,53 +70,20 @@ def two_body_gaussian(n, orbital_i, orbital_j, orbital_k, orbital_l):
     print("Compiling gaussian two body")
     return
 
-def nuclear_gaussian(n, orbitals, nucleus):
+def _unpack_loop():
+    return
+
+def nuclear_gaussian(n, orbital_i, orbital_j, nucleus):
     r"""1 body matrix element in gaussian basis
     $U_{ij} = \int dx \overline{\phi_i(x)} 1/|x_n - x| \phi_j(x)$"""
     print("Compiling gaussian nuclear")
-
-    # unpack array
-    coefficients_i, alphas_i, lmn_i, pos_i = orbital_i[:n], orbital_i[n:2*n], orbital_i[-6:-3], orbital_i[-3:]
-    coefficients_j, alphas_j, lmn_j, pos_j = orbital_j[:n], orbital_j[n:2*n], orbital_j[-6:-3], orbital_j[-3:]
-    
-    # normalization 
-    norms_i = gaussian_norm(lmn_i, alphas_i)
-    norms_j = gaussian_norm(lmn_j, alphas_j)
-    
-    # scalar distance is loop invariant
-    r = jnp.linalg.norm(pos_i - pos_j)**2
-
-    # vectorized integration as a matrix
-    integral = jax.vmap(jax.vmap(lambda a, b : gaussian_nuclear_term(lmn_i, lmn_j, a, b, pos_i, pos_j, r), (0, None), 0), (None, 0), 0)
-
-    # corresponding prefactor matrix
-    prefac = norms_i[:, None] * norms_j * coefficients_i[:, None] * coefficients_j
-    
-    return (prefac * integral(alphas_i, alphas_j) ).sum()
+    return
 
 def kinetic_gaussian(n, orbital_i, orbital_j):
     r"""1 body matrix element in gaussian basis
     $U_{ij} = \int dx \overline{\phi_i(x)} \sum_{x_n} - \nabla \phi_j(x)$"""
     print("Compiling gaussian kinetic")
-
-    # unpack array
-    coefficients_i, alphas_i, lmn_i, pos_i = orbital_i[:n], orbital_i[n:2*n], orbital_i[-6:-3], orbital_i[-3:]
-    coefficients_j, alphas_j, lmn_j, pos_j = orbital_j[:n], orbital_j[n:2*n], orbital_j[-6:-3], orbital_j[-3:]
-    
-    # normalization 
-    norms_i = gaussian_norm(lmn_i, alphas_i)
-    norms_j = gaussian_norm(lmn_j, alphas_j)
-    
-    # scalar distance is loop invariant
-    r = jnp.linalg.norm(pos_i - pos_j)**2
-
-    # vectorized integration as a matrix
-    integral = jax.vmap(jax.vmap(lambda a, b : gaussian_kinetic_term(lmn_i, lmn_j, a, b, pos_i, pos_j, r), (0, None), 0), (None, 0), 0)
-
-    # corresponding prefactor matrix
-    prefac = norms_i[:, None] * norms_j * coefficients_i[:, None] * coefficients_j
-    
-    return (prefac * integral(alphas_i, alphas_j) ).sum()
+    return
 
 def overlap_gaussian(n, orbital_i, orbital_j):
     r"""1 body matrix element in gaussian basis
@@ -201,25 +97,7 @@ def overlap_gaussian(n, orbital_i, orbital_j):
     float, overlap element
     """    
     print("Compiling gaussian overlap")
-
-    # unpack array
-    coefficients_i, alphas_i, lmn_i, pos_i = orbital_i[:n], orbital_i[n:2*n], orbital_i[-6:-3], orbital_i[-3:]
-    coefficients_j, alphas_j, lmn_j, pos_j = orbital_j[:n], orbital_j[n:2*n], orbital_j[-6:-3], orbital_j[-3:]
-    
-    # normalization
-    norms_i = gaussian_norm(lmn_i, alphas_i)
-    norms_j = gaussian_norm(lmn_j, alphas_j)
-
-    # scalar distance is loop invariant
-    r = jnp.linalg.norm(pos_i - pos_j)**2
-
-    # vectorized integration as a matrix
-    integral = jax.vmap(jax.vmap(lambda a, b : gaussian_3d(lmn_i, lmn_j, a, b, pos_i, pos_j, r), (0, None), 0), (None, 0), 0)
-
-    # corresponding prefactor matrix
-    prefac = norms_i[:, None] * norms_j * coefficients_i[:, None] * coefficients_j
-    
-    return (prefac * integral(alphas_i, alphas_j) ).sum()
+    return
 
 def expand_gaussian(orb_list, expansion):
     """converts OrbitalList into a representation compatible with gaussian integration.
@@ -291,10 +169,45 @@ def scf(hamiltonian, cooper, coulomb, exchange):
     # else, start loop
     return NotImplemented
 
-def transform_loop(f, *xs):
-    loop = lambda s, *indices : s + f(*indices)
+# TODO: prbly smarter to bound individual nestings
+def transform_nested_loop(f, bound, *arrs):
+    """transforms a dynamic bounds nested loop computation with base case function f
+    for a in arrs[0]:
+      for b in arrs[1]:
+        ...
+          val = f(val, a, b, ..., **params)
+    into a JAX-JIT compatible chain of `scan` calls.
+
+    where the dynamic bounds are decided by the bound function before calling into f.
+
+    This function is partially based on mattj's ingenious solution https://github.com/google/jax/discussions/10401#discussioncomment-2610609
+    """
     
+    def bound_eval(loop, bound):
+        """bypasses loop computation if bound evals to True"""
+
+        return lambda val, *xs, **params : jax.lax.cond( bound(*xs, **params), lambda : loop(val, *xs, **params), lambda : val)
     
+    # wrap loop into dynamic bound evaluation function before capturing in closure 
+    loop = bound_eval(lambda val, *xs, **params : f(val, *xs, **params), bound)
+    
+    def add(loop, arr):
+        """adds another nesting level to `loop` over the values contained in `arr`"""
+        
+        def wrapper(val, *xs, **params):
+            """wraps the bounded loop computation on `arr` into a scan, discarding the array value accumulator"""
+            
+            print("compiled nesting") # poor mans JIT debug            
+            val, _ = jax.lax.scan(lambda val, x : (loop(val, *xs, x, **params), None), val, arr)
+            return val
+
+        # start from base case by adding induction cases
+        return wrapper
+
+    for arr in reversed(arrs):
+        loop = add(loop, arr)
+    
+    return loop
 
 # convention used for built-in gaussian basis: tuples have the form (coefficients, alphas, lmn), where lmn is exponent of cartesian coordinates x,y,z
 sto_3g = {
@@ -304,125 +217,13 @@ sto_3g = {
     }
 
 
-def get_reference(flake, expansion):
-    """constructs PyQInt reference list of CGFs"""
-    ang2bohr = 1 #1.8897259886
-    cgfs = []
-    for orb in flake:
-        cs, alphas = expansion[orb.group_id][0], expansion[orb.group_id][1]
-        cgf1 = cgf( (orb.position*ang2bohr).tolist()  )    
-        cgf1.add_gto(cs[0], alphas[0], 0, 0, 1)
-        cgf1.add_gto(cs[1], alphas[1], 0, 0, 1)
-        cgf1.add_gto(cs[2], alphas[2], 0, 0, 1)    
-        cgfs.append( cgf1 )
-    return cgfs
 
-def test_elements():
-    # set up flake    
-    flake = MaterialCatalog.get("graphene").cut_flake(Triangle(10))
-
-    # modelling only pz orbs
-    expansion = { flake[0].group_id : sto_3g["pz"] }
-
-    # prepare data and functions for matrix element evaluation    
-    overlap, kinetic, orbitals, nuclei, orbs_to_nuclei = expand_gaussian(flake, expansion)
-    
-    integrator = PyQInt()    
-
-    i, j = 0, 3  
-    cgfs = get_reference(flake, expansion)    
-    cfg1, cfg2 = cgfs[i], cgfs[j]
-
-    jax_s = overlap(orbitals[i], orbitals[j])
-    pyqint_s = integrator.overlap(cfg1, cfg2)
-
-    print("###OVERLAP###")
-    print( "JAX", jax_s)
-    print( "PyQint",  pyqint_s)    
-    print( "delta", jnp.abs(jax_s - pyqint_s) )    
-
-    jax_s = kinetic(orbitals[i], orbitals[j])
-    pyqint_s = integrator.kinetic(cfg1, cfg2)
-    
-    print("###KINETIC###")    
-    print( "JAX", jax_s)
-    print( "PyQint",  pyqint_s)    
-    print( "delta", jnp.abs(jax_s - pyqint_s) )    
-
-def test_matrix():
-    # set up flake    
-    flake = MaterialCatalog.get("graphene").cut_flake(Triangle(30))
-
-    # modelling only pz orbs
-    expansion = { flake[0].group_id : sto_3g["pz"] }
-
-    # prepare data and functions for matrix element evaluation    
-    overlap, kinetic, orbitals, nuclei, orbs_to_nuclei = expand_gaussian(flake, expansion)
-    
-    cgfs = get_reference(flake, expansion)
-    integrator = PyQInt()    
-
-    get_s = jax.jit(jax.vmap(jax.vmap(lambda o1, o2 : overlap(o1, o2), (0, None), 0), (None, 0), 0))
-    start = time.time()
-    jax_s = get_s(orbitals, orbitals)
-    print(time.time() - start)
-    
-    pyqint_s = np.zeros_like(jax_s)
-    start = time.time()
-    for i in range(len(flake)):
-        for j in range(len(flake)):
-            pyqint_s[i,j] = integrator.overlap(cgfs[i], cgfs[j])
-    print(time.time()-start)
-
-    print("###OVERLAP###")
-    print( "delta", jnp.linalg.norm(jax_s - pyqint_s) )    
-
-
-def test_cgfs():
-    # set up flake    
-    flake = MaterialCatalog.get("graphene").cut_flake(Triangle(10))
-
-    # modelling only pz orbs
-    expansion = { flake[0].group_id : sto_3g["pz"] }
-
-    # prepare data and functions for matrix element evaluation    
-    overlap, kinetic, orbitals, nuclei, orbs_to_nuclei = expand_gaussian(flake, expansion)
-    
-    integrator = PyQInt()    
-
-    cgfs = get_reference(flake, expansion)
-    
-    i, j = 0, 1
-    gto1 = cgfs[i].gtos[0]
-    gto2 = cgfs[j].gtos[0]
-    print(gto1, gto2)
-    
-    n = 3
-    orbital_1, orbital_2 = orbitals[i], orbitals[j]    
-    coefficients_1, alphas_1, lmn_1, r_1 = orbital_1[:n], orbital_1[n:2*n], orbital_1[-6:-3], orbital_1[-3:]
-    coefficients_2, alphas_2, lmn_2, r_2 = orbital_2[:n], orbital_2[n:2*n], orbital_2[-6:-3], orbital_2[-3:]
-    a_1, a_2 = alphas_1[i], alphas_2[i]    
-    r = jnp.linalg.norm(r_1 - r_2)**2    
-
-    vals1 = jnp.array([2,1,2])
-    vals2 = jnp.array([1,1,2])
-    
-    gto1.l = vals1[0]
-    gto1.m = vals1[1]
-    gto1.n = vals1[2]
-    gto1.p = r_1.tolist()
-
-    gto2.l = vals2[0]
-    gto2.m = vals2[1]
-    gto2.n = vals2[2]
-    gto2.p = r_2.tolist()
-
-    print(gaussian_3d(lmn_1.at[:3].set(vals1), lmn_2.at[:3].set(vals2), a_1, a_2, r_1, r_2, r))
-    print(integrator.overlap_gto(gto1, gto2))
-    print(gaussian_kinetic_term(lmn_1.at[:3].set(vals1), lmn_2.at[:3].set(vals2), a_1, a_2, r_1, r_2, r))
-    print(integrator.kinetic_gto(gto1, gto2))    
-    
 if __name__ == '__main__':
+    1
     # test_cgfs()
     # test_elements()
-    test_matrix()
+    # test_matrix()
+
+    # boys_g = lambda n, t : 0.5*jnp.pow(t,-n-0.5) * jax.lax.igamma(n+0.5,t)
+    # boys_g =  lambda n, x : 
+
