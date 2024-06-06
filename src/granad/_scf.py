@@ -1,9 +1,11 @@
 import time
 import jax
 import jax.numpy as jnp
-from jax.scipy.special import gamma, gammainc
 
 from granad import *
+
+from pyqint import PyQInt, cgf, gto
+import numpy as np
 
 # TODO: mean-field channels as flake couplings: coulomb, cooper, exchange
 # TODO: high level scf into flake that sets params, positions from scf
@@ -15,7 +17,7 @@ from granad import *
 #   2. orbitals = jnp.concatenate(orbitals, jnp.arange(orbitals.size))
 #   3. in integration, check ( orbital1[-1] , orbital2[-1] , orbital3[-1] , orbital4[-1] ) in index array. yes => return 0, no => compute
 #   4. result = vmap ... => build full matrix with function fill_missing_values(result)
-# TODO: performance: normalization, factorial, binom, double_factorial are slow
+# TODO: performance: normalization, factorial, binomial, double_factorial are slow
 # TODO: put norms into orbital array?
 # TODO: DRY norm unpacking same in all mat elem procedures
 
@@ -39,8 +41,22 @@ def get_atomic_charge(atom):
     }
     return charges[atom]
 
-# TODO: I suspect all these functions suck in terms of performance
-# TODO: tail-call for n > len(vals)
+### ELEMENTARY FUNCTIONS ###
+# TODO: I suspect all these functions suck in terms of performance, also: loop for n > len(vals)
+def get_binomial_prefactor(l_max_range):    
+    def body(val, t, s, ia, ib, xpa, xpb):
+        return jax.lax.cond(jnp.logical_and(jnp.logical_and(t <= s, s-ia<=t), t <= ib),                            
+                            lambda : val + binomial(ia, s-t) *
+                            binomial(ib, t) *
+                            xpa ** (ia-s+t)  *
+                            xpb ** (ib-t),
+                            lambda : val)
+
+    def wrapper(*params):
+        return jax.lax.scan(lambda val, t : (body(val, t, *params), None), 0.0, l_max_range)[0]
+
+    return wrapper
+
 def double_factorial(n):
     vals = jnp.array([1,1,2,3,8,15,48,105,384,945,3840,10395,46080,135135,645120,2027025])
     n_max = vals.size
@@ -52,38 +68,145 @@ def factorial(n):
     rng = jnp.arange(vals.size)
     return jnp.where(rng == n, vals[rng], 0).sum()
 
-def binom(n, m):
+def binomial(n, m):
     return (n > 0) * (m > 0) * (n > m) * (factorial(n) / (factorial(n - m) * factorial(m)) - 1) + 1
-
-def boys(n, x):
-    r"""Computes $F_n(T) = \int_0^1 dx x^{2m} e^{-Tx^2}$"""
-    return gamma(0.5 + n) * gammainc(0.5 + n, x) / (2*x**(0.5 + n))
 
 def gaussian_norm(lmn, alphas):
     nom = jax.vmap(lambda a : jnp.pow(2.0, 2.0*(lmn.sum()) + 1.5) * jnp.pow(a, lmn.sum() + 1.5))(alphas)
     denom = (jax.vmap(lambda i : double_factorial(2*i-1))(lmn)).prod() * jnp.pow(jnp.pi, 1.5)
     return jnp.sqrt(nom / denom)    
 
-def two_body_gaussian(n, orbital_i, orbital_j, orbital_k, orbital_l):
-    r"""2 body matrix element of 1/|x-x'| in gaussian basis
-    $U_{ijkl} = \int dx \int dx' \overline{\phi}_i(x) \overline{\phi}_j(x') 1/|x-x'| \phi_k(x') \phi_l(x)$"""
-    print("Compiling gaussian two body")
-    return
 
-def _unpack_loop():
-    return
+### OVERLAP ###
+def get_overlap_1d(l_max_range):
+    def body(val, i, l1, l2, x1, x2, gamma):
+        return jax.lax.cond(i <  1 + jnp.floor(0.5*(l1+l2)),                            
+                            lambda : val + binomial_prefactor(2*i, l1, l2, x1, x2) * double_factorial(2*i-1) / jnp.pow(2*gamma, i),
+                            lambda : val)
 
-def nuclear_gaussian(n, orbital_i, orbital_j, nucleus):
-    r"""1 body matrix element in gaussian basis
-    $U_{ij} = \int dx \overline{\phi_i(x)} 1/|x_n - x| \phi_j(x)$"""
-    print("Compiling gaussian nuclear")
-    return
+    def wrapper(*params):
+        return jax.lax.scan(lambda val, i : (body(val, i, *params), None), 0.0, l_max_range)[0]
 
-def kinetic_gaussian(n, orbital_i, orbital_j):
-    r"""1 body matrix element in gaussian basis
-    $U_{ij} = \int dx \overline{\phi_i(x)} \sum_{x_n} - \nabla \phi_j(x)$"""
-    print("Compiling gaussian kinetic")
-    return
+    binomial_prefactor = get_binomial_prefactor(l_max_range)
+    
+    return wrapper
+
+def get_overlap(l_max):
+    def overlap(alpha1, lmn1, pos1, alpha2, lmn2, pos2):
+        rab2 = jnp.linalg.norm(pos1-pos2)**2
+        gamma = alpha1 + alpha2
+        p = (alpha1*pos1 + alpha2*pos2) / gamma
+        pre = jnp.pow(jnp.pi/gamma, 1.5) * jnp.exp(-alpha1*alpha2*rab2/gamma)
+
+        vpa =  p - pos1
+        vpb =  p - pos2
+
+        wx = overlap_1d(lmn1[0], lmn2[0], vpa[0], vpb[0], gamma)
+        wy = overlap_1d(lmn1[1], lmn2[1], vpa[1], vpb[1], gamma)
+        wz = overlap_1d(lmn1[2], lmn2[2], vpa[2], vpb[2], gamma)
+        
+        return pre*wx*wy*wz
+
+    l_max_range = jnp.arange(l_max)
+    overlap_1d  = get_overlap_1d(l_max_range)
+    
+    return overlap
+
+
+### KINETIC ###
+def get_kinetic(l_max):
+    
+    def kinetic(alpha1, lmn1, pos1, alpha2, lmn2, pos2):
+        term = alpha2 * (2.0 * lmn2.sum() + 3.0) * overlap(alpha1, lmn1, pos1, alpha2, lmn2, pos2)
+
+        lmn2_inc = lmn2 + 2
+        term += -2.0 * jnp.pow(alpha2, 2) * (overlap(alpha1, lmn1, pos1, alpha2, lmn2.at[0].set(lmn2_inc[0]), pos2) +
+                                               overlap(alpha1, lmn1, pos1, alpha2, lmn2.at[1].set(lmn2_inc[1]), pos2) +
+                                               overlap(alpha1, lmn1, pos1, alpha2, lmn2.at[2].set(lmn2_inc[2]), pos2) )
+
+        lmn2_dec = lmn2 - 2
+        term += -0.5 * ( (lmn2[0] * (lmn2[0] - 1)) * overlap(alpha1, lmn1, pos1, alpha2, lmn2.at[0].set(lmn2_dec[0]), pos2) +
+                 lmn2[1]*(lmn2[1]-1) * overlap(alpha1, lmn1, pos1, alpha2, lmn2.at[1].set(lmn2_dec[1]), pos2) +
+                 lmn2[2]*(lmn2[2]-1) * overlap(alpha1, lmn1, pos1, alpha2, lmn2.at[2].set(lmn2_dec[2]), pos2) )
+        
+        return term
+
+    overlap = get_overlap(l_max)
+    
+    return kinetic
+
+
+### NUCLEAR ###
+def get_a_array(l_max):
+
+    def a_term(i, r, u, l1, l2, pa, pb, cp, g):
+        return ( jnp.pow(-1,i) * binomial_prefactor(i,l1,l2,pa,pb)*
+                 jnp.pow(-1,u) * factorial(i)*jnp.pow(cp,i-2*r-2*u)*
+                 jnp.pow(0.25/g,r+u)/factorial(r)/factorial(u)/factorial(i-2*r-2*u) )
+    
+    def a_legal(iI, i, r, u, l1, l2):
+        return jnp.logical_and( jnp.logical_and( jnp.logical_and(i < l1 + l2 + 1, r < jnp.floor(i/2)),  u < jnp.floor((i-2*r)/2)),  iI == i - 2 * r - u )
+
+    def a_wrapped(iI, i, r, u, l1, l2, pa, pb, cp, g):
+        return jax.lax.cond(a_legal(iI, i, r, u, l1, l2), lambda: a_term(i, r, u, l1, l2, pa, pb, cp, g), lambda : 0.0) 
+
+    def a_loop(iI, l1, l2, pa, pb, cp, g):
+        return jax.lax.fori_loop(0, imax,
+                             lambda i, vx: vx + jax.lax.fori_loop(0, rmax,
+                                                              lambda r, vy: vy + jax.lax.fori_loop(0, umax,
+                                                                                               lambda u, vz: vz + a_wrapped(iI, i, r, u, l1, l2, pa, pb, cp, g),
+                                                                                               0),
+                                                              0),
+                             0)
+    
+    # TODO: this sucks, bc it introduces an additional loop
+    def a_array(l1, l2, pa, pb, cp, g):
+        return jax.vmap(lambda iI : a_loop(iI, l1, l2, pa, pb, cp, g))(arr)    
+
+    imax = 2*l_max + 1
+    rmax = jnp.floor(imax/2)
+    umax = jnp.floor((imax-2*rmax)/2)
+    binomial_prefactor = get_binomial_prefactor(jnp.arange(imax))
+    return a_array
+
+def get_nuclear(l_max):
+
+    def loop_body(i, j, k, lmn, rg):
+        return jax.lax.cond(i <= lmn[0], j <= lmn[1], k <= lmn[2], lambda: jax.lax.gammainc(i+j+k, rg), lambda: 0.0)
+        
+
+    def loop(ax, ay, az, lmn, rg):
+        return jax.lax.fori_loop(0, lim,
+                                 lambda i, vx: vx + jax.lax.fori_loop(0, lim,
+                                                                      lambda j, vy: vy + jax.lax.fori_loop(0, lim,
+                                                                                                           lambda k, vz: vz + ax[i] * ay[j] * az[k] * loop_body(i, j, k, lmn, rg),
+                                                                                                           0),
+                                                                      0),
+                                 0)
+        
+        
+    def nuclear(alpha1, lmn1, pos1, alpha2, lmn2, pos2, nuc):
+        gamma = alpha1 + alpha2
+        p = (alpha1*pos1 + alpha2*pos2) / gamma
+        rab2 = jnp.linalg.norm(pos1-pos2)**2
+        rcp2 = jnp.linalg.norm(nuc-p)**2
+        
+        vpa =  p - pos1
+        vpb =  p - pos2
+
+        ax = a_array(lmn1[0], lmn2[0], vpa[0], vpb[1], gamma)
+        ay = a_array(lmn1[1], lmn2[1], vpa[1], vpb[1], gamma)
+        az = a_array(lmn1[2], lmn2[2], vpa[2], vpb[2], gamma)
+
+        return loop(ax, ay, az, lmn1+lmn2, rcp2*gamma)
+
+    a_array = get_a_array(l_max)
+    
+    return nuclear
+
+### 2 body ###
+def get_twob(l_max):
+    return NotImplemented
 
 def overlap_gaussian(n, orbital_i, orbital_j):
     r"""1 body matrix element in gaussian basis
@@ -99,40 +222,23 @@ def overlap_gaussian(n, orbital_i, orbital_j):
     print("Compiling gaussian overlap")
     return
 
-def expand_gaussian(orb_list, expansion):
-    """converts OrbitalList into a representation compatible with gaussian integration.
-    
-    Args:
-    orb_list: OrbtalList 
-    expansion: dictionary mapping group ids to arrays
-    
-    Returns:
-    """
-    
-    # translate orbital list to array representation
-    orbitals = jnp.array( [jnp.concatenate([jnp.concatenate(expansion[o.group_id]), o.position]) for o in orb_list] )
+def kinetic_gaussian(n, orbital_i, orbital_j):
+    r"""1 body matrix element in gaussian basis
+    $U_{ij} = \int dx \overline{\phi_i(x)} \sum_{x_n} - \nabla \phi_j(x)$"""
+    print("Compiling gaussian kinetic")
+    return
 
-    # array representation of nuclei, index map to keep track of orbitals => nuclei
-    nuclei_positions, idxs, orbitals_to_nuclei = jnp.unique(orbitals[:,:3], axis = 0, return_index = True, return_inverse = True)
-    atomic_charges = get_atomic_charges()
-    nuclei_charges = jnp.array([float(atomic_charges[o.atom_name]) for o in orb_list])[idxs]
-    nuclei = jnp.hstack( [nuclei_positions, nuclei_charges[:,None]] )
+def nuclear_gaussian(n, orbital_i, orbital_j, nucleus):
+    r"""1 body matrix element in gaussian basis
+    $U_{ij} = \int dx \overline{\phi_i(x)} 1/|x_n - x| \phi_j(x)$"""
+    print("Compiling gaussian nuclear")
+    return
 
-    size = expansion[orb_list[0].group_id][0].size
-
-    # TODO: naja...
-    overlap = jax.jit(lambda orb1, orb2: overlap_gaussian(size, orb1, orb2))
-    overlap(orbitals[0], orbitals[0])
-    
-    kinetic = jax.jit(lambda orb1, orb2: kinetic_gaussian(size, orb1, orb2))
-    kinetic(orbitals[0], orbitals[0])
-
-    nuclear = jax.jit(lambda orb1, orb2, nuc: nuclear_gaussian(size, orb1, orb2, nuc))
-    nuclear(orbitals[0], orbitals[0], nuclei[0])
-    
-    # kinetic = overlap = nuclear = None
-    
-    return overlap, kinetic, orbitals, nuclei, orbitals_to_nuclei
+def two_body_gaussian(n, orbital_i, orbital_j, orbital_k, orbital_l):
+    r"""2 body matrix element of 1/|x-x'| in gaussian basis
+    $U_{ijkl} = \int dx \int dx' \overline{\phi}_i(x) \overline{\phi}_j(x') 1/|x-x'| \phi_k(x') \phi_l(x)$"""
+    print("Compiling gaussian two body")
+    return
 
 def update_positions(orbitals, nuclei, orbitals_to_nuclei):
     """Ensures that orbital positions match their nuclei."""    
@@ -169,6 +275,191 @@ def scf(hamiltonian, cooper, coulomb, exchange):
     # else, start loop
     return NotImplemented
 
+### UNWRAP ###
+def expand_gaussian(orb_list, expansion):
+    """converts OrbitalList into a representation compatible with gaussian integration.
+    
+    Args:
+    orb_list: OrbtalList 
+    expansion: dictionary mapping group ids to arrays
+    
+    Returns:
+    """
+    
+    # translate orbital list to array representation
+    orbitals = jnp.array( [jnp.concatenate([jnp.concatenate(expansion[o.group_id]), o.position]) for o in orb_list] )
+
+    # array representation of nuclei, index map to keep track of orbitals => nuclei
+    nuclei_positions, idxs, orbitals_to_nuclei = jnp.unique(orbitals[:,:3], axis = 0, return_index = True, return_inverse = True)
+    atomic_charges = get_atomic_charges()
+    nuclei_charges = jnp.array([float(atomic_charges[o.atom_name]) for o in orb_list])[idxs]
+    nuclei = jnp.hstack( [nuclei_positions, nuclei_charges[:,None]] )
+
+    # max l for static loops compatible with JIT+reverse AD
+    l_max = orbitals[3:6].max()
+    
+    return *get_gaussian_functions(l_max), orbitals, nuclei, orbitals_to_nuclei
+
+# TODO: decocrate gto functions with norm factor loop and compile directive
+def one_body_wrapper():
+    return NotImplemented
+
+def two_body_wrapper():
+    return NotImplemented
+
+def get_gaussian_functions(l_max):
+    overlap = get_overlap(l_max)
+    kinetic = get_kinetic(l_max)
+    nuclear = get_nuclear(l_max)
+    twob = get_twob(l_max)
+
+    return overlap, kinetic, nuclear, twob
+
+### PYQINT REFERENCE NAMESPACE: USE EXPOSED FUNCS FROM LIB OR PURE PYTHON IMPLS OF PYQINT C++ FUNCS ###
+class Reference:
+
+    @staticmethod 
+    def get_reference(flake, expansion):
+        def get_cgf( orb ):
+            ret = cgf(orb.position.tolist())
+            exp = expansion[orb.group_id]
+
+            for i in range(len(exp[0])):
+                ret.add_gto( exp[0][i], exp[1][i], *(exp[2].tolist()) )
+
+            return ret
+
+        return list(map(get_cgf, flake))
+
+    @staticmethod
+    def binomial_prefactor(s, ia, ib, xpa, xpb):
+        sum = 0.0
+        for t in range(s + 1):
+            if (s - ia <= t) and (t <= ib):
+                sum += binomial(ia, s - t) * binomial(ib, t) * (xpa ** (ia - s + t)) * (xpb ** (ib - t))
+        return sum
+
+    @staticmethod
+    def a_array(l1, l2, pa, pb, cp, g):
+        imax = l1 + l2 + 1
+        arrA = [0] * imax
+
+        for i in range(imax):
+            for r in range(int(i/2)):
+                for u in range( int((i-2*r)/2) ):
+                    iI = i - 2*r - u
+                    arrA[iI] += A_term(i, r, u, l1, l2, pa, pb, cp, g) # some pure function call
+
+        return arrA
+    
+    @staticmethod
+    def A_term(i, r, u, l1, l2, pa, pb, cp, g):
+        def binomial_prefactor(s, ia, ib, xpa, xpb):
+            sum = 0.0
+            for t in range(s + 1):
+                if (s - ia <= t) and (t <= ib):
+                    sum += binomial(ia, s - t) * binomial(ib, t) * (xpa ** (ia - s + t)) * (xpb ** (ib - t))
+            return sum
+
+        return (-1)**i * binomial_prefactor(i, l1, l2, pa, pb) * (-1)**u*factorial(i)*cp**(i-2*r-2*u)*(0.25/g)**(r+u)/factorial(r)/factorial(u)/factorial(i-2*r-2*u)
+
+#### QUICK TESTS ###    
+def test_binomial_prefactor():
+    bf = get_binomial_prefactor(jnp.arange(10))
+    s, ia, ib, xpa, xpb = 1, 1, 2, -0.1, 0.1
+    bf = jax.jit(bf)
+    bf(s, ia, ib, xpa, xpb)
+    
+    print(Reference.binomial_prefactor(s, ia, ib, xpa, xpb))
+    print(bf(s, ia, ib, xpa, xpb))
+    
+    print(Reference.binomial_prefactor(s, ia, ib, xpa, xpb) - bf(s, ia, ib, xpa, xpb) )
+
+    assert abs(Reference.binomial_prefactor(s, ia, ib, xpa, xpb) - bf(s, ia, ib, xpa, xpb)) < 1e-10
+
+def test_gto_overlap():
+    integrator = PyQInt()
+
+    # parameters
+    c_1, c_2 = 0.391957, 0.391957
+    alpha_1, alpha_2 = 0.22229, 0.22229
+    alpha_1, alpha_2 = 0.3, 0.1
+    lmn1, lmn2 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ])
+    p_1, p_2 = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.])
+
+    # pyqint gtos
+    gto_1 = gto(c_1, p_1.tolist(), alpha_1, *(lmn1.tolist()))
+    gto_2 = gto(c_2, p_2.tolist(), alpha_2, *(lmn2.tolist()))
+
+    # overlap function
+    overlap = get_gaussian_functions(jnp.concatenate([lmn1, lmn2]).max()+10)[0]
+    overlap = jax.jit(overlap)
+
+    print(integrator.overlap_gto(gto_1, gto_2))
+    print(overlap(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2))
+
+    assert abs(integrator.overlap_gto(gto_1, gto_2) - overlap(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2)) < 1e-10
+
+def test_gto_kinetic():
+    integrator = PyQInt()
+
+    # parameters
+    c_1, c_2 = 0.391957, 0.391957
+    alpha_1, alpha_2 = 0.22229, 0.22229
+    alpha_1, alpha_2 = 0.3, 0.1
+    lmn1, lmn2 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ])
+    p_1, p_2 = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.])
+
+    # pyqint gtos
+    gto_1 = gto(c_1, p_1.tolist(), alpha_1, *(lmn1.tolist()))
+    gto_2 = gto(c_2, p_2.tolist(), alpha_2, *(lmn2.tolist()))
+
+    # overlap function
+    kinetic = get_gaussian_functions(jnp.concatenate([lmn1, lmn2]).max()+10)[1]
+    kinetic = jax.jit(kinetic)
+
+    print(integrator.kinetic_gto(gto_1, gto_2))
+    print(kinetic(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2))
+
+    assert abs(integrator.kinetic_gto(gto_1, gto_2) - kinetic(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2)) < 1e-10
+
+def test_a_array():
+    arr = jnp.arange(10)
+    bf = get_binomial_prefactor(arr)
+    fun = jax_a_array(bf, 2, 2)
+    # jax.make_jaxpr(fun)(l1, l2, pa, pb, cp, g)
+    fun = jax.jit(fun)
+
+    l1, l2, pa, pb, cp, g = 2,2,0.1, 0.2, 0.3, 0.1
+    print(fun(l1, l2, pa, pb, cp, g))
+    fun = jax.jit(fun)
+
+    print(fun(l1, l2, pa, pb, cp, g))
+
+    print(a_array(l1, l2, pa, pb, cp, g))
+
+def test_gto_nuclear():
+    assert False
+
+def test_b_array():
+    assert False
+
+def test_gto_ee():
+    assert False
+    
+def test_overlap():
+    assert False
+
+def test_kinetic():
+    assert False
+
+def test_nuclear():
+    assert False
+
+def test_ee():
+    assert False
+
+# TODO: what a shame. this function is so nice, but so useless :(
 # TODO: prbly smarter to bound individual nestings
 def transform_nested_loop(f, bound, *arrs):
     """transforms a dynamic bounds nested loop computation with base case function f
@@ -219,11 +510,4 @@ sto_3g = {
 
 
 if __name__ == '__main__':
-    1
-    # test_cgfs()
-    # test_elements()
-    # test_matrix()
-
-    # boys_g = lambda n, t : 0.5*jnp.pow(t,-n-0.5) * jax.lax.igamma(n+0.5,t)
-    # boys_g =  lambda n, x : 
-
+    print("hi :)")
