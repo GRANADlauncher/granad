@@ -1,6 +1,7 @@
 import time
 import jax
 import jax.numpy as jnp
+from jax.scipy.special import gammainc, gamma
 
 from granad import *
 
@@ -43,6 +44,9 @@ def get_atomic_charge(atom):
 
 ### ELEMENTARY FUNCTIONS ###
 # TODO: I suspect all these functions suck in terms of performance, also: loop for n > len(vals)
+def gamma_fun(s, x):
+    return gammainc(s+0.5, x) * gamma(s+0.5) * 0.5 * jnp.pow(x,-s-0.5) 
+    
 def get_binomial_prefactor(l_max_range):    
     def body(val, t, s, ia, ib, xpa, xpb):
         return jax.lax.cond(jnp.logical_and(jnp.logical_and(t <= s, s-ia<=t), t <= ib),                            
@@ -65,8 +69,9 @@ def double_factorial(n):
 
 def factorial(n):
     vals = jnp.array([1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800,87178291200,1307674368000])
-    rng = jnp.arange(vals.size)
-    return jnp.where(rng == n, vals[rng], 0).sum()
+    return jax.lax.cond(n < vals.size,
+                        lambda : vals[n],
+                        lambda : 1 )
 
 def binomial(n, m):
     return (n > 0) * (m > 0) * (n > m) * (factorial(n) / (factorial(n - m) * factorial(m)) - 1) + 1
@@ -145,7 +150,7 @@ def get_a_array(l_max):
                  jnp.pow(0.25/g,r+u)/factorial(r)/factorial(u)/factorial(i-2*r-2*u) )
     
     def a_legal(iI, i, r, u, l1, l2):
-        return jnp.logical_and( jnp.logical_and( jnp.logical_and(i < l1 + l2 + 1, r < jnp.floor(i/2)),  u < jnp.floor((i-2*r)/2)),  iI == i - 2 * r - u )
+        return jnp.logical_and( jnp.logical_and( jnp.logical_and(i < l1 + l2 + 1, r <= jnp.ceil(i/2)),  u <= jnp.ceil((i-2*r)/2)),  iI == i - 2 * r - u )
 
     def a_wrapped(iI, i, r, u, l1, l2, pa, pb, cp, g):
         return jax.lax.cond(a_legal(iI, i, r, u, l1, l2), lambda: a_term(i, r, u, l1, l2, pa, pb, cp, g), lambda : 0.0) 
@@ -161,18 +166,20 @@ def get_a_array(l_max):
     
     # TODO: this sucks, bc it introduces an additional loop
     def a_array(l1, l2, pa, pb, cp, g):
-        return jax.vmap(lambda iI : a_loop(iI, l1, l2, pa, pb, cp, g))(arr)    
+        return jax.vmap(lambda iI : a_loop(iI, l1, l2, pa, pb, cp, g))(i_max_range)    
 
     imax = 2*l_max + 1
-    rmax = jnp.floor(imax/2)
-    umax = jnp.floor((imax-2*rmax)/2)
-    binomial_prefactor = get_binomial_prefactor(jnp.arange(imax))
+    rmax = jnp.floor(imax/2).astype(int)  + 1
+    umax = rmax
+
+    i_max_range = jnp.arange(imax)
+    binomial_prefactor = get_binomial_prefactor(i_max_range)
     return a_array
 
 def get_nuclear(l_max):
 
     def loop_body(i, j, k, lmn, rg):
-        return jax.lax.cond(i <= lmn[0], j <= lmn[1], k <= lmn[2], lambda: jax.lax.gammainc(i+j+k, rg), lambda: 0.0)
+        return jax.lax.cond( jnp.logical_and(jnp.logical_and(i <= lmn[0], j <= lmn[1]), k <= lmn[2]), lambda: gamma_fun(i+j+k , rg), lambda: 0.0)
         
 
     def loop(ax, ay, az, lmn, rg):
@@ -191,21 +198,23 @@ def get_nuclear(l_max):
         rab2 = jnp.linalg.norm(pos1-pos2)**2
         rcp2 = jnp.linalg.norm(nuc-p)**2
         
-        vpa =  p - pos1
-        vpb =  p - pos2
+        # TODO: this looks vectorizable
+        vpa = p - pos1
+        vpb = p - pos2
+        vpn = p - nuc
+        ax = a_array(lmn1[0], lmn2[0], vpa[0], vpb[0], vpn[0], gamma)
+        ay = a_array(lmn1[1], lmn2[1], vpa[1], vpb[1], vpn[1], gamma)
+        az = a_array(lmn1[2], lmn2[2], vpa[2], vpb[2], vpn[2], gamma)
+        res = loop(ax, ay, az, lmn1+lmn2, rcp2*gamma)
+        return -2.0 * jnp.pi / gamma * jnp.exp(-alpha1*alpha2*rab2/gamma) * res
 
-        ax = a_array(lmn1[0], lmn2[0], vpa[0], vpb[1], gamma)
-        ay = a_array(lmn1[1], lmn2[1], vpa[1], vpb[1], gamma)
-        az = a_array(lmn1[2], lmn2[2], vpa[2], vpb[2], gamma)
-
-        return loop(ax, ay, az, lmn1+lmn2, rcp2*gamma)
-
+    lim = 2*l_max+1
     a_array = get_a_array(l_max)
     
     return nuclear
 
-### 2 body ###
-def get_twob(l_max):
+### repulsion ###
+def get_repulsion(l_max):
     return NotImplemented
 
 def overlap_gaussian(n, orbital_i, orbital_j):
@@ -333,6 +342,7 @@ class Reference:
 
     @staticmethod
     def binomial_prefactor(s, ia, ib, xpa, xpb):
+        from scipy.special import binom
         sum = 0.0
         for t in range(s + 1):
             if (s - ia <= t) and (t <= ib):
@@ -340,30 +350,121 @@ class Reference:
         return sum
 
     @staticmethod
+    def nuclear(a, l1, m1, n1, alpha1, b, l2, m2, n2, alpha2, c):
+        import scipy.special
+        
+        Fgamma = lambda s, x : scipy.special.gammainc(s+0.5, x) * 0.5 * jnp.pow(x,-s-0.5) * scipy.special.gamma(s+0.5)
+
+        gamma = alpha1 + alpha2
+
+        p = (alpha1 * a + alpha2 * b) / gamma
+        rab2 = jnp.linalg.norm(a - b)**2
+        rcp2 = jnp.linalg.norm(c - p)**2
+
+        ax = Reference.a_array(l1, l2, p[0] - a[0], p[0] - b[0], p[0] - c[0], gamma)
+        ay = Reference.a_array(m1, m2, p[1] - a[1], p[1] - b[1], p[1] - c[1], gamma)
+        az = Reference.a_array(n1, n2, p[2] - a[2], p[2] - b[2], p[2] - c[2], gamma)
+
+        sum = 0.0
+
+        for i in range(l1 + l2 + 1):
+            for j in range(m1 + m2 + 1):
+                for k in range(n1 + n2 + 1):
+                    sum += ax[i] * ay[j] * az[k] * Fgamma(i + j + k, rcp2 * gamma)
+
+        return -2.0 * jnp.pi / gamma * jnp.exp(-alpha1 * alpha2 * rab2 / gamma) * sum
+
+    @staticmethod
     def a_array(l1, l2, pa, pb, cp, g):
         imax = l1 + l2 + 1
         arrA = [0] * imax
 
         for i in range(imax):
-            for r in range(int(i/2)):
-                for u in range( int((i-2*r)/2) ):
+            for r in range(int(i/2)+1):
+                for u in range( int((i-2*r)/2)+1):
                     iI = i - 2*r - u
-                    arrA[iI] += A_term(i, r, u, l1, l2, pa, pb, cp, g) # some pure function call
+                    arrA[iI] += Reference.A_term(i, r, u, l1, l2, pa, pb, cp, g) # some pure function call
 
         return arrA
     
     @staticmethod
-    def A_term(i, r, u, l1, l2, pa, pb, cp, g):
-        def binomial_prefactor(s, ia, ib, xpa, xpb):
-            sum = 0.0
-            for t in range(s + 1):
-                if (s - ia <= t) and (t <= ib):
-                    sum += binomial(ia, s - t) * binomial(ib, t) * (xpa ** (ia - s + t)) * (xpb ** (ib - t))
-            return sum
+    def A_term(i, r, u, l1, l2, pax, pbx, cpx, gamma):
+        import math
+        return (math.pow(-1, i) * Reference.binomial_prefactor(i, l1, l2, pax, pbx) *
+                math.pow(-1, u) * factorial(i) * math.pow(cpx, i - 2 * r - 2 * u) *
+                math.pow(0.25 / gamma, r + u) / factorial(r) / factorial(u) / factorial(i - 2 * r - 2 * u))
 
-        return (-1)**i * binomial_prefactor(i, l1, l2, pa, pb) * (-1)**u*factorial(i)*cp**(i-2*r-2*u)*(0.25/g)**(r+u)/factorial(r)/factorial(u)/factorial(i-2*r-2*u)
 
-#### QUICK TESTS ###    
+# TODO: test with minimum possible l_max
+### QUICK TESTS ###
+def test_binom():
+    assert False
+    
+def test_gaussian_norm():
+    assert False
+
+def test_double_factorial():
+    assert False
+
+def test_factorial():
+    # The first 20 factorial values
+    expected_values = [
+        1,               # 0!
+        1,               # 1!
+        2,               # 2!
+        6,               # 3!
+        24,              # 4!
+        120,             # 5!
+        720,             # 6!
+        5040,            # 7!
+        40320,           # 8!
+        362880,          # 9!
+        3628800,         # 10!
+        39916800,        # 11!
+        479001600,       # 12!
+        6227020800,      # 13!
+        87178291200,     # 14!
+        1307674368000,   # 15!
+        20922789888000,  # 16!
+        355687428096000, # 17!
+        6402373705728000,# 18!
+        121645100408832000,# 19!
+        2432902008176640000 # 20!
+    ]
+    
+    for n in range(21):
+        assert factorial(n) == expected_values[n], f"Test failed for n={n}: {factorial(n)} != {expected_values[n]}"
+
+def test_gamma_fun():
+    import scipy.special
+
+    prec = 1e-6
+
+    # Test case 1: gamma(1, 1)
+    val = scipy.special.gammainc(1, 1) * scipy.special.gamma(1)
+    assert abs(gamma_fun(1, 1.) - val) < prec
+
+    # Test case 2: gamma(2, 2)
+    val = scipy.special.gammainc(2, 2) * scipy.special.gamma(2)
+    assert abs(gamma_fun(2, 2.) - val) < prec
+
+    # Test case 3: gamma(3, 0.5)
+    val = scipy.special.gammainc(3, 0.5) * scipy.special.gamma(3)
+    assert abs(gamma_fun(3, 0.5) - val) < prec
+
+    # Test case 4: gamma(0.5, 0.5)
+    val = scipy.special.gammainc(0.5, 0.5) * scipy.special.gamma(0.5)
+    assert abs(gamma_fun(0.5, 0.5) - val) < prec
+
+    # Test case 5: gamma(5, 3)
+    val = scipy.special.gammainc(5, 3) * scipy.special.gamma(5)
+    assert abs(gamma_fun(5, 3.) - val) < prec
+
+    # Test case 6: gamma(10, 10)
+    val = scipy.special.gammainc(10, 10) * scipy.special.gamma(10)
+    assert abs(gamma_fun(10, 10.) - val) < prec    
+
+
 def test_binomial_prefactor():
     bf = get_binomial_prefactor(jnp.arange(10))
     s, ia, ib, xpa, xpb = 1, 1, 2, -0.1, 0.1
@@ -424,22 +525,45 @@ def test_gto_kinetic():
     assert abs(integrator.kinetic_gto(gto_1, gto_2) - kinetic(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2)) < 1e-10
 
 def test_a_array():
-    arr = jnp.arange(10)
-    bf = get_binomial_prefactor(arr)
-    fun = jax_a_array(bf, 2, 2)
-    # jax.make_jaxpr(fun)(l1, l2, pa, pb, cp, g)
-    fun = jax.jit(fun)
+    l1, l2, pa, pb, cp, g = 2,3,0.1, 0.2, 0.3, 0.1
 
-    l1, l2, pa, pb, cp, g = 2,2,0.1, 0.2, 0.3, 0.1
-    print(fun(l1, l2, pa, pb, cp, g))
-    fun = jax.jit(fun)
-
-    print(fun(l1, l2, pa, pb, cp, g))
+    a_array = get_a_array(max(l1,l2))
+    # jax.make_jaxpr(a_array)(l1, l2, pa, pb, cp, g)
+    a_array = jax.jit(a_array)
 
     print(a_array(l1, l2, pa, pb, cp, g))
+    print(Reference.a_array(l1, l2, pa, pb, cp, g))
 
+    assert jnp.allclose( a_array(l1, l2, pa, pb, cp, g)[:(l1+l2+1)], jnp.array(Reference.a_array(l1, l2, pa, pb, cp, g)) )
+
+def test_a_array_grad():
+    l1, l2, pa, pb, cp, g = 2,3,0.1, 0.2, 0.3, 0.1
+    a_array = get_a_array(max(l1,l2))
+    grad = jax.jit(jax.grad( lambda *xs : a_array(*xs).sum(), argnums = [2,3,4,5]))
+    grad(l1,l2,pa,pb,cp,g)
+    grad(l1,l2,pa,pb,cp,g)    
+    
 def test_gto_nuclear():
-    assert False
+    integrator = PyQInt()
+
+    # parameters
+    c_1, c_2 = 0.391957, 0.391957
+    alpha_1, alpha_2 = 0.22229, 0.22229
+    alpha_1, alpha_2 = 0.3, 0.1
+    lmn1, lmn2 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ])
+    p_1, p_2, nuc = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.]), jnp.array([1,1,1])
+
+    # pyqint gtos
+    gto_1 = gto(c_1, p_1.tolist(), alpha_1, *(lmn1.tolist()))
+    gto_2 = gto(c_2, p_2.tolist(), alpha_2, *(lmn2.tolist()))
+
+    # overlap function
+    nuclear = get_gaussian_functions(jnp.concatenate([lmn1, lmn2]).max()+1)[2]
+    nuclear = jax.jit(nuclear)
+    print(nuclear(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, nuc))
+    print(integrator.nuclear_gto(gto_1, gto_2, nuc.tolist()))
+
+    assert abs(integrator.nuclear_gto(gto_1, gto_2, nuc.tolist()) - nuclear(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, nuc)) < 1e-10
 
 def test_b_array():
     assert False
@@ -510,4 +634,5 @@ sto_3g = {
 
 
 if __name__ == '__main__':
-    print("hi :)")
+    # test_a_array()
+    test_gto_nuclear()
