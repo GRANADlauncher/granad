@@ -1,7 +1,7 @@
 import time
 import jax
 import jax.numpy as jnp
-from jax.scipy.special import gammainc, gamma
+from jax.scipy.special import gammainc, gamma, factorial
 
 from granad import *
 
@@ -67,11 +67,11 @@ def double_factorial(n):
     rng = jnp.arange(n_max)
     return (n > 0) * jnp.where(rng == n, vals[rng], 0).sum() + (n < 0)
 
-def factorial(n):
-    vals = jnp.array([1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800,87178291200,1307674368000])
-    return jax.lax.cond(n < vals.size,
-                        lambda : vals[n],
-                        lambda : 1 )
+# def factorial(n):
+#     vals = jnp.array([1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800,87178291200,1307674368000])
+#     return jax.lax.cond(n < vals.size,
+#                         lambda : vals[n],
+#                         lambda : 1 )
 
 def binomial(n, m):
     return (n > 0) * (m > 0) * (n > m) * (factorial(n) / (factorial(n - m) * factorial(m)) - 1) + 1
@@ -79,7 +79,7 @@ def binomial(n, m):
 def gaussian_norm(lmn, alphas):
     nom = jax.vmap(lambda a : jnp.pow(2.0, 2.0*(lmn.sum()) + 1.5) * jnp.pow(a, lmn.sum() + 1.5))(alphas)
     denom = (jax.vmap(lambda i : double_factorial(2*i-1))(lmn)).prod() * jnp.pow(jnp.pi, 1.5)
-    return jnp.sqrt(nom / denom)    
+    return jnp.sqrt(nom / denom)
 
 
 ### OVERLAP ###
@@ -157,12 +157,12 @@ def get_a_array(l_max):
 
     def a_loop(iI, l1, l2, pa, pb, cp, g):
         return jax.lax.fori_loop(0, imax,
-                             lambda i, vx: vx + jax.lax.fori_loop(0, rmax,
-                                                              lambda r, vy: vy + jax.lax.fori_loop(0, umax,
-                                                                                               lambda u, vz: vz + a_wrapped(iI, i, r, u, l1, l2, pa, pb, cp, g),
-                                                                                               0),
-                                                              0),
-                             0)
+                lambda i, vx: vx + jax.lax.fori_loop(0, rmax,
+                    lambda r, vy: vy + jax.lax.fori_loop(0, umax,
+                        lambda u, vz: vz + a_wrapped(iI, i, r, u, l1, l2, pa, pb, cp, g),
+                            0),
+                            0),
+                            0)
     
     # TODO: this sucks, bc it introduces an additional loop
     def a_array(l1, l2, pa, pb, cp, g):
@@ -184,12 +184,12 @@ def get_nuclear(l_max):
 
     def loop(ax, ay, az, lmn, rg):
         return jax.lax.fori_loop(0, lim,
-                                 lambda i, vx: vx + jax.lax.fori_loop(0, lim,
-                                                                      lambda j, vy: vy + jax.lax.fori_loop(0, lim,
-                                                                                                           lambda k, vz: vz + ax[i] * ay[j] * az[k] * loop_body(i, j, k, lmn, rg),
-                                                                                                           0),
-                                                                      0),
-                                 0)
+                    lambda i, vx: vx + jax.lax.fori_loop(0, lim,
+                        lambda j, vy: vy + jax.lax.fori_loop(0, lim,
+                            lambda k, vz: vz + ax[i] * ay[j] * az[k] * loop_body(i, j, k, lmn, rg),
+                                0),
+                                0),
+                                0)
         
         
     def nuclear(alpha1, lmn1, pos1, alpha2, lmn2, pos2, nuc):
@@ -213,41 +213,100 @@ def get_nuclear(l_max):
     
     return nuclear
 
-### repulsion ###
+
+### REPULSION ###
+# TODO: i almost vomit every time i have to read this
+def get_b_array(l_max):
+
+    def bb0(i, r, g):
+        return factorial(i) / factorial(r) / factorial(i - 2*r) * jnp.pow(4*g,r-i)
+
+    def fb(i, l1, l2, p-a, p-b):
+        return binomial_prefactor(i, l1, l2, p-a, p-b) * bb0(i, r, g)
+    
+    def b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta):
+        a, b = i1+i2-2*(r1+r2),u
+        return (fB(i1,l1,l2,px,ax,bx,r1,g1)*
+                jnp.pow(-1,i2) * fB(i2,l3,l4,qx,cx,dx,r2,g2)*
+                jnp.pow(-1,u)* factorial(a) / factorial(b) / factorial(a - 2*b)*
+                jnp.pow(qx-px,i1+i2-2*(r1+r2)-2*u)/
+                jnp.pow(delta,i1+i2-2*(r1+r2)-u))
+    
+    def b_legal(i, i1, i2, r1, r2, u, l1, l2, l3, l4):
+        return jnp.logical_and(
+            jnp.logical_and(
+                jnp.logical_and(
+                    jnp.logical_and(
+                        jnp.logical_and(i1 < l1 + l2 + 1, i2 < l3 + l4 + 1),
+                        r1 < jnp.ceil(i1/2)),
+                    r2 < jnp.ceil(i2/2)),
+                u<jnp.floor((i1+i2)/2)-r1-r2+1),
+            i == i1+i2-2*(r1+r2)-u)
+
+    def b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta):
+        return jax.lax.cond(b_legal(i, i1, i2, r1, r2, u, l1, l2, l3, l4), lambda: b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta), lambda : 0.0) 
+
+    def b_loop(i, l1, l2, pa, pb, cp, g):
+            return jax.lax.fori_loop(0, inner_max,
+                    lambda i1, acc_i1: acc_i1 + jax.lax.fori_loop(0, inner_max,
+                        lambda i2, acc_i2: acc_i2 + jax.lax.fori_loop(0, inner_max,
+                            lambda r1, acc_r1: acc_r1 + jax.lax.fori_loop(0, inner_max,
+                                lambda r2, acc_r2: acc_r2 + jax.lax.fori_loop(0, inner_max,
+                                    lambda u, acc_u: acc_u + b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta),
+                                        0),
+                                        0),
+                                        0),
+                                        0),
+                                     0)
+    
+    # TODO: this sucks, bc it introduces an additional loop
+    def b_array(l1, l2, pa, pb, cp, g):
+        return jax.vmap(lambda iI : b_loop(iI, l1, l2, pa, pb, cp, g))(i_max_range)    
+
+    imax = 4*l_max + 1
+    inner_max = 2*l_max + 1
+
+    i_max_range = jnp.arange(imax)
+    binomial_prefactor = get_binomial_prefactor(i_max_range)
+    return b_array
+
 def get_repulsion(l_max):
-    return NotImplemented
 
-def overlap_gaussian(n, orbital_i, orbital_j):
-    r"""1 body matrix element in gaussian basis
-    $U_{ij} = \int dx \overline{\phi_i(x)} \sum_{x_n} \phi_j(x)$
+    def loop_body(i, j, k, lmn, rg):
+        return jax.lax.cond( jnp.logical_and(jnp.logical_and(i <= lmn[0], j <= lmn[1]), k <= lmn[2]), lambda: gamma_fun(i+j+k , rg), lambda: 0.0)
+        
 
-    Args:
-    n : slicing parameter for orbital array unpacking
-    orbitals : orbital array, represents two orbitals
+    def loop(bx, by, bz, lmn, rg):
+        return jax.lax.fori_loop(0, lim,
+                lambda i, vx: vx + jax.lax.fori_loop(0, lim,
+                    lambda j, vy: vy + jax.lax.fori_loop(0, lim,
+                        lambda k, vz: vz + bx[i] * by[j] * bz[k] * loop_body(i, j, k, lmn, rg),
+                        0),
+                        0),
+                        0)
 
-    Returns:
-    float, overlap element
-    """    
-    print("Compiling gaussian overlap")
-    return
+    def repulsion(alpha1, lmn1, pos1, alpha2, lmn2, pos2, alpha3, lmn3, pos3, alpha4, lmn4, pos4):
+        
+        rab2 = jnp.linalg.norm(pos1-pos2)**2
+        rcd2 = jnp.linalg.norm(pos3-pos4)**2
+        
+        gamma12 = alpha1 + alpha2
+        p = (alpha1*pos1 + alpha2*pos2) / gamma12
+        
+        gamma34 = alpha3 + alpha4        
+        q = (alpha3*pos3 + alpha4*pos4) / gamma34
 
-def kinetic_gaussian(n, orbital_i, orbital_j):
-    r"""1 body matrix element in gaussian basis
-    $U_{ij} = \int dx \overline{\phi_i(x)} \sum_{x_n} - \nabla \phi_j(x)$"""
-    print("Compiling gaussian kinetic")
-    return
+        rpq2 = jnp.linalg.norm(p-q)**2
+        
+        delta = 0.25 * (1.0 / gamma12 + 1.0 / gamma34)
 
-def nuclear_gaussian(n, orbital_i, orbital_j, nucleus):
-    r"""1 body matrix element in gaussian basis
-    $U_{ij} = \int dx \overline{\phi_i(x)} 1/|x_n - x| \phi_j(x)$"""
-    print("Compiling gaussian nuclear")
-    return
+        bx=b_array(lmn1[0], lmn2[0], lmn3[0], lmn4[0], p[0], pos1[0], pos2[0], q[0], pos3[0], pos4[0], gamma12, gamma34, delta)
+        by=b_array(lmn1[1], lmn2[1], lmn3[1], lmn4[1], p[1], pos1[1], pos2[1], q[1], pos3[1], pos4[1], gamma12, gamma34, delta)
+        bz=b_array(lmn1[2], lmn2[2], lmn3[2], lmn4[2], p[2], pos1[2], pos2[2], q[2], pos3[2], pos4[2], gamma12, gamma34, delta)
 
-def two_body_gaussian(n, orbital_i, orbital_j, orbital_k, orbital_l):
-    r"""2 body matrix element of 1/|x-x'| in gaussian basis
-    $U_{ijkl} = \int dx \int dx' \overline{\phi}_i(x) \overline{\phi}_j(x') 1/|x-x'| \phi_k(x') \phi_l(x)$"""
-    print("Compiling gaussian two body")
-    return
+        res = loop(bx, by, bz, lmn1+lmn2+lmn3+lmn4, 0.25*rpq2/delta)
+        return 2.0 * jnp.pow(jnp.pi, 2.5) / (gamma12*gamma34*jnp.sqrt(gamma12+gamma34)) * jnp.exp(-alpha1*alpha2*rab2/gamma12) * jnp.exp(-alpha3*alpha4*rcd2/gamma34) * ret
+        
 
 def update_positions(orbitals, nuclei, orbitals_to_nuclei):
     """Ensures that orbital positions match their nuclei."""    
@@ -320,9 +379,9 @@ def get_gaussian_functions(l_max):
     overlap = get_overlap(l_max)
     kinetic = get_kinetic(l_max)
     nuclear = get_nuclear(l_max)
-    twob = get_twob(l_max)
+    repulsion = get_repulsion(l_max)
 
-    return overlap, kinetic, nuclear, twob
+    return overlap, kinetic, nuclear, repulsion
 
 ### PYQINT REFERENCE NAMESPACE: USE EXPOSED FUNCS FROM LIB OR PURE PYTHON IMPLS OF PYQINT C++ FUNCS ###
 class Reference:
