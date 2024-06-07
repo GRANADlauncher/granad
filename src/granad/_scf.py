@@ -67,7 +67,8 @@ def double_factorial(n):
     rng = jnp.arange(n_max)
     return (n > 0) * jnp.where(rng == n, vals[rng], 0).sum() + (n < 0)
 
-# def factorial(n):
+from jax.scipy.special import factorial
+# def factorial(n):    
 #     vals = jnp.array([1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800,87178291200,1307674368000])
 #     return jax.lax.cond(n < vals.size,
 #                         lambda : vals[n],
@@ -150,7 +151,7 @@ def get_a_array(l_max):
                  jnp.pow(0.25/g,r+u)/factorial(r)/factorial(u)/factorial(i-2*r-2*u) )
     
     def a_legal(iI, i, r, u, l1, l2):
-        return jnp.logical_and( jnp.logical_and( jnp.logical_and(i < l1 + l2 + 1, r <= jnp.ceil(i/2)),  u <= jnp.ceil((i-2*r)/2)),  iI == i - 2 * r - u )
+        return jnp.logical_and( jnp.logical_and( jnp.logical_and(i < l1 + l2 + 1, r <= i//2+1),  u <= (i-2*r)//2+1),  iI == i - 2 * r - u )
 
     def a_wrapped(iI, i, r, u, l1, l2, pa, pb, cp, g):
         return jax.lax.cond(a_legal(iI, i, r, u, l1, l2), lambda: a_term(i, r, u, l1, l2, pa, pb, cp, g), lambda : 0.0) 
@@ -221,13 +222,13 @@ def get_b_array(l_max):
     def bb0(i, r, g):
         return factorial(i) / factorial(r) / factorial(i - 2*r) * jnp.pow(4*g,r-i)
 
-    def fb(i, l1, l2, p-a, p-b):
+    def fb(i, l1, l2, p, a, b, r, g):
         return binomial_prefactor(i, l1, l2, p-a, p-b) * bb0(i, r, g)
     
     def b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta):
         a, b = i1+i2-2*(r1+r2),u
-        return (fB(i1,l1,l2,px,ax,bx,r1,g1)*
-                jnp.pow(-1,i2) * fB(i2,l3,l4,qx,cx,dx,r2,g2)*
+        return (fb(i1,l1,l2,px,ax,bx,r1,g1)*
+                jnp.pow(-1,i2) * fb(i2,l3,l4,qx,cx,dx,r2,g2)*
                 jnp.pow(-1,u)* factorial(a) / factorial(b) / factorial(a - 2*b)*
                 jnp.pow(qx-px,i1+i2-2*(r1+r2)-2*u)/
                 jnp.pow(delta,i1+i2-2*(r1+r2)-u))
@@ -238,21 +239,21 @@ def get_b_array(l_max):
                 jnp.logical_and(
                     jnp.logical_and(
                         jnp.logical_and(i1 < l1 + l2 + 1, i2 < l3 + l4 + 1),
-                        r1 < jnp.ceil(i1/2)),
-                    r2 < jnp.ceil(i2/2)),
-                u<jnp.floor((i1+i2)/2)-r1-r2+1),
+                        r1 < i1//2 + 1),
+                    r2 < i2//2 + 1),
+                u<(i1+i2)//2-r1-r2+1),
             i == i1+i2-2*(r1+r2)-u)
 
     def b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta):
         return jax.lax.cond(b_legal(i, i1, i2, r1, r2, u, l1, l2, l3, l4), lambda: b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta), lambda : 0.0) 
 
-    def b_loop(i, l1, l2, pa, pb, cp, g):
+    def b_loop(i, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta):
             return jax.lax.fori_loop(0, inner_max,
                     lambda i1, acc_i1: acc_i1 + jax.lax.fori_loop(0, inner_max,
                         lambda i2, acc_i2: acc_i2 + jax.lax.fori_loop(0, inner_max,
                             lambda r1, acc_r1: acc_r1 + jax.lax.fori_loop(0, inner_max,
                                 lambda r2, acc_r2: acc_r2 + jax.lax.fori_loop(0, inner_max,
-                                    lambda u, acc_u: acc_u + b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta),
+                                    lambda u, acc_u: acc_u + b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta),
                                         0),
                                         0),
                                         0),
@@ -260,8 +261,8 @@ def get_b_array(l_max):
                                      0)
     
     # TODO: this sucks, bc it introduces an additional loop
-    def b_array(l1, l2, pa, pb, cp, g):
-        return jax.vmap(lambda iI : b_loop(iI, l1, l2, pa, pb, cp, g))(i_max_range)    
+    def b_array(l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta):
+        return jax.vmap(lambda i : b_loop(i, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta))(i_max_range)    
 
     imax = 4*l_max + 1
     inner_max = 2*l_max + 1
@@ -305,7 +306,12 @@ def get_repulsion(l_max):
         bz=b_array(lmn1[2], lmn2[2], lmn3[2], lmn4[2], p[2], pos1[2], pos2[2], q[2], pos3[2], pos4[2], gamma12, gamma34, delta)
 
         res = loop(bx, by, bz, lmn1+lmn2+lmn3+lmn4, 0.25*rpq2/delta)
-        return 2.0 * jnp.pow(jnp.pi, 2.5) / (gamma12*gamma34*jnp.sqrt(gamma12+gamma34)) * jnp.exp(-alpha1*alpha2*rab2/gamma12) * jnp.exp(-alpha3*alpha4*rcd2/gamma34) * ret
+        return 2.0 * jnp.pow(jnp.pi, 2.5) / (gamma12*gamma34*jnp.sqrt(gamma12+gamma34)) * jnp.exp(-alpha1*alpha2*rab2/gamma12) * jnp.exp(-alpha3*alpha4*rcd2/gamma34) * res
+
+    b_array = get_b_array(l_max)
+    lim = 4*l_max+1
+    
+    return repulsion
         
 
 def update_positions(orbitals, nuclei, orbitals_to_nuclei):
@@ -384,6 +390,8 @@ def get_gaussian_functions(l_max):
     return overlap, kinetic, nuclear, repulsion
 
 ### PYQINT REFERENCE NAMESPACE: USE EXPOSED FUNCS FROM LIB OR PURE PYTHON IMPLS OF PYQINT C++ FUNCS ###
+import math
+
 class Reference:
 
     @staticmethod 
@@ -448,11 +456,9 @@ class Reference:
     
     @staticmethod
     def A_term(i, r, u, l1, l2, pax, pbx, cpx, gamma):
-        import math
         return (math.pow(-1, i) * Reference.binomial_prefactor(i, l1, l2, pax, pbx) *
                 math.pow(-1, u) * factorial(i) * math.pow(cpx, i - 2 * r - 2 * u) *
-                math.pow(0.25 / gamma, r + u) / factorial(r) / factorial(u) / factorial(i - 2 * r - 2 * u))
-
+                math.pow(0.25 / gamma, r + u) / factorial(r) / factorial(u) / factorial(i - 2 * r - 2 * u))    
 
 # TODO: test with minimum possible l_max
 ### QUICK TESTS ###
@@ -624,11 +630,47 @@ def test_gto_nuclear():
 
     assert abs(integrator.nuclear_gto(gto_1, gto_2, nuc.tolist()) - nuclear(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, nuc)) < 1e-10
 
+    
 def test_b_array():
-    assert False
+    
+    # i1, i2, r1, r2, u, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta = 1,2,3,4,5,1, 2, 3, 4, 0.1, 0.2, 0.3, 0.1, 0.1, 0.2, 0.3, 0.1, 0.3
 
-def test_gto_ee():
-    assert False
+    # 1,1,1,1,1,1,1,0.1, 0.2, 0.3, 0.1, 0.1, 0.2, 0.3, 0.1, 0.3
+    
+    l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta = 1, 2, 3, 4, 0.1, 0.2, 0.3, 0.1, 0.1, 0.2, 0.3, 0.1, 0.3
+
+    b_array = get_b_array(max(l1,l2,l3,l4))
+    # jax.make_jaxpr(b_array)(l1, l2, pa, pb, cp, g)
+    b_array = jax.jit(b_array)
+    
+    print(b_array(l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta))
+    import pdb; pdb.set_trace()
+
+    # print(Reference.b_array(l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta))
+    
+def test_gto_repulsion():
+    integrator = PyQInt()
+
+    # parameters
+    c_1, c_2, c_3, c_4 = 0.391957, 0.391957, 0.391957, 0.391957
+    alpha_1, alpha_2 = 0.22229, 0.22229
+    alpha_1, alpha_2, alpha_3, alpha_4 = 0.3, 0.1, 0.2, 0.5
+    lmn1, lmn2, lmn3, lmn4 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ]), jnp.array([2,2,1 ]), jnp.array([1,0,1 ])
+    p_1, p_2, p_3, p_4 = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.]), jnp.array([1,1,1.]), jnp.array([1.,3,1])
+
+    # pyqint gtos
+    gto_1 = gto(c_1, p_1.tolist(), alpha_1, *(lmn1.tolist()))
+    gto_2 = gto(c_2, p_2.tolist(), alpha_2, *(lmn2.tolist()))
+    gto_3 = gto(c_3, p_3.tolist(), alpha_3, *(lmn3.tolist()))
+    gto_4 = gto(c_4, p_4.tolist(), alpha_4, *(lmn4.tolist()))
+
+    # overlap function
+    repulsion = get_gaussian_functions(jnp.concatenate([lmn1, lmn2, lmn3, lmn4]).max()+1)[3]
+    repulsion = jax.jit(repulsion)
+    print(repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4))
+    print(integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4))
+
+    assert abs(repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4) - integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4)) < 1e-10
     
 def test_overlap():
     assert False
@@ -639,7 +681,7 @@ def test_kinetic():
 def test_nuclear():
     assert False
 
-def test_ee():
+def test_repulsion():
     assert False
 
 # TODO: what a shame. this function is so nice, but so useless :(
@@ -694,4 +736,6 @@ sto_3g = {
 
 if __name__ == '__main__':
     # test_a_array()
-    test_gto_nuclear()
+    # test_gto_nuclear()
+    # test_b_array()
+    test_gto_repulsion()
