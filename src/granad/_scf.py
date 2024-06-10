@@ -11,16 +11,9 @@ import numpy as np
 # TODO: mean-field channels as flake couplings: coulomb, cooper, exchange
 # TODO: high level scf into flake that sets params, positions from scf
 # TODO: doc strings
-# TODO: remove hard-coded ranges (determine max range at start?)
-# TODO: are type casts ... le bad?
-# TODO: exploit symmetry as follows:
-#   1. introduce array `dont_compute_these_index_combinations` with index combinations not to compute.
-#   2. orbitals = jnp.concatenate(orbitals, jnp.arange(orbitals.size))
-#   3. in integration, check ( orbital1[-1] , orbital2[-1] , orbital3[-1] , orbital4[-1] ) in index array. yes => return 0, no => compute
-#   4. result = vmap ... => build full matrix with function fill_missing_values(result)
-# TODO: performance: normalization, factorial, binomial, double_factorial are slow
-# TODO: put norms into orbital array?
-# TODO: DRY norm unpacking same in all mat elem procedures
+# TODO: exploit symmetries via some sort of memoization
+# TODO: optimize gaussian elementary functions (type casts)
+# TODO: gaussian_norm : loop for n > len(vals)
 
 def get_atomic_charge(atom):
     charges = {
@@ -43,10 +36,12 @@ def get_atomic_charge(atom):
     return charges[atom]
 
 ### ELEMENTARY FUNCTIONS ###
-# TODO: I suspect all these functions suck in terms of performance, also: loop for n > len(vals)
 def gamma_fun(s, x):
     return gammainc(s+0.5, x) * gamma(s+0.5) * 0.5 * jnp.pow(x,-s-0.5) 
     
+def binomial(n, m):
+    return (n > 0) * (m > 0) * (n > m) * (factorial(n) / (factorial(n - m) * factorial(m)) - 1) + 1
+
 def get_binomial_prefactor(l_max_range):    
     def body(val, t, s, ia, ib, xpa, xpb):
         return jax.lax.cond(jnp.logical_and(jnp.logical_and(t <= s, s-ia<=t), t <= ib),                            
@@ -67,15 +62,6 @@ def double_factorial(n):
     rng = jnp.arange(n_max)
     return (n > 0) * jnp.where(rng == n, vals[rng], 0).sum() + (n < 0)
 
-from jax.scipy.special import factorial
-# def factorial(n):    
-#     vals = jnp.array([1,1,2,6,24,120,720,5040,40320,362880,3628800,39916800,479001600,6227020800,87178291200,1307674368000])
-#     return jax.lax.cond(n < vals.size,
-#                         lambda : vals[n],
-#                         lambda : 1 )
-
-def binomial(n, m):
-    return (n > 0) * (m > 0) * (n > m) * (factorial(n) / (factorial(n - m) * factorial(m)) - 1) + 1
 
 def gaussian_norm(lmn, alphas):
     nom = jax.vmap(lambda a : jnp.pow(2.0, 2.0*(lmn.sum()) + 1.5) * jnp.pow(a, lmn.sum() + 1.5))(alphas)
@@ -137,6 +123,7 @@ def get_kinetic(l_max):
         
         return term
 
+    l_max = l_max + 2
     overlap = get_overlap(l_max)
     
     return kinetic
@@ -151,7 +138,7 @@ def get_a_array(l_max):
                  jnp.pow(0.25/g,r+u)/factorial(r)/factorial(u)/factorial(i-2*r-2*u) )
     
     def a_legal(iI, i, r, u, l1, l2):
-        return jnp.logical_and( jnp.logical_and( jnp.logical_and(i < l1 + l2 + 1, r <= i//2+1),  u <= (i-2*r)//2+1),  iI == i - 2 * r - u )
+        return jnp.logical_and( jnp.logical_and( jnp.logical_and(i < l1 + l2 + 1, r <= i//2),  u <= (i-2*r)//2),  iI == i - 2 * r - u )
 
     def a_wrapped(iI, i, r, u, l1, l2, pa, pb, cp, g):
         return jax.lax.cond(a_legal(iI, i, r, u, l1, l2), lambda: a_term(i, r, u, l1, l2, pa, pb, cp, g), lambda : 0.0) 
@@ -287,7 +274,9 @@ def get_repulsion(l_max):
                         0)
 
     def repulsion(alpha1, lmn1, pos1, alpha2, lmn2, pos2, alpha3, lmn3, pos3, alpha4, lmn4, pos4):
-        
+
+        print("I compiled")
+
         rab2 = jnp.linalg.norm(pos1-pos2)**2
         rcd2 = jnp.linalg.norm(pos3-pos4)**2
         
@@ -311,8 +300,7 @@ def get_repulsion(l_max):
     b_array = get_b_array(l_max)
     lim = 4*l_max+1
     
-    return repulsion
-        
+    return jax.jit(repulsion)
 
 def update_positions(orbitals, nuclei, orbitals_to_nuclei):
     """Ensures that orbital positions match their nuclei."""    
@@ -350,6 +338,47 @@ def scf(hamiltonian, cooper, coulomb, exchange):
     return NotImplemented
 
 ### UNWRAP ###
+def one_body_wrapper(func, m):
+
+    def inner(orb1, orb2, *args):
+        cs1, alphas1, lmn1, ps1, cs2, alphas2, lmn2, ps2 = orb1[:m], orb1[m:2*m], orb1[-6:-3], orb1[-3:], orb2[:m], orb2[m:2*m], orb2[-6:-3], orb2[-3:]
+        norms1 = gaussian_norm(lmn1, alphas1)
+        norms2 = gaussian_norm(lmn2, alphas2)
+        
+        return jax.lax.fori_loop(0, imax, lambda i, acci:
+                                 acci + jax.lax.fori_loop(0, imax, lambda j, accj :
+                                                          accj + cs1[i] * cs2[j] * norms1[i] * norms2[j] * func(alphas1[i], lmn1, ps1, alphas2[j], lmn2, ps2, *args), 0), 0)
+
+    # number of coefficients to be looped over
+    imax = m 
+    
+    return inner
+
+def two_body_wrapper(func, m):
+    
+    def inner(orb1, orb2, orb3, orb4):
+        cs1, alphas1, lmn1, ps1, cs2, alphas2, lmn2, ps2, cs3, alphas3, lmn3, ps3, cs4, alphas4, lmn4, ps4 = orb1[:m], orb1[m:2*m], orb1[-6:-3], orb1[-3:], orb2[:m], orb2[m:2*m], orb2[-6:-3], orb2[-3:], orb3[:m], orb3[m:2*m], orb3[-6:-3], orb3[-3:], orb4[:m], orb4[m:2*m], orb4[-6:-3], orb4[-3:]
+
+        norms1 = gaussian_norm(lmn1, alphas1)
+        norms2 = gaussian_norm(lmn2, alphas2)
+        norms3 = gaussian_norm(lmn3, alphas3)
+        norms4 = gaussian_norm(lmn4, alphas4)
+
+        # import pdb; pdb.set_trace()
+        # print("le compile")
+        
+        return jax.lax.fori_loop(0, imax, lambda i, acci:
+                                 acci + jax.lax.fori_loop(0, imax, lambda j, accj :
+                                                          accj + jax.lax.fori_loop(0, imax, lambda k, acck :
+                                                                                   acck + jax.lax.fori_loop(0, imax, lambda l, accl :
+                                                                                                            accl + norms1[i] * norms2[j] * norms3[k] * norms4[l] * cs1[i] * cs2[j] * cs3[k] * cs4[l] * \
+                                                                                                            func(alphas1[i], lmn1, ps1, alphas2[j], lmn2, ps2, alphas3[k], lmn3, ps3, alphas4[l], lmn4, ps4), 0), 0), 0), 0)
+    
+    # number of coefficients to be looped over
+    imax = m
+    
+    return inner
+
 def expand_gaussian(orb_list, expansion):
     """converts OrbitalList into a representation compatible with gaussian integration.
     
@@ -363,31 +392,27 @@ def expand_gaussian(orb_list, expansion):
     # translate orbital list to array representation
     orbitals = jnp.array( [jnp.concatenate([jnp.concatenate(expansion[o.group_id]), o.position]) for o in orb_list] )
 
+    # size of coefficients for unpacking array arguments
+    coeff_size = expansion[orb_list[0].group_id][0].size
+
     # array representation of nuclei, index map to keep track of orbitals => nuclei
     nuclei_positions, idxs, orbitals_to_nuclei = jnp.unique(orbitals[:,:3], axis = 0, return_index = True, return_inverse = True)
-    atomic_charges = get_atomic_charges()
-    nuclei_charges = jnp.array([float(atomic_charges[o.atom_name]) for o in orb_list])[idxs]
+    nuclei_charges = jnp.array([float(get_atomic_charge(o.atom_name)) for o in orb_list])[idxs]
     nuclei = jnp.hstack( [nuclei_positions, nuclei_charges[:,None]] )
 
     # max l for static loops compatible with JIT+reverse AD
     l_max = orbitals[3:6].max()
+
+    # gto funcs 
+    overlap, kinetic, nuclear, repulsion = get_gaussian_functions(l_max)
+
+    # cgf expansion
+    overlap = one_body_wrapper(get_overlap(l_max), coeff_size)
+    kinetic = one_body_wrapper(get_kinetic(l_max), coeff_size)
+    nuclear = one_body_wrapper(get_nuclear(l_max), coeff_size)
+    repulsion = two_body_wrapper(get_repulsion(l_max), coeff_size)
     
-    return *get_gaussian_functions(l_max), orbitals, nuclei, orbitals_to_nuclei
-
-# TODO: decocrate gto functions with norm factor loop and compile directive
-def one_body_wrapper():
-    return NotImplemented
-
-def two_body_wrapper():
-    return NotImplemented
-
-def get_gaussian_functions(l_max):
-    overlap = get_overlap(l_max)
-    kinetic = get_kinetic(l_max)
-    nuclear = get_nuclear(l_max)
-    repulsion = get_repulsion(l_max)
-
-    return overlap, kinetic, nuclear, repulsion
+    return overlap, kinetic, nuclear, repulsion, orbitals, nuclei, orbitals_to_nuclei
 
 ### PYQINT REFERENCE NAMESPACE: USE EXPOSED FUNCS FROM LIB OR PURE PYTHON IMPLS OF PYQINT C++ FUNCS ###
 import math
@@ -459,8 +484,7 @@ class Reference:
         return (math.pow(-1, i) * Reference.binomial_prefactor(i, l1, l2, pax, pbx) *
                 math.pow(-1, u) * factorial(i) * math.pow(cpx, i - 2 * r - 2 * u) *
                 math.pow(0.25 / gamma, r + u) / factorial(r) / factorial(u) / factorial(i - 2 * r - 2 * u))    
-
-# TODO: test with minimum possible l_max
+    
 ### QUICK TESTS ###
 def test_binom():
     assert False
@@ -470,65 +494,6 @@ def test_gaussian_norm():
 
 def test_double_factorial():
     assert False
-
-def test_factorial():
-    # The first 20 factorial values
-    expected_values = [
-        1,               # 0!
-        1,               # 1!
-        2,               # 2!
-        6,               # 3!
-        24,              # 4!
-        120,             # 5!
-        720,             # 6!
-        5040,            # 7!
-        40320,           # 8!
-        362880,          # 9!
-        3628800,         # 10!
-        39916800,        # 11!
-        479001600,       # 12!
-        6227020800,      # 13!
-        87178291200,     # 14!
-        1307674368000,   # 15!
-        20922789888000,  # 16!
-        355687428096000, # 17!
-        6402373705728000,# 18!
-        121645100408832000,# 19!
-        2432902008176640000 # 20!
-    ]
-    
-    for n in range(21):
-        assert factorial(n) == expected_values[n], f"Test failed for n={n}: {factorial(n)} != {expected_values[n]}"
-
-def test_gamma_fun():
-    import scipy.special
-
-    prec = 1e-6
-
-    # Test case 1: gamma(1, 1)
-    val = scipy.special.gammainc(1, 1) * scipy.special.gamma(1)
-    assert abs(gamma_fun(1, 1.) - val) < prec
-
-    # Test case 2: gamma(2, 2)
-    val = scipy.special.gammainc(2, 2) * scipy.special.gamma(2)
-    assert abs(gamma_fun(2, 2.) - val) < prec
-
-    # Test case 3: gamma(3, 0.5)
-    val = scipy.special.gammainc(3, 0.5) * scipy.special.gamma(3)
-    assert abs(gamma_fun(3, 0.5) - val) < prec
-
-    # Test case 4: gamma(0.5, 0.5)
-    val = scipy.special.gammainc(0.5, 0.5) * scipy.special.gamma(0.5)
-    assert abs(gamma_fun(0.5, 0.5) - val) < prec
-
-    # Test case 5: gamma(5, 3)
-    val = scipy.special.gammainc(5, 3) * scipy.special.gamma(5)
-    assert abs(gamma_fun(5, 3.) - val) < prec
-
-    # Test case 6: gamma(10, 10)
-    val = scipy.special.gammainc(10, 10) * scipy.special.gamma(10)
-    assert abs(gamma_fun(10, 10.) - val) < prec    
-
 
 def test_binomial_prefactor():
     bf = get_binomial_prefactor(jnp.arange(10))
@@ -558,7 +523,7 @@ def test_gto_overlap():
     gto_2 = gto(c_2, p_2.tolist(), alpha_2, *(lmn2.tolist()))
 
     # overlap function
-    overlap = get_gaussian_functions(jnp.concatenate([lmn1, lmn2]).max()+10)[0]
+    overlap = get_overlap(jnp.concatenate([lmn1, lmn2]).max()+10)
     overlap = jax.jit(overlap)
 
     print(integrator.overlap_gto(gto_1, gto_2))
@@ -581,7 +546,7 @@ def test_gto_kinetic():
     gto_2 = gto(c_2, p_2.tolist(), alpha_2, *(lmn2.tolist()))
 
     # overlap function
-    kinetic = get_gaussian_functions(jnp.concatenate([lmn1, lmn2]).max()+10)[1]
+    kinetic = get_kinetic(jnp.concatenate([lmn1, lmn2]).max())
     kinetic = jax.jit(kinetic)
 
     print(integrator.kinetic_gto(gto_1, gto_2))
@@ -606,7 +571,20 @@ def test_a_array_grad():
     a_array = get_a_array(max(l1,l2))
     grad = jax.jit(jax.grad( lambda *xs : a_array(*xs).sum(), argnums = [2,3,4,5]))
     grad(l1,l2,pa,pb,cp,g)
-    grad(l1,l2,pa,pb,cp,g)    
+    arr = grad(l1,l2,pa,pb,cp,g)    
+
+    assert not jnp.isnan(jnp.array(arr)).any()
+
+def test_b_array_grad():
+    l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta = 1, 2, 3, 4, 0.1, 0.2, 0.3, 0.1, 0.1, 0.2, 0.3, 0.1, 0.3
+
+    b_array = get_b_array(max(l1,l2,l3,l4))
+    grad = jax.jit(jax.grad( lambda *xs : b_array(*xs).sum(), argnums = [5,6,7,8,9,10,11,12]))
+    grad(l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta)
+    
+    arr = grad(l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta)
+
+    assert not jnp.isnan(jnp.array(arr)).any()
     
 def test_gto_nuclear():
     integrator = PyQInt()
@@ -623,31 +601,13 @@ def test_gto_nuclear():
     gto_2 = gto(c_2, p_2.tolist(), alpha_2, *(lmn2.tolist()))
 
     # overlap function
-    nuclear = get_gaussian_functions(jnp.concatenate([lmn1, lmn2]).max()+1)[2]
+    nuclear = get_nuclear(jnp.concatenate([lmn1, lmn2]).max())
     nuclear = jax.jit(nuclear)
     print(nuclear(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, nuc))
     print(integrator.nuclear_gto(gto_1, gto_2, nuc.tolist()))
 
     assert abs(integrator.nuclear_gto(gto_1, gto_2, nuc.tolist()) - nuclear(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, nuc)) < 1e-10
-
-    
-def test_b_array():
-    
-    # i1, i2, r1, r2, u, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta = 1,2,3,4,5,1, 2, 3, 4, 0.1, 0.2, 0.3, 0.1, 0.1, 0.2, 0.3, 0.1, 0.3
-
-    # 1,1,1,1,1,1,1,0.1, 0.2, 0.3, 0.1, 0.1, 0.2, 0.3, 0.1, 0.3
-    
-    l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta = 1, 2, 3, 4, 0.1, 0.2, 0.3, 0.1, 0.1, 0.2, 0.3, 0.1, 0.3
-
-    b_array = get_b_array(max(l1,l2,l3,l4))
-    # jax.make_jaxpr(b_array)(l1, l2, pa, pb, cp, g)
-    b_array = jax.jit(b_array)
-    
-    print(b_array(l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta))
-    import pdb; pdb.set_trace()
-
-    # print(Reference.b_array(l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta))
-    
+        
 def test_gto_repulsion():
     integrator = PyQInt()
 
@@ -665,7 +625,7 @@ def test_gto_repulsion():
     gto_4 = gto(c_4, p_4.tolist(), alpha_4, *(lmn4.tolist()))
 
     # overlap function
-    repulsion = get_gaussian_functions(jnp.concatenate([lmn1, lmn2, lmn3, lmn4]).max()+1)[3]
+    repulsion = get_repulsion(jnp.concatenate([lmn1, lmn2, lmn3, lmn4]).max())
     repulsion = jax.jit(repulsion)
     print(repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4))
     print(integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4))
@@ -673,57 +633,126 @@ def test_gto_repulsion():
     assert abs(repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4) - integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4)) < 1e-10
     
 def test_overlap():
-    assert False
+    
+    c_11, c_12, c_21, c_22, c_31, c_32, c_41, c_42 = 0.391957, 0.4, 0.5, 0.6, 0.391957, 0.4, 0.5, 0.6
+    alpha_11, alpha_12, alpha_21, alpha_22,  alpha_31, alpha_32, alpha_41, alpha_42 = 0.3, 0.1, 0.2, 0.5, 0.3, 0.1, 0.2, 0.5
+    lmn1, lmn2, lmn3, lmn4 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ]), jnp.array([2,2,1 ]), jnp.array([1,0,1 ])
+    p_1, p_2, p_3, p_4 = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.]), jnp.array([1,1,1.]), jnp.array([1.,3,1])
 
+
+    orb1 = jnp.concatenate( [jnp.array([c_11, c_12]), jnp.array([alpha_11, alpha_12]), lmn1, p_1] )
+    orb2 = jnp.concatenate( [jnp.array([c_21, c_22]), jnp.array([alpha_21, alpha_22]), lmn2, p_2] )
+
+    
+    cgf1 = cgf(p_1.tolist())
+    cgf1.add_gto( c_11, alpha_11, *lmn1.tolist() )
+    cgf1.add_gto( c_12, alpha_12, *lmn1.tolist() )
+
+    cgf2 = cgf(p_2.tolist())
+    cgf2.add_gto( c_21, alpha_21, *lmn2.tolist() )
+    cgf2.add_gto( c_22, alpha_22, *lmn2.tolist() )
+
+    integrator = PyQInt()
+    n1 = integrator.overlap(cgf1, cgf2)
+
+    overlap = one_body_wrapper(get_overlap(jnp.concatenate([lmn1, lmn2]).max()), 2)
+    n2 = overlap( orb1, orb2 )
+
+    assert abs(n1-n2) < 1e-10
+    
 def test_kinetic():
-    assert False
+    c_11, c_12, c_21, c_22, c_31, c_32, c_41, c_42 = 0.391957, 0.4, 0.5, 0.6, 0.391957, 0.4, 0.5, 0.6
+    alpha_11, alpha_12, alpha_21, alpha_22,  alpha_31, alpha_32, alpha_41, alpha_42 = 0.3, 0.1, 0.2, 0.5, 0.3, 0.1, 0.2, 0.5
+    lmn1, lmn2, lmn3, lmn4 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ]), jnp.array([2,2,1 ]), jnp.array([1,0,1 ])
+    p_1, p_2, p_3, p_4 = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.]), jnp.array([1,1,1.]), jnp.array([1.,3,1])
 
-def test_nuclear():
-    assert False
+    orb1 = jnp.concatenate( [jnp.array([c_11, c_12]), jnp.array([alpha_11, alpha_12]), lmn1, p_1] )
+    orb2 = jnp.concatenate( [jnp.array([c_21, c_22]), jnp.array([alpha_21, alpha_22]), lmn2, p_2] )
+    
+    cgf1 = cgf(p_1.tolist())
+    cgf1.add_gto( c_11, alpha_11, *lmn1.tolist() )
+    cgf1.add_gto( c_12, alpha_12, *lmn1.tolist() )
+
+    cgf2 = cgf(p_2.tolist())
+    cgf2.add_gto( c_21, alpha_21, *lmn2.tolist() )
+    cgf2.add_gto( c_22, alpha_22, *lmn2.tolist() )
+
+    integrator = PyQInt()
+    n1 = integrator.kinetic(cgf1, cgf2)
+
+    kinetic = one_body_wrapper(get_kinetic(jnp.concatenate([lmn1, lmn2]).max()), 2)    
+    n2 = kinetic( orb1, orb2 )
+
+    assert abs(n1-n2) < 1e-10
+
+def test_nuclear():    
+    c_11, c_12, c_21, c_22, c_31, c_32, c_41, c_42 = 0.391957, 0.4, 0.5, 0.6, 0.391957, 0.4, 0.5, 0.6
+    alpha_11, alpha_12, alpha_21, alpha_22,  alpha_31, alpha_32, alpha_41, alpha_42 = 0.3, 0.1, 0.2, 0.5, 0.3, 0.1, 0.2, 0.5
+    lmn1, lmn2, lmn3, lmn4 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ]), jnp.array([2,2,1 ]), jnp.array([1,0,1 ])
+    p_1, p_2, p_3, p_4 = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.]), jnp.array([1,1,1.]), jnp.array([1.,3,1])
+
+    orb1 = jnp.concatenate( [jnp.array([c_11, c_12]), jnp.array([alpha_11, alpha_12]), lmn1, p_1] )
+    orb2 = jnp.concatenate( [jnp.array([c_21, c_22]), jnp.array([alpha_21, alpha_22]), lmn2, p_2] )
+    
+    cgf1 = cgf(p_1.tolist())
+    cgf1.add_gto( c_11, alpha_11, *lmn1.tolist() )
+    cgf1.add_gto( c_12, alpha_12, *lmn1.tolist() )
+
+    cgf2 = cgf(p_2.tolist())
+    cgf2.add_gto( c_21, alpha_21, *lmn2.tolist() )
+    cgf2.add_gto( c_22, alpha_22, *lmn2.tolist() )
+
+    integrator = PyQInt()
+    n1 = integrator.nuclear(cgf1, cgf2, p_3.tolist(), 1)
+
+    nuclear = one_body_wrapper(get_nuclear(jnp.concatenate([lmn1, lmn2]).max()), 2)    
+    n2 = nuclear( orb1, orb2, p_3 )
+
+    assert abs(n1-n2) < 1e-10
 
 def test_repulsion():
-    assert False
-
-# TODO: what a shame. this function is so nice, but so useless :(
-# TODO: prbly smarter to bound individual nestings
-def transform_nested_loop(f, bound, *arrs):
-    """transforms a dynamic bounds nested loop computation with base case function f
-    for a in arrs[0]:
-      for b in arrs[1]:
-        ...
-          val = f(val, a, b, ..., **params)
-    into a JAX-JIT compatible chain of `scan` calls.
-
-    where the dynamic bounds are decided by the bound function before calling into f.
-
-    This function is partially based on mattj's ingenious solution https://github.com/google/jax/discussions/10401#discussioncomment-2610609
-    """
     
-    def bound_eval(loop, bound):
-        """bypasses loop computation if bound evals to True"""
+    c_11, c_12, c_21, c_22, c_31, c_32, c_41, c_42 = 0.391957, 0.4, 0.5, 0.6, 0.391957, 0.4, 0.5, 0.6
+    alpha_11, alpha_12, alpha_21, alpha_22,  alpha_31, alpha_32, alpha_41, alpha_42 = 0.3, 0.1, 0.2, 0.5, 0.3, 0.1, 0.2, 0.5
+    lmn1, lmn2, lmn3, lmn4 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ]), jnp.array([2,2,1 ]), jnp.array([1,0,1 ])
+    p_1, p_2, p_3, p_4 = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.]), jnp.array([1,1,1.]), jnp.array([1.,3,1])
 
-        return lambda val, *xs, **params : jax.lax.cond( bound(*xs, **params), lambda : loop(val, *xs, **params), lambda : val)
-    
-    # wrap loop into dynamic bound evaluation function before capturing in closure 
-    loop = bound_eval(lambda val, *xs, **params : f(val, *xs, **params), bound)
-    
-    def add(loop, arr):
-        """adds another nesting level to `loop` over the values contained in `arr`"""
-        
-        def wrapper(val, *xs, **params):
-            """wraps the bounded loop computation on `arr` into a scan, discarding the array value accumulator"""
-            
-            print("compiled nesting") # poor mans JIT debug            
-            val, _ = jax.lax.scan(lambda val, x : (loop(val, *xs, x, **params), None), val, arr)
-            return val
 
-        # start from base case by adding induction cases
-        return wrapper
+    c_11, c_12, c_21, c_22, c_31, c_32, c_41, c_42 = 1, 1, 1, 1, 1, 1, 1, 1
 
-    for arr in reversed(arrs):
-        loop = add(loop, arr)
+    orb1 = jnp.concatenate( [jnp.array([c_11, c_12]), jnp.array([alpha_11, alpha_12]), lmn1, p_1] )
+    orb2 = jnp.concatenate( [jnp.array([c_21, c_22]), jnp.array([alpha_21, alpha_22]), lmn2, p_2] )
+    orb3 = jnp.concatenate( [jnp.array([c_31, c_32]), jnp.array([alpha_31, alpha_32]), lmn3, p_3] )
+    orb4 = jnp.concatenate( [jnp.array([c_41, c_42]), jnp.array([alpha_41, alpha_42]), lmn4, p_4] )
     
-    return loop
+    cgf1 = cgf(p_1.tolist())
+    cgf1.add_gto( c_11, alpha_11, *lmn1.tolist() )
+    cgf1.add_gto( c_12, alpha_12, *lmn1.tolist() )
+
+    cgf2 = cgf(p_2.tolist())
+    cgf2.add_gto( c_21, alpha_21, *lmn2.tolist() )
+    cgf2.add_gto( c_22, alpha_22, *lmn2.tolist() )
+
+    cgf3 = cgf(p_3.tolist())
+    cgf3.add_gto( c_31, alpha_31, *lmn3.tolist() )
+    cgf3.add_gto( c_32, alpha_32, *lmn3.tolist() )
+
+    cgf4 = cgf(p_4.tolist())
+    cgf4.add_gto( c_41, alpha_41, *lmn4.tolist() )
+    cgf2.add_gto( c_42, alpha_42, *lmn4.tolist() )
+
+    
+    integrator = PyQInt()
+    n1 = integrator.repulsion(cgf1, cgf2, cgf3, cgf4)
+
+    repulsion = two_body_wrapper(get_repulsion(jnp.concatenate([lmn1, lmn2, lmn3, lmn4]).max()), 2)
+    # repulsion  = jax.jit(repulsion)
+    n2 = repulsion( orb1, orb2, orb3, orb4 )
+
+    import pdb; pdb.set_trace()
+
+
+    assert abs(n1-n2) < 1e-10
 
 # convention used for built-in gaussian basis: tuples have the form (coefficients, alphas, lmn), where lmn is exponent of cartesian coordinates x,y,z
 sto_3g = {
@@ -735,7 +764,5 @@ sto_3g = {
 
 
 if __name__ == '__main__':
-    # test_a_array()
-    # test_gto_nuclear()
-    # test_b_array()
-    test_gto_repulsion()
+    # test_overlap()
+    test_repulsion()
