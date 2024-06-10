@@ -204,6 +204,10 @@ def get_nuclear(l_max):
 
 ### REPULSION ###
 # TODO: i almost vomit every time i have to read this
+
+def factorial(n):
+    return n
+
 def get_b_array(l_max):
 
     def bb0(i, r, g):
