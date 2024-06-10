@@ -40,7 +40,7 @@ def factorial(n):
     return n
 
 def gamma_fun(s, x):
-    return 1.0#gammainc(s+0.5, x) * gamma(s+0.5) * 0.5 * jnp.pow(x,-s-0.5) 
+    return 1#gammainc(s+0.5, x) * gamma(s+0.5) * 0.5 * jnp.pow(x,-s-0.5) 
     
 def binomial(n, m):
     return (n > 0) * (m > 0) * (n > m) * (factorial(n) / (factorial(n - m) * factorial(m)) - 1) + 1
@@ -614,7 +614,7 @@ def test_gto_repulsion():
     lmn1, lmn2, lmn3, lmn4 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ]), jnp.array([2,2,1 ]), jnp.array([1,0,1 ])
     p_1, p_2, p_3, p_4 = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.]), jnp.array([1,1,1.]), jnp.array([1.,3,1])
 
-    # lmn1, lmn2, lmn3, lmn4 = jnp.array([1,0,1 ]), jnp.array([0,1,1 ]), jnp.array([1,1,1 ]), jnp.array([1,0,1 ])
+    lmn1, lmn2, lmn3, lmn4 = jnp.array([1,0,1 ]), jnp.array([0,1,1 ]), jnp.array([1,1,1 ]), jnp.array([1,0,1 ])
 
     # pyqint gtos
     gto_1 = gto(c_1, p_1.tolist(), alpha_1, *(lmn1.tolist()))
