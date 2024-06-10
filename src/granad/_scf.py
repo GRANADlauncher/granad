@@ -627,13 +627,17 @@ def test_gto_repulsion():
     repulsion = jax.jit(repulsion)
     print(repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4))
     print(integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4))
-
+    rep = lambda a : repulsion(a, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4) 
+    rep_jit = jax.jit(jax.vmap( lambda a : rep(a)))
     
     import timeit
     def foo(): repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4)
     def bar(): integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4)
+    def frisbee() : rep_jit(jnp.arange(3*1000).reshape(3,1000).T )
+
     timeit.timeit(foo, number = 100)
     timeit.timeit(bar, number = 100)
+    timeit.timeit(frisbee, number = 1)
     
     import pdb; pdb.set_trace()
 
