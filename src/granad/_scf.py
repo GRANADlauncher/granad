@@ -36,6 +36,9 @@ def get_atomic_charge(atom):
     return charges[atom]
 
 ### ELEMENTARY FUNCTIONS ###
+def factorial(n):
+    return n
+
 def gamma_fun(s, x):
     return gammainc(s+0.5, x) * gamma(s+0.5) * 0.5 * jnp.pow(x,-s-0.5) 
     
@@ -204,10 +207,6 @@ def get_nuclear(l_max):
 
 ### REPULSION ###
 # TODO: i almost vomit every time i have to read this
-
-def factorial(n):
-    return n
-
 def get_b_array(l_max):
 
     def bb0(i, r, g):
@@ -627,6 +626,15 @@ def test_gto_repulsion():
     print(repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4))
     print(integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4))
 
+    
+    # import timeit
+    # def foo(): repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4)
+    # def bar(): integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4)
+    # timeit.timeit(foo, number = 100)
+    # timeit.timeit(bar, number = 100)
+
+
+    
     import pdb; pdb.set_trace()
 
     assert abs(repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4) - integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4)) < 1e-10
