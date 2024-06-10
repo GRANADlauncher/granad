@@ -36,9 +36,6 @@ def get_atomic_charge(atom):
     return charges[atom]
 
 ### ELEMENTARY FUNCTIONS ###
-def factorial(n):
-    return n
-
 def gamma_fun(s, x):
     return gammainc(s+0.5, x) * gamma(s+0.5) * 0.5 * jnp.pow(x,-s-0.5) 
     
@@ -251,7 +248,7 @@ def get_b_array(l_max):
         return jax.vmap(lambda i : b_loop(i, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta))(outer_i_range)    
 
     outer_i_range = jnp.arange(4*l_max + 1)
-    binomial_prefactor = lambda a,b,c,d,e : 1.0 #get_binomial_prefactor(outer_i_range)
+    binomial_prefactor = get_binomial_prefactor(outer_i_range)
 
     inner_i_range = jnp.arange(2*l_max + 1)
     
