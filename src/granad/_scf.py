@@ -231,9 +231,13 @@ def get_b_array(l_max):
                 u<(i1+i2)//2-r1-r2+1),
             i == i1+i2-2*(r1+r2)-u)
 
+    # def b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta):
+    #     return jax.lax.cond(b_legal(i, i1, i2, r1, r2, u, l1, l2, l3, l4), lambda: b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta), lambda : 0.0)
+    
     def b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta):
-        return jax.lax.cond(b_legal(i, i1, i2, r1, r2, u, l1, l2, l3, l4), lambda: b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta), lambda : 0.0) 
+        return b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta)
 
+    
     def b_loop(i, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta):
         f = lambda i1, i2, r1, r2, u : b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta)
         return jax.vmap(jax.vmap(jax.vmap(jax.vmap(jax.vmap(f,
@@ -254,7 +258,11 @@ def get_repulsion(l_max):
 
     def loop_body(i, j, k, lmn, rg):
         return jax.lax.cond( jnp.logical_and(jnp.logical_and(i <= lmn[0], j <= lmn[1]), k <= lmn[2]), lambda: gamma_fun(i+j+k , rg), lambda: 0.0)
-        
+    
+    def loop_body(i, j, k, lmn, rg):
+        return gamma_fun(i+j+k , rg)
+
+    
     def repulsion(alpha1, lmn1, pos1, alpha2, lmn2, pos2, alpha3, lmn3, pos3, alpha4, lmn4, pos4):
 
         print("I compiled")
