@@ -235,27 +235,19 @@ def get_b_array(l_max):
         return jax.lax.cond(b_legal(i, i1, i2, r1, r2, u, l1, l2, l3, l4), lambda: b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta), lambda : 0.0) 
 
     def b_loop(i, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta):
-            return jax.lax.fori_loop(0, inner_max,
-                    lambda i1, acc_i1: acc_i1 + jax.lax.fori_loop(0, inner_max,
-                        lambda i2, acc_i2: acc_i2 + jax.lax.fori_loop(0, inner_max,
-                            lambda r1, acc_r1: acc_r1 + jax.lax.fori_loop(0, inner_max,
-                                lambda r2, acc_r2: acc_r2 + jax.lax.fori_loop(0, inner_max,
-                                    lambda u, acc_u: acc_u + b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta),
-                                        0),
-                                        0),
-                                        0),
-                                        0),
-                                     0)
+        f = lambda i1, i2, r1, r2, u : b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta)
+        return jax.vmap(jax.vmap(jax.vmap(jax.vmap(jax.vmap(f,
+                                                            in_axes=(0, None, None, None, None)), in_axes=(None, 0, None, None, None)), in_axes=(None, None, 0, None, None)), in_axes=(None, None, None, 0, None)), in_axes=(None, None, None, None, 0))(inner_i_range, inner_i_range, inner_i_range, inner_i_range, inner_i_range).sum()
+
     
-    # TODO: this sucks, bc it introduces an additional loop
     def b_array(l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta):
-        return jax.vmap(lambda i : b_loop(i, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta))(i_max_range)    
+        return jax.vmap(lambda i : b_loop(i, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta))(outer_i_range)    
 
-    imax = 4*l_max + 1
-    inner_max = 2*l_max + 1
+    outer_i_range = jnp.arange(4*l_max + 1)
+    binomial_prefactor = get_binomial_prefactor(outer_i_range)
 
-    i_max_range = jnp.arange(imax)
-    binomial_prefactor = get_binomial_prefactor(i_max_range)
+    inner_i_range = jnp.arange(2*l_max + 1)
+    
     return b_array
 
 def get_repulsion(l_max):
@@ -263,16 +255,6 @@ def get_repulsion(l_max):
     def loop_body(i, j, k, lmn, rg):
         return jax.lax.cond( jnp.logical_and(jnp.logical_and(i <= lmn[0], j <= lmn[1]), k <= lmn[2]), lambda: gamma_fun(i+j+k , rg), lambda: 0.0)
         
-
-    def loop(bx, by, bz, lmn, rg):
-        return jax.lax.fori_loop(0, lim,
-                lambda i, vx: vx + jax.lax.fori_loop(0, lim,
-                    lambda j, vy: vy + jax.lax.fori_loop(0, lim,
-                        lambda k, vz: vz + bx[i] * by[j] * bz[k] * loop_body(i, j, k, lmn, rg),
-                        0),
-                        0),
-                        0)
-
     def repulsion(alpha1, lmn1, pos1, alpha2, lmn2, pos2, alpha3, lmn3, pos3, alpha4, lmn4, pos4):
 
         print("I compiled")
@@ -290,17 +272,20 @@ def get_repulsion(l_max):
         
         delta = 0.25 * (1.0 / gamma12 + 1.0 / gamma34)
 
-        bx=b_array(lmn1[0], lmn2[0], lmn3[0], lmn4[0], p[0], pos1[0], pos2[0], q[0], pos3[0], pos4[0], gamma12, gamma34, delta)
-        by=b_array(lmn1[1], lmn2[1], lmn3[1], lmn4[1], p[1], pos1[1], pos2[1], q[1], pos3[1], pos4[1], gamma12, gamma34, delta)
-        bz=b_array(lmn1[2], lmn2[2], lmn3[2], lmn4[2], p[2], pos1[2], pos2[2], q[2], pos3[2], pos4[2], gamma12, gamma34, delta)
+        # TODO: hmpf
+        b = jax.vmap(lambda i : b_array(lmn1[i], lmn2[i], lmn3[i], lmn4[i], p[i], pos1[i], pos2[i], q[i], pos3[i], pos4[i], gamma12, gamma34, delta) )(jnp.arange(3))
 
-        res = loop(bx, by, bz, lmn1+lmn2+lmn3+lmn4, 0.25*rpq2/delta)
+        lmn= lmn1+lmn2+lmn3+lmn4
+        l = jax.vmap(jax.vmap(jax.vmap(lambda i, j, k : loop_body(i, j, k, lmn, 0.25*rpq2/delta), in_axes=(0, None, None)), in_axes=(None, 0, None)), in_axes=(None, None, 0))(indices, indices, indices)
+
+        res = b[2] @ (b[1] @ (b[0] @ l))
         return 2.0 * jnp.pow(jnp.pi, 2.5) / (gamma12*gamma34*jnp.sqrt(gamma12+gamma34)) * jnp.exp(-alpha1*alpha2*rab2/gamma12) * jnp.exp(-alpha3*alpha4*rcd2/gamma34) * res
+    
 
     b_array = get_b_array(l_max)
-    lim = 4*l_max+1
+    indices = jnp.arange(4*l_max+1)
     
-    return jax.jit(repulsion)
+    return repulsion
 
 def update_positions(orbitals, nuclei, orbitals_to_nuclei):
     """Ensures that orbital positions match their nuclei."""    
@@ -630,6 +615,8 @@ def test_gto_repulsion():
     print(repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4))
     print(integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4))
 
+    import pdb; pdb.set_trace()
+
     assert abs(repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4) - integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4)) < 1e-10
     
 def test_overlap():
@@ -765,4 +752,4 @@ sto_3g = {
 
 if __name__ == '__main__':
     # test_overlap()
-    test_repulsion()
+    test_gto_repulsion()
