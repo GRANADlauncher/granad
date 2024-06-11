@@ -88,6 +88,8 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#modifying-the-saturation-functional">Modifying the saturation functional</a>
     </li>
+    <li class="toctree-l2"><a class="reference internal" href="#corrected-lindblad">Corrected Lindblad</a>
+    </li>
     <li class="toctree-l2"><a class="reference internal" href="#wigner-weisskopf-transition-rates">Wigner-Weisskopf transition rates</a>
     </li>
     </ul>
@@ -120,7 +122,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="lindblad-dissipation">Lindblad Dissipation</h1>
-<p>To model dissipation in greater depth, GRANAD makes a Lindblad dissipation model available. The mathematical details are laid out in <a href="https://link.aps.org/doi/10.1103/PhysRevA.109.022237">Pelc et al., 2023</a> and revolve around the following equation</p>
+<p>To model dissipation in greater depth, GRANAD makes a Lindblad dissipation model available. The mathematical details are laid out in <a href="https://link.aps.org/doi/10.1103/PhysRevA.109.022237">Pelc et al., 2024</a> and revolve around the following equation</p>
 <div class="arithmatex">\[\gamma_{ij}(t) = \gamma_{ij} \cdot f(t)\]</div>
 <p>where \gamma_{ij} is the transition rate from state i to state j and <span class="arithmatex">\(f\)</span> is a relaxation functional to prevent breaking the Pauli principle (pushing more than 2 electrons into the same energetic state).</p>
 <h2 id="lindblad-relaxation-dynamics-of-the-metallic-chain">Lindblad Relaxation dynamics of the Metallic Chain</h2>
@@ -217,14 +219,51 @@ RHS compiled
 100.0 %
 </code></pre></div>
 <p><img alt="png" src="../la_lindblad_files/la_lindblad_24_2.png" /></p>
+<h2 id="corrected-lindblad">Corrected Lindblad</h2>
+<p>A precursor of the saturated Linblad model replaces <span class="arithmatex">\(D[\rho] \rightarrow D[\rho - \rho_0]\)</span>, i.e. it applies the Lindblad operators to <span class="arithmatex">\(\rho - \rho_0\)</span>, much like the phenomenological dissipator.</p>
+<p>It can be shown that this model for an <span class="arithmatex">\(N\)</span> electron system is equivalent to the phenomenological dissipator with relaxation rate <span class="arithmatex">\(r\)</span> if <span class="arithmatex">\(\gamma^{ij} = \gamma = \frac{r}{N}\)</span>. We can check this is as follows</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">dissipators</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">gamma_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">hamiltonian</span><span class="p">)</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">dissipator</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;corrected&quot;</span><span class="p">:</span><span class="n">dissipators</span><span class="o">.</span><span class="n">CorrectedLindblad</span><span class="p">(</span><span class="n">no_saturation</span><span class="p">)}</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>                               <span class="n">dissipator</span> <span class="o">=</span> <span class="n">dissipator</span><span class="p">,</span>
+</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
+</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>                               <span class="p">)</span>
+</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+100.0 %
+</code></pre></div>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_28_2.png" /></p>
+<p>We can now compare to the phenomenological dissipator with its rate scaled by <span class="arithmatex">\(N\)</span>.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mf">6.</span><span class="p">,</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>                               <span class="p">)</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+100.0 %
+</code></pre></div>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_30_2.png" /></p>
 <h2 id="wigner-weisskopf-transition-rates">Wigner-Weisskopf transition rates</h2>
 <p>GRANAD also offers the IP wigner_weisskopf_transition_rates directly as a gamma matrix like</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">gamma_matrix</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">wigner_weisskopf_transition_rates</span>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">matshow</span><span class="p">(</span><span class="n">gamma_matrix</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">gamma_matrix</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">wigner_weisskopf_transition_rates</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">matshow</span><span class="p">(</span><span class="n">gamma_matrix</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </span></code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_27_0.png" /></p>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_33_0.png" /></p>
 <p>NOTE: things will likely break if you use these rates directly without rescaling them somehow. </p>
               
             </div>
