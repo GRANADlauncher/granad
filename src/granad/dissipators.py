@@ -1,5 +1,5 @@
 import jax
-import jax.numpy
+import jax.numpy as jnp
 
 def DecoherenceTime():
     """Function for modelling dissipation according to the relaxation approximation.
