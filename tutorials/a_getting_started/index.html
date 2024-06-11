@@ -94,6 +94,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../la_lindblad/">La lindblad</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
                   </li>
               </ul>
@@ -184,7 +186,7 @@ hBN
 <p>Let's inspect a material.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>&lt;function get_graphene at 0x7fbbb229f060&gt;
+<div class="language-text highlight"><pre><span></span><code>&lt;function get_graphene at 0x7fd351d6af20&gt;
 </code></pre></div>
 <p>There are parameters regarding the geometry, the type of the involved orbitals (the built-in graphene model contains only a single pz orbital per atom), the position of orbitals in the unit cell and the interactions (currently, GRANAD supports hoppings and Coulomb interactions). Let's pick a concrete material.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">graphene</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
