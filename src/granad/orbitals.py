@@ -1074,7 +1074,8 @@ class OrbitalList:
             return {"no_dissipation" : lambda t, r, args : 0.0}
         if isinstance(relaxation_rate, float):
             return { "decoherence_time" : dissipators.DecoherenceTime() }
-        return {"lindblad" : dissipators.SaturationLindblad( lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x))) ) }        
+        func  = (lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x)))) if saturation is None else saturation
+        return {"lindblad" : dissipators.SaturationLindblad(func) }        
 
     # TODO: rewrite, should be static, leaks mem
     def get_postprocesses( self, expectation_values, density_matrix ):
@@ -1118,7 +1119,7 @@ class OrbitalList:
             
             illumination : Callable = None,
             
-            relaxation_rate : float = None,
+            relaxation_rate : Optional[Union[float, jax.Array]] = None,
 
             compute_at : Optional[jax.Array] = None,
 
