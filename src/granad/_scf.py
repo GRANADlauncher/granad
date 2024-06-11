@@ -201,6 +201,10 @@ def get_nuclear(l_max):
     
     return nuclear
 
+  # i = jnp.arange(n)[:, None]
+  # j = jnp.arange(n)[None, :]
+  # x = jnp.zeros((n, n))
+  # x = x.at[i, j].set(jnp.exp(-(i - j)) * a[j])
 
 ### REPULSION ###
 # TODO: i almost vomit every time i have to read this
@@ -231,8 +235,8 @@ def get_b_array(l_max):
                 u<(i1+i2)//2-r1-r2+1),
             i == i1+i2-2*(r1+r2)-u)
 
-    # def b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta):
-    #     return jax.lax.cond(b_legal(i, i1, i2, r1, r2, u, l1, l2, l3, l4), lambda: b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta), lambda : 0.0)
+    def b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta):
+        return jax.lax.cond(b_legal(i, i1, i2, r1, r2, u, l1, l2, l3, l4), lambda: b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta), lambda : 0.0)
     
     def b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta):
         return b_term(i, i1, i2, r1, r2, u, l1, l2, l3, l4, px, ax, bx, qx, cx, dx, g1, g2, delta)
@@ -240,28 +244,37 @@ def get_b_array(l_max):
     
     def b_loop(i, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta):
         f = lambda i1, i2, r1, r2, u : b_wrapped(i, i1, i2, r1, r2, u, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta)
+        # loop_fun = jax.vmap(jax.vmap(jax.vmap(jax.vmap(jax.vmap(f, in_axes=(0, None, None, None, None)), in_axes=(None, 0, None, None, None)), in_axes=(None, None, 0, None, None)), in_axes=(None, None, None, 0, None)), in_axes=(None, None, None, None, 0))
+        # return jnp.sum(x.at[I, i, i, i, i, i].set(loop_fun(i,i,i,i,i))
         return jax.vmap(jax.vmap(jax.vmap(jax.vmap(jax.vmap(f,
                                                             in_axes=(0, None, None, None, None)), in_axes=(None, 0, None, None, None)), in_axes=(None, None, 0, None, None)), in_axes=(None, None, None, 0, None)), in_axes=(None, None, None, None, 0))(inner_i_range, inner_i_range, inner_i_range, inner_i_range, inner_i_range).sum()
 
-    
+        
     def b_array(l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta):
         return jax.vmap(lambda i : b_loop(i, l1, l2, l3, l4, p, a, b, q, c, d, g1, g2, delta))(outer_i_range)    
 
+
+    eval_on
+    
     outer_i_range = jnp.arange(4*l_max + 1)
     binomial_prefactor = get_binomial_prefactor(outer_i_range)
 
     inner_i_range = jnp.arange(2*l_max + 1)
+
+    I = outer_i_range
+    i = inner_i_range
+
+    # x = jnp.zeros((2*n-1, n, n, n, n, n))
     
     return b_array
 
 def get_repulsion(l_max):
 
-    def loop_body(i, j, k, lmn, rg):
-        return jax.lax.cond( jnp.logical_and(jnp.logical_and(i <= lmn[0], j <= lmn[1]), k <= lmn[2]), lambda: gamma_fun(i+j+k , rg), lambda: 0.0)
+    # def loop_body(i, j, k, lmn, rg):
+    #     return jax.lax.cond( jnp.logical_and(jnp.logical_and(i <= lmn[0], j <= lmn[1]), k <= lmn[2]), lambda: gamma_fun(i+j+k , rg), lambda: 0.0)
     
     def loop_body(i, j, k, lmn, rg):
         return gamma_fun(i+j+k , rg)
-
     
     def repulsion(alpha1, lmn1, pos1, alpha2, lmn2, pos2, alpha3, lmn3, pos3, alpha4, lmn4, pos4):
 
@@ -611,7 +624,7 @@ def test_gto_repulsion():
     lmn1, lmn2, lmn3, lmn4 = jnp.array([2,0,1 ]), jnp.array([0,3,1 ]), jnp.array([2,2,1 ]), jnp.array([1,0,1 ])
     p_1, p_2, p_3, p_4 = jnp.array([3., 1., 0.]), jnp.array([0, 0, 2.]), jnp.array([1,1,1.]), jnp.array([1.,3,1])
 
-    # lmn1, lmn2, lmn3, lmn4 = jnp.array([1,0,1 ]), jnp.array([0,1,1 ]), jnp.array([1,1,1 ]), jnp.array([1,0,1 ])
+    lmn1, lmn2, lmn3, lmn4 = jnp.array([1,0,1 ]), jnp.array([0,1,1 ]), jnp.array([1,1,1 ]), jnp.array([1,0,1 ])
 
     # pyqint gtos
     gto_1 = gto(c_1, p_1.tolist(), alpha_1, *(lmn1.tolist()))
@@ -630,7 +643,10 @@ def test_gto_repulsion():
     import timeit
     def foo(): repulsion(alpha_1, lmn1, p_1, alpha_2, lmn2, p_2, alpha_3, lmn3, p_3, alpha_4, lmn4, p_4)
     def bar(): integrator.repulsion_gto(gto_1, gto_2, gto_3, gto_4)
-    def frisbee() : rep_jit(jnp.arange(3*1000).reshape(3,1000).T )
+    def frisbee() : rep_jit(jnp.arange(1000))
+
+    
+    import pdb; pdb.set_trace()
 
     timeit.timeit(foo, number = 100)
     timeit.timeit(bar, number = 100)
@@ -773,4 +789,21 @@ sto_3g = {
 
 if __name__ == '__main__':
     # test_overlap()
-    test_gto_repulsion()
+    # test_gto_repulsion()
+    1
+
+
+from collections import defaultdict
+
+d = defaultdict(list)
+m = 11
+for i1 in range(m):
+    for i2 in range(m):
+        for r1 in range(i1//2+1):
+            for r2 in range(i2//2+1):
+                for u in range((i1+i2)//2 - r1 - r2 + 1):
+                    i = i1+i2-2*(r1+r2)-u
+                    d[i].append( (i1, i2, r1, r2, u) )
+                    
+            
+        
