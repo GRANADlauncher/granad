@@ -18,7 +18,7 @@
 
 # $$\gamma_{ij}(t) = \gamma_{ij} \cdot f(t)$$
 
-# where \gamma_{ij} is the transition rate from state i to state j and $f$ is a relaxation functional to prevent breaking the Pauli principle (pushing more than 2 electrons into the same energetic state).
+# where $\gamma_{ij}$ is the transition rate from state i to state j and $f$ is a relaxation functional to prevent breaking the Pauli principle (pushing more than 2 electrons into the same energetic state).
 
 ### Lindblad Relaxation dynamics of the Metallic Chain
 
@@ -32,7 +32,7 @@ flake.set_excitation(flake.homo, flake.homo+2, 1)
 flake.show_energies()
 # -
 
-# We can now build the matrix of transitions rates with a uniform rate of $gamma = 10$ as follows
+# We can now build the matrix of transitions rates with a uniform rate of $\gamma = 10$ as follows
 
 # +
 delta = flake.energies[:,None] - flake.energies
