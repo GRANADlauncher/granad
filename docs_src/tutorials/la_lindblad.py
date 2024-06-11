@@ -1,4 +1,18 @@
-### Lindblad Dissipation
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.16.1
+#   kernelspec:
+#     display_name: base
+#     language: python
+#     name: base
+# ---
+
+# # Lindblad Dissipation
 
 # To model dissipation in greater depth, GRANAD makes a Lindblad dissipation model available. The mathematical details are laid out in [Pelc et al., 2023](https://link.aps.org/doi/10.1103/PhysRevA.109.022237) and revolve around the following equation
 
