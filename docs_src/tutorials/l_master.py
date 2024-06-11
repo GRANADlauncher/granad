@@ -152,9 +152,11 @@ flake.show_res( result )
 # You can also get defaults
 
 # +
-dissipator_model = flake.get_dissipator( relaxation_rate = 1/10 )
+dissipator_model = flake.get_dissipator(relaxation_rate = 1/10)
 print( dissipator_model )
 # -
+
+# NOTE: just passing this default to the master equation won't work. You have to specify the relaxation rate again. This will likely change in the future, but ows to the separation of computation and data GRANAD tries to adhere to.
 
 ### Postprocesses
 
