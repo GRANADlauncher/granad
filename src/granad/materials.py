@@ -603,6 +603,14 @@ def get_graphene():
             )
 
 def get_ssh(delta = 0.2, displacement = 0.8):
+    """Returns an ssh model with hoppings (eV)
+    
+    [onsite, nn, nnn] = [0.0, 1 + delta, 1 - delta]
+
+    and the 2-atom unit cell (Angström)
+
+    pos = [0, 0.8]    
+    """
     return (Material("ssh")
             .lattice_constant(2.46)
             .lattice_basis([
