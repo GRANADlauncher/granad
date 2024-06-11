@@ -14,7 +14,7 @@
 
 # # Lindblad Dissipation
 
-# To model dissipation in greater depth, GRANAD makes a Lindblad dissipation model available. The mathematical details are laid out in [Pelc et al., 2023](https://link.aps.org/doi/10.1103/PhysRevA.109.022237) and revolve around the following equation
+# To model dissipation in greater depth, GRANAD makes a Lindblad dissipation model available. The mathematical details are laid out in [Pelc et al., 2024](https://link.aps.org/doi/10.1103/PhysRevA.109.022237) and revolve around the following equation
 
 # $$\gamma_{ij}(t) = \gamma_{ij} \cdot f(t)$$
 
@@ -109,6 +109,38 @@ result = flake.master_equation(relaxation_rate = gamma_matrix,
                                )
 flake.show_res(result, show_illumination=False, plot_labels = labels)
 # -
+
+### Corrected Lindblad
+
+# A precursor of the saturated Linblad model replaces $D[\rho] \rightarrow D[\rho - \rho_0]$, i.e. it applies the Lindblad operators to $\rho - \rho_0$, much like the phenomenological dissipator.
+
+# It can be shown that this model for an $N$ electron system is equivalent to the phenomenological dissipator with relaxation rate $r$ if $\gamma^{ij} = \gamma = \frac{r}{N}$. We can check this is as follows
+
+# +
+from granad import dissipators
+
+gamma_matrix = jnp.ones_like(flake.hamiltonian)
+
+dissipator = {"corrected":dissipators.CorrectedLindblad(no_saturation)}
+
+result = flake.master_equation(relaxation_rate = gamma_matrix,
+                               dissipator = dissipator,
+                               end_time = 1,
+                               density_matrix = ['occ_e'],
+                               )
+flake.show_res(result, show_illumination=False, plot_labels = labels)
+# -
+
+# We can now compare to the phenomenological dissipator with its rate scaled by $N$.
+
+# +
+result = flake.master_equation(relaxation_rate = 6.,
+                               end_time = 1,
+                               density_matrix = ['occ_e'],
+                               )
+flake.show_res(result, show_illumination=False, plot_labels = labels)
+# -
+
 
 ### Wigner-Weisskopf transition rates
 
