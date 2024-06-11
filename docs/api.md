@@ -4,3 +4,4 @@
 ::: granad.materials
 ::: granad.shapes
 ::: granad.potentials
+::: granad.dissipators
