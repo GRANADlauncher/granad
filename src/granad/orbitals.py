@@ -865,10 +865,10 @@ class OrbitalList:
         c = 3e8  # 137 (a.u.)
         factor = 1.6e-29 * charge / (3 * jnp.pi * eps_0 * hbar**2 * c**3)
         te = self.transition_energies
-        transition_dipole_moments = self.dipole_operator_e
+        transition_dipole_moments = jnp.sum(self.dipole_operator_e**2, axis = 0)
         return (
             (te * (te > self.eps)) ** 3
-            * jnp.squeeze(transition_dipole_moments**2)
+            * transition_dipole_moments
             * factor
         )
 
