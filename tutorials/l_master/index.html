@@ -98,7 +98,7 @@
     </li>
     </ul>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../la_lindblad/">La lindblad</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../la_lindblad/">Lindblad Dissipation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
                   </li>
@@ -241,7 +241,7 @@ RHS compiled
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">dissipator_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_dissipator</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">print</span><span class="p">(</span> <span class="n">dissipator_model</span> <span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;decoherence_time&#39;: &lt;function DecoherenceTime.&lt;locals&gt;.&lt;lambda&gt; at 0x7fa3e518b420&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;decoherence_time&#39;: &lt;function DecoherenceTime.&lt;locals&gt;.&lt;lambda&gt; at 0x7f760595c680&gt;}
 </code></pre></div>
 <p>NOTE: just passing this default to the master equation won't work. You have to specify the relaxation rate again. This will likely change in the future, but ows to the separation of computation and data GRANAD tries to adhere to.</p>
 <h2 id="postprocesses">Postprocesses</h2>
@@ -265,7 +265,7 @@ RHS compiled
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
         <a href="../k_potentials/" class="btn btn-neutral float-left" title="Potentials"><span class="icon icon-circle-arrow-left"></span> Previous</a>
-        <a href="../la_lindblad/" class="btn btn-neutral float-right" title="La lindblad">Next <span class="icon icon-circle-arrow-right"></span></a>
+        <a href="../la_lindblad/" class="btn btn-neutral float-right" title="Lindblad Dissipation">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
   <hr/>

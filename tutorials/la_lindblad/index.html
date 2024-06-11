@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>La lindblad - GRANAD</title>
+    <title>Lindblad Dissipation - GRANAD</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,7 +13,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "La lindblad";
+        var mkdocs_page_name = "Lindblad Dissipation";
         var mkdocs_page_input_path = "tutorials/la_lindblad.md";
         var mkdocs_page_url = null;
       </script>
@@ -82,8 +82,14 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">La lindblad</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Lindblad Dissipation</a>
     <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#lindblad-relaxation-dynamics-of-the-metallic-chain">Lindblad Relaxation dynamics of the Metallic Chain</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#modifying-the-saturation-functional">Modifying the saturation functional</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#wigner-weisskopf-transition-rates">Wigner-Weisskopf transition rates</a>
+    </li>
     </ul>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
@@ -104,7 +110,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Tutorials</li>
-      <li class="breadcrumb-item active">La lindblad</li>
+      <li class="breadcrumb-item active">Lindblad Dissipation</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -113,7 +119,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h2 id="lindblad-dissipation">Lindblad Dissipation</h2>
+                <h1 id="lindblad-dissipation">Lindblad Dissipation</h1>
 <p>To model dissipation in greater depth, GRANAD makes a Lindblad dissipation model available. The mathematical details are laid out in <a href="https://link.aps.org/doi/10.1103/PhysRevA.109.022237">Pelc et al., 2023</a> and revolve around the following equation</p>
 <div class="arithmatex">\[\gamma_{ij}(t) = \gamma_{ij} \cdot f(t)\]</div>
 <p>where \gamma_{ij} is the transition rate from state i to state j and <span class="arithmatex">\(f\)</span> is a relaxation functional to prevent breaking the Pauli principle (pushing more than 2 electrons into the same energetic state).</p>
