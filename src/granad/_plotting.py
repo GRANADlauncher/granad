@@ -176,7 +176,7 @@ def show_res(
     res,
     plot_only : jax.Array = None,
     plot_labels : list[str] = None,
-    show_illumination = True,
+    show_illumination = False,
     omega_max = None,
     omega_min = None,
 ):

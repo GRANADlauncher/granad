@@ -80,7 +80,7 @@ graphene = MaterialCatalog.get("graphene")
 
 # +
 my_ssh_model = get_ssh(delta, displacement)
-my_ssh_chain = my_ssh_model.cut_flake(10)  # 10 unit cells, as usual
+my_ssh_chain = my_ssh_model.cut_flake(10)  
 # -
 
 ### OrbitalLists
@@ -203,5 +203,5 @@ print(dipole_moments[10, 0])
 # Now that we understand how a time domain simulation works, we can visualize the result. GRANAD offers a dedicated function for this
 
 # +
-my_first_flake.show_res( result, plot_labels = ["p_x", "p_y", "p_z"], show_illumination = False ) 
+my_first_flake.show_res(result, plot_labels = ["p_x", "p_y", "p_z"]) 
 # -
