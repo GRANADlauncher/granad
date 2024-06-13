@@ -58,8 +58,6 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
@@ -116,7 +114,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="basis-handling">Basis Handling</h1>
-<p>We talk about how to switch between site and energy basis.</p>
+<p>We introduce the site and energy basis. </p>
 <h2 id="default-basis">Default basis</h2>
 <p>By default, GRANAD uses the site basis. You can explicitly force a quantity to be given in energy basis by appending "_e" to it.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
@@ -137,11 +135,12 @@
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>True
 </code></pre></div>
-<p>This is usually only useful when transforming arrays of density matrices, because they are just returned from an orbital list and don't belong to its attributes, so you can't simply append _e.</p>
-<p>Displaying transition dipole moments</p>
+<p>This is useful when transforming arrays of density matrices, because appending _e only works on attributes of the orbital list. As density matrices are a simulation output and not an attribute of the orbital list, appending _e will not work and a separate method is needed.</p>
+<p>Transition dipole moments can be displayed in energy basis</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">plt</span><span class="o">.</span><span class="n">matshow</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator_e</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </span></code></pre></div>
 <p><img alt="png" src="../d_basis_handling_files/d_basis_handling_9_0.png" /></p>
               

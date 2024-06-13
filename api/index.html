@@ -224,8 +224,6 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/a_getting_started/">Getting started</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tutorials/b_list_based_simulations/">List-based Simulations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tutorials/c_plotting/">Plotting</a>
@@ -1902,8 +1900,8 @@ quantity_x == quantity.</p>
 </span><span id="__span-0-352"><a id="__codelineno-0-352" name="__codelineno-0-352"></a>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="__span-0-353"><a id="__codelineno-0-353" name="__codelineno-0-353"></a>        <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;List with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s2"> orbitals, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">electrons</span><span class="si">}</span><span class="s2"> electrons.&quot;</span>
 </span><span id="__span-0-354"><a id="__codelineno-0-354" name="__codelineno-0-354"></a>        <span class="n">info</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Excitation: f</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">excitation</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="__span-0-355"><a id="__codelineno-0-355" name="__codelineno-0-355"></a>        <span class="c1"># TODO: add sth about groups</span>
-</span><span id="__span-0-356"><a id="__codelineno-0-356" name="__codelineno-0-356"></a>        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">info</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_list</span><span class="p">)))</span> 
+</span><span id="__span-0-355"><a id="__codelineno-0-355" name="__codelineno-0-355"></a>        <span class="c1"># TODO: format excitation more readbly</span>
+</span><span id="__span-0-356"><a id="__codelineno-0-356" name="__codelineno-0-356"></a>        <span class="k">return</span> <span class="n">info</span> 
 </span><span id="__span-0-357"><a id="__codelineno-0-357" name="__codelineno-0-357"></a>
 </span><span id="__span-0-358"><a id="__codelineno-0-358" name="__codelineno-0-358"></a>    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="__span-0-359"><a id="__codelineno-0-359" name="__codelineno-0-359"></a>        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_list</span><span class="p">)</span>
@@ -6957,7 +6955,7 @@ among these orbitals. </p>
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span>
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>        <span class="s2">&quot;hamiltonian&quot;</span><span class="p">,</span>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>        <span class="n">participants</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;pz&quot;</span><span class="p">,</span> <span class="s2">&quot;pz&quot;</span><span class="p">),</span>
-</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">2.66</span><span class="p">],</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>        <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.66</span><span class="p">],</span>
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="p">)</span>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span>
 </span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        <span class="s2">&quot;coulomb&quot;</span><span class="p">,</span>
@@ -7292,7 +7290,7 @@ among these orbitals. </p>
 </span><span id="__span-0-245"><a id="__codelineno-0-245" name="__codelineno-0-245"></a><span class="sd">            .add_interaction(</span>
 </span><span id="__span-0-246"><a id="__codelineno-0-246" name="__codelineno-0-246"></a><span class="sd">                &quot;hamiltonian&quot;,</span>
 </span><span id="__span-0-247"><a id="__codelineno-0-247" name="__codelineno-0-247"></a><span class="sd">                participants=(&quot;pz&quot;, &quot;pz&quot;),</span>
-</span><span id="__span-0-248"><a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">                parameters=[0.0, 2.66],</span>
+</span><span id="__span-0-248"><a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">                parameters=[0.0, -2.66],</span>
 </span><span id="__span-0-249"><a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">            )</span>
 </span><span id="__span-0-250"><a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">            .add_interaction(</span>
 </span><span id="__span-0-251"><a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">                &quot;coulomb&quot;,</span>

@@ -58,8 +58,6 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Plotting</a>
@@ -120,7 +118,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="plotting">Plotting</h1>
-<p>We take a look at built-in plotting functions. </p>
+<p>We introduce built-in plotting functions. </p>
 <p>A typical simulation requires visualizing:</p>
 <ol>
 <li>geometry</li>
@@ -144,7 +142,8 @@
 </span></code></pre></div>
 <p><img alt="png" src="../c_plotting_files/c_plotting_6_0.png" /></p>
 <h2 id="simulation-output">Simulation output</h2>
-<p>There is a dedicated function for showing TD simulation results. Let's illustrate this by tracking the current</p>
+<p>There is a dedicated function for showing time-domain simulation results. Let's illustrate this by tracking the current considering the previously defined flake under x-polarized Gaussian pulsed illumination, which in GRANAD's units is equivalent to the velocity operator given by</p>
+<div class="arithmatex">\[\bf{v} = \frac{-i}{\hbar} [H, \bf{P}]\]</div>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">Pulse</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">2.3</span><span class="p">,</span> <span class="n">peak</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mi">2</span>
@@ -154,7 +153,7 @@
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">expectation_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">velocity_operator</span><span class="p">],</span>
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">end_time</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
 </span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="n">relaxation_rate</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">grid</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+</span><span id="__span-2-10"><a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="n">grid</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="c1"># save every 100-th time step</span>
 </span><span id="__span-2-11"><a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="p">)</span>
 </span><span id="__span-2-12"><a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="n">plot_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;j_x&#39;</span><span class="p">,</span> <span class="s1">&#39;j_y&#39;</span><span class="p">,</span> <span class="s1">&#39;j_z&#39;</span><span class="p">]</span> 
 </span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span> <span class="n">result</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">plot_labels</span> <span class="p">)</span>
@@ -165,21 +164,23 @@ RHS compiled
 
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../c_plotting_files/c_plotting_9_2.png" /></p>
-<p>We can also plot in frequency domain by specifying the omega limits</p>
+<p><img alt="png" src="../c_plotting_files/c_plotting_10_2.png" /></p>
+<p>A detailed description of parameters to the Gaussian pulse is given in the electric fields tutorial.</p>
+<p>We can also Fourier transform the result to obtain the frequency domain result by specifying the omega limits</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span> <span class="n">result</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">plot_labels</span> <span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../c_plotting_files/c_plotting_11_0.png" /></p>
+<p><img alt="png" src="../c_plotting_files/c_plotting_13_0.png" /></p>
+<p>Note that the sparsity of the spectral grid ows to the sparse sampling in time domain which we have chosen for demonstrational purposes. A real simulation requires more careful refinement of the temporal grid.</p>
 <h2 id="space-dependent-arrays">Space-dependent arrays</h2>
 <p>The functions show_2d and show_3d are a bit more versatile than initially indicated.</p>
-<p>If we supply a "display" argument, we can plot an arbitrary array on the grid spanned by the orbitals and filter it by orbital tags. Let's demonstrate this by visualizing the lowest energy one particle state of the flake</p>
+<p>If we supply a "display" argument, we can plot an arbitrary array on the grid spanned by the orbitals and filter it by orbital tags. Let's demonstrate this by visualizing the lowest energy single-particle state of the flake</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_2d</span><span class="p">(</span> <span class="n">display</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">eigenvectors</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../c_plotting_files/c_plotting_15_0.png" /></p>
+<p><img alt="png" src="../c_plotting_files/c_plotting_18_0.png" /></p>
 <p>If you want a normalized plot of the absolute values, do</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_2d</span><span class="p">(</span> <span class="n">display</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">eigenvectors</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scale</span> <span class="o">=</span> <span class="kc">True</span> <span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../c_plotting_files/c_plotting_17_0.png" /></p>
+<p><img alt="png" src="../c_plotting_files/c_plotting_20_0.png" /></p>
 <p>Additionally, if you supply the keyword argument name = "MY-PLOT-NAME.pdf" to any plotting function, the plot will not be displayed, but instead saved to disk in the directory you invoked Python.</p>
               
             </div>

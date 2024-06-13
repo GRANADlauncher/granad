@@ -58,8 +58,6 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
@@ -126,8 +124,19 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="time-domain-simulations">Time-Domain simulations</h1>
+<p>We introduce time-domain simulations, which are based on GRANAD's default master equation</p>
+<div class="arithmatex">\[\dot{\rho}(t) = -i [H[t,\rho(t)], \rho] + \mathcal{D}[t, \rho]\]</div>
+<p>The non-linear Hamiltonian is given by</p>
+<div class="arithmatex">\[H[t,\rho(t)] = h^{0} + \vec{E} \vec{P} + C(\rho(t) - \rho^{0})\]</div>
+<p>where </p>
+<ol>
+<li><span class="arithmatex">\(h^{0}\)</span> is the unperturbed or bare Hamiltonian constructed from localized orbitals.</li>
+<li><span class="arithmatex">\(\vec{P}\)</span> is the polarization operator depending on space <span class="arithmatex">\(\vec{r}\)</span> and transition dipole moments <span class="arithmatex">\(\vec{d}\)</span>, leading to an interatomic potential <span class="arithmatex">\(\vec{E}\vec{r}\)</span> and an intra-atomic potential <span class="arithmatex">\(\vec{E} \vec{d}\)</span>.</li>
+<li><span class="arithmatex">\(\rho^{0}\)</span> is the stationary density matrix of the system's ground state, and <span class="arithmatex">\(C\)</span> is the Coulomb matrix (a subset of two-body matrix elements).</li>
+</ol>
+<p>This expression is the dipole-gauge expression for the Hamiltonian including an external electric field <span class="arithmatex">\(\vec{E}\)</span>.</p>
 <h2 id="observables">Observables</h2>
-<p>You can compute multiple observables in one run</p>
+<p>You can compute multiple observables in one simulation run</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Hexagon</span><span class="p">,</span> <span class="n">Pulse</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Hexagon</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="p">)</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
@@ -176,7 +185,11 @@ RHS compiled
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">omegas</span><span class="p">,</span> <span class="n">pulse_omega</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ft_illumination</span><span class="p">(</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="n">omega_max</span> <span class="p">)</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">output_omega</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ft_output</span><span class="p">(</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="n">omega_max</span> <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </span></code></pre></div>
-<p>So we can quickly check the continuity equation</p>
+<p>From the classical continuity equation, we have</p>
+<div class="arithmatex">\[\dot{\rho}(x, t) = -\nabla \bf{j}(x, t) = \dot{\nabla \bf{p}}(t) \implies \dot{\bf{p}}(x,t) = \bf{j}(x,t) \implies \omega \bf{p}(\omega) = \bf{j}(\omega)\]</div>
+<p>Integrating this equation spatially leads to</p>
+<div class="arithmatex">\[\rho(t) = j(t)\]</div>
+<p>We can verify the spatially integrated version of this explicitly as follows</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">omegas</span> <span class="o">*</span> <span class="n">output_omega</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">imag</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">j</span> <span class="o">=</span> <span class="n">output_omega</span><span class="p">[:,</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">real</span>
@@ -185,7 +198,7 @@ RHS compiled
 </span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 </span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </span></code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_13_0.png" /></p>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_24_0.png" /></p>
 <p>The field is also accessible</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">td_illumination</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
@@ -251,7 +264,7 @@ RHS compiled
 </span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>     <span class="p">)</span>
 </span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">plot_only</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">],</span> <span class="n">show_illumination</span> <span class="o">=</span> <span class="kc">False</span> <span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_27_0.png" /></p>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_38_0.png" /></p>
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 RHS compiled
 
@@ -261,7 +274,7 @@ RHS compiled
 
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_27_4.png" /></p>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_38_4.png" /></p>
 <h2 id="combinations">Combinations</h2>
 <p>We can also extract multiple things at the same time</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>

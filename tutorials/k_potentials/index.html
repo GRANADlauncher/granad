@@ -58,8 +58,6 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul class="current">
-                  <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
@@ -128,7 +126,7 @@
 <ol>
 <li><span class="arithmatex">\(h^{0}\)</span> is the unperturbed or bare Hamiltonian constructed from localized orbitals.</li>
 <li><span class="arithmatex">\(\vec{P}\)</span> is the polarization operator depending on space <span class="arithmatex">\(\vec{r}\)</span> and transition dipole moments <span class="arithmatex">\(\vec{d}\)</span>, leading to an interatomic potential <span class="arithmatex">\(\vec{E}\vec{r}\)</span> and an intra-atomic potential <span class="arithmatex">\(\vec{E} \vec{d}\)</span>.</li>
-<li><span class="arithmatex">\(\rho^{0}\)</span> is the stationary density matrix of the system's ground state, and <span class="arithmatex">\(C\)</span> is the Coulomb matrix (a subset of ERIs).</li>
+<li><span class="arithmatex">\(\rho^{0}\)</span> is the stationary density matrix of the system's ground state, and <span class="arithmatex">\(C\)</span> is the Coulomb matrix (a subset of two-body matrix elements).</li>
 </ol>
 <p>You can modify GRANAD's internal representation of the Hamiltonian to include your own potential terms. Here, you have two options:</p>
 <ol>
@@ -148,7 +146,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">hamiltonian_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_hamiltonian</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff5642d2700&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff5642d28e0&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f8efcc9eb60&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f8efcc9ed40&gt;}
 </code></pre></div>
 <p>We see that it is just a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian. You can tell which one by looking at the keys again</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>

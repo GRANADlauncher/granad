@@ -64,8 +64,6 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul>
-                  <li class="toctree-l1"><a class="reference internal" href="tutorials/a_getting_started/">Getting started</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="tutorials/b_list_based_simulations/">List-based Simulations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="tutorials/c_plotting/">Plotting</a>
@@ -120,15 +118,15 @@
 <p>GRANAD (GRAphene Nanoflakes with ADatoms) is a tight-binding simulation utility geared towards the exploration of systems at the intersection of solid state physics and quantum optics.</p>
 <h3 id="features">Features</h3>
 <ul>
-<li>Computes optical and electronic properties </li>
-<li>Full access to time-dependent density matrices via master equation</li>
+<li>Computes electronic and optical properties </li>
+<li>Time-evolution of density matrix calculated via master equation</li>
 <li>Relies on <a href="https://jax.readthedocs.io/en/latest/">JAX</a> for performance and differentiability</li>
 </ul>
 <h3 id="installation">Installation</h3>
 <h2 id="linux">Linux</h2>
 <p>The recommended way is to install with (mini-)conda.</p>
 <p>First, set up miniconda: https://docs.anaconda.com/free/miniconda/index.html</p>
-<p>Then, create a fresh environment</p>
+<p>Then, create a new environment</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>granad<span class="w"> </span><span class="s1">&#39;python&#39;</span>
 </span></code></pre></div>
 <p>Activate the environment</p>
@@ -141,7 +139,7 @@
 <h2 id="windows">Windows</h2>
 <p>To install on Windows, set up <a href="https://learn.microsoft.com/en-us/windows/wsl/install">WSL</a> first. Then, follow the instructions above.</p>
 <h3 id="quickstart">Quickstart</h3>
-<p>Set up the simulation</p>
+<p>In the following, we demonstrate how to compute the absorption spectrum in a triangular zigzag graphene flake in the random phase approximation (RPA). The code is listed below:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Triangle</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
@@ -152,16 +150,18 @@
 </span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">graphene</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Triangle</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>  <span class="p">)</span> 
 </span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>
 </span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="c1"># frequencies</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="n">omegas</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">50</span> <span class="p">)</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="n">omegas</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">100</span> <span class="p">)</span>
 </span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># compute optical properties in the RPA with GPU-acceleration</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="c1"># compute the polarizability in the RPA</span>
 </span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">polarizability</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_polarizability_rpa</span><span class="p">(</span>
 </span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="n">omegas</span><span class="p">,</span>
 </span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
 </span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="n">polarization</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 </span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="n">hungry</span> <span class="o">=</span> <span class="mi">2</span> <span class="c1"># higher numbers are faster and consume more RAM</span>
 </span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="p">)</span>
-</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="n">absorption</span> <span class="o">=</span> <span class="n">polarizability</span><span class="o">.</span><span class="n">imag</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">omegas</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="c1"># from the imaginary part of polarizability, obtain the absorption spectrum</span>
+</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="n">absorption</span> <span class="o">=</span> <span class="n">polarizability</span><span class="o">.</span><span class="n">imag</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">omegas</span>
 </span></code></pre></div>
 <p>Plot the results</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -170,7 +170,7 @@
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">omegas</span><span class="p">,</span> <span class="n">absorption</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">absorption</span><span class="p">),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\hbar\omega$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
 </span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\sigma(\omega)$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Absorption Spectrum as a Function of Photon Energy&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">&#39;Absorption spectrum as a function of photon energy&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
 </span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="index_files/index_13_0.png" /></p>
@@ -225,5 +225,5 @@
 
 <!--
 MkDocs version : 1.6.0
-Build Date UTC : 2024-06-11 14:45:15.635401+00:00
+Build Date UTC : 2024-06-13 10:53:59.976974+00:00
 -->
