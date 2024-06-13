@@ -14,7 +14,7 @@
 
 # # Potentials
 #
-# GRANAD lets you specify coupling to external light using (an arbitrary combination of) electromagnetic potentials. You do this by modifying GRANAD's internal representation of the Hamiltonian, which is  a dictionary.
+# GRANAD lets you specify coupling to external light using (an arbitrary combination of) electromagnetic potentials. You do this by modifying GRANAD's internal representation of the Hamiltonian, which is a dictionary.
 
 ### Background
 
@@ -34,21 +34,21 @@
 
 # You can modify GRANAD's internal representation of the Hamiltonian to include your own potential terms. Here, you have two options:
 
-# 1. Define potentials completely on your own.
+# 1. Define potentials on your own.
 # 2. Use built-in potentials.
 
 # The first solution is more flexible, but a bit more complicated, so we will focus on the built-in potentials in this tutorial.
 
 ### Built-in Potentials
 
-# First, we set up our small triangle.
+# First, we set up a small triangle.
 
 # +
 from granad import MaterialCatalog, Triangle
 flake = MaterialCatalog.get( "graphene" ).cut_flake( Triangle(15), plot = True  )
 # -
 
-# If we call `flake.master_equation`, the flake will turn the arguments we passed in (e.g., the illumination) into a representation of the Hamiltonian. By default, this representation corresponds to the dipole-gauge model discussed above.
+# If we call `flake.master_equation`, the arguments we passed in (e.g., the illumination) are turned into a representation of the Hamiltonian. By default, this representation corresponds to the dipole-gauge model discussed above.
 
 # This representation will be passed to "lower-level" simulation functions. These functions will turn it into arrays and integrate it.
 
@@ -59,13 +59,13 @@ hamiltonian_model = flake.get_hamiltonian()
 print(hamiltonian_model)
 # -
 
-# We see that it is  a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian. You can tell which one by looking at the keys again
+# We see that it is a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian, identified by the keys
 
 # +
 print(hamiltonian_model.keys())
 # -
 
-# So, as we said, we have a bare hamiltonian, and an induced coulomb interaction. But where is the dipole gauge coupling? Remember that we did not pass in any external illumination, so GRANAD assumes there is none. Let's change this quickly
+# So, as we said, we have a bare Hamiltonian, and an induced Coulomb interaction. But where is the dipole gauge coupling? Remember that we did not pass in any external illumination, so GRANAD assumes there is none. This can be changed as follows
 
 # +
 from granad import Wave
@@ -74,7 +74,7 @@ hamiltonian_model_external_illu = flake.get_hamiltonian( illumination = wave )
 print(hamiltonian_model_external_illu.keys())
 # -
 
-# We add our own potentials to the Hamiltonian by adding entries to the dictionary, like `hamiltonian_model["my_potential"] = my_potential`. The name for the potential does not matter; it's  nicer for us to look at than function pointers.
+# We add our own potentials to the Hamiltonian by adding entries to the dictionary, like `hamiltonian_model["my_potential"] = my_potential`. 
 
 # In choosing `my_potential`, you have several options, documented in the API. For demonstration, we will model a dipole pulse
 
@@ -87,7 +87,7 @@ dip_pulse = potentials.DipolePulse( dipole_moment = [1., 0., 0.],
                                     t0 = 3)
 # -
 
-# We can visualize its impact at any time t. The potential is a function and returns a diagonal matrix, so we can do the following (the arguments to this function will be explained in the tutorial on custom master equations, for now we  live with them).
+# We can visualize its impact at any time t. The potential is a function and returns a diagonal matrix in site basis. The arguments to this function will be explained in the tutorial on custom master equations.
 
 # +
 import jax.numpy as jnp
@@ -95,7 +95,9 @@ time = 1.0
 flake.show_2d( display = jnp.abs(dip_pulse(time,
                                            0, # this argument will be explained in another tutorial, you can always pass in 0
                                            flake.get_args() # this argument will be explained in another tutorial, you can always copy this
-                                           ).diagonal()) )
+                                           ).diagonal()),
+               title = "Dipole potential in real space"
+              )
 # -
 
 # We can now include it in the Hamiltonian
@@ -104,7 +106,7 @@ flake.show_2d( display = jnp.abs(dip_pulse(time,
 hamiltonian_model["dipole_pulse"] = dip_pulse
 # -
 
-# To simulate this Hamiltonian instead of the default one, we have to pass it explicitly to the TD simulation function
+# To simulate this Hamiltonian instead of the default one, we have to pass it explicitly to the time-domain simulation function
 
 # +
 import diffrax
@@ -117,19 +119,17 @@ result = flake.master_equation( end_time = 40.0,
 flake.show_res( result )
 # -
 
-# You can simulate any number of dipoles (or terms) by  adding more keys to the dictionary. **Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.**
+# You can simulate any number of dipoles (or terms) by adding more keys to the dictionary. **Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.**
 
-# Note: The dipole potential above is purely diagonal, i.e. it will miss the intra-atomic dipolar contribution between orbitals $i$ and $j$ connected by a transition dipole moment $\vec{d}_{ij$.
-
+# Note: The dipole potential above is purely diagonal, i.e. it will miss the intra-atomic dipolar contribution between orbitals $i$ and $j$ connected by a transition dipole moment $\vec{d}_{ij}$.
 # In dipole gauge, this term is expressed as $\vec{E} \vec{d}_{ij}$. If you want to include this term explicitly, add another potential to the Hamiltonian.
-
 # To do so, define a function evaluating the electric field of your dipole at the positions of the orbitals like so `dipole_electric_field : time -> 3xN-Array`.
 
 # You can use the built-in dipole gauge like `potentials.DipoleGauge( illumination = dipole_electric_field, intra_only = True )`.
 
 # If you place the dipole at the position of an orbital, the potential is set to zero there.
 
-# **DANGER: We did not need the illumination argument and so the `result` object contains no information on it. It is populated with zeroes by default**
+# **Warning: We did not need the illumination argument and so the `result` object contains no information on it. It is populated with zeroes by default**
 
 # +
 print(result.td_illumination)

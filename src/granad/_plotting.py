@@ -19,7 +19,7 @@ def _plot_wrapper(plot_func):
     return wrapper
 
 @_plot_wrapper
-def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3):
+def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None):
     """
     Generates a 2D scatter plot representing the positions of orbitals in the xy-plane,
     filtered by specified tags. Optionally colors and sizes points by, e.g., eigenvector
@@ -31,6 +31,7 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     - show_index (bool): If True, indexes of the orbitals will be shown on the plot.
     - display: N-element array to display
     - circle_size (float): larger values mean larger circles 
+    - title: title of the plot
 
     Returns:
     - None: A 2D scatter plot is displayed.
@@ -78,14 +79,14 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
             ax.annotate(str(idx), (pos[0], pos[1]), textcoords="offset points", xytext=(0,10), ha='center')
 
     # Finalize plot settings
-    plt.title('Orbital positions in the xy-plane')
+    plt.title('Orbital positions in the xy-plane' if title is None else title)
     plt.xlabel('X')
     plt.ylabel('Y')
     ax.grid(True)
     ax.axis('equal')
 
 @_plot_wrapper
-def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3):
+def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None):
     """
     Generates a 3D scatter plot representing the positions of orbitals in 3D space,
     filtered by specified tags. Optionally colors and sizes points by, e.g., eigenvector
@@ -97,6 +98,7 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     - show_index (bool): If True, indexes of the orbitals will be shown on the plot.
     - display: N-element array to display
     - circle_scale: larger values means larger circles
+    - title: title of the plot
 
     Returns:
     - None: A 3D scatter plot is displayed.
@@ -145,7 +147,7 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
             ax.text(pos[0], pos[1], pos[2], str(idx), color='black', size=10)
 
     # Finalize plot settings
-    ax.set_title('Orbital positions in 3D')
+    ax.set_title('Orbital positions in 3D' if title is not None else title)
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')

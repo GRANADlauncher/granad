@@ -20,13 +20,11 @@
 
 # *Note*: While a bit more complicated, this tutorial can help you make your simulations not only more versatile, but also increase their efficiency.
 
-# *Note*: This is still rough. In the future, I might package the functions into a "Term" object or sth like that, but this will be purely cosmetic. The underlying functions won't change.
-
 ### Hamiltonian
 
 # When calling the integration for the master equation, you can give an optional argument, `hamiltonian`. As already discussed, this argument represents a Hamiltonian as a dictionary of functions.
 
-# Up to now, we  wanted to use custom potentials, so we  added them to the dictionary. Let's look more closely at what is going on by considering a flake under CW illumination.
+# Up to now, we  wanted to use custom potentials, so we  added them to the dictionary. Let's look more closely at what is going on by considering a flake under plane wave illumination.
 
 # +
 from granad import MaterialCatalog, Triangle, Wave
@@ -46,7 +44,7 @@ print(hamiltonian_model.keys())
 
 # 1. time
 # 2. the density matrix at this time
-# 3. an argument object `args`. It contains all required "static" information, like relaxation rates, energies or operators (remember we use the Schrödinger picture, so, e.g. the dipole operator does not depend on time).
+# 3. an argument object `args`. It contains all required "static" information, like relaxation rates, energies or operators in the Schrödinger picture.
 
 # Every function maps these arguments to a complex matrix. Before running a simulation, the functions in the dictionary get turned into a list `func_list`. 
 
@@ -54,7 +52,7 @@ print(hamiltonian_model.keys())
 
 ### Argument Objects
 
-# What does the `args` object contain, exactly? We can create this object ourselves. It is  a named tuple (like a C struct) and we can inspect its contents by looking at its fields 
+# The `args` object is a named tuple (like a struct in the C programming language) and we can inspect its contents by looking at its fields 
 
 # +
 args = flake.get_args()
@@ -67,14 +65,13 @@ print(args._fields)
 print(args.dipole_operator.shape)
 # -
 
-# The `args` object is a lower-level representation of our OrbitalList object: a collection of numbers and arrays that represent the structure we are simulating.
+# The `args` object is a lower-level representation of the OrbitalList object: a collection of numbers and arrays that represent the structure.
 
-# The time evolution depends on time, the density matrix and the structure we are simulating. This is directly reflected in the signature of a "term". As discussed above, a single function in the Hamiltonian
-# looks like `term: time, density_matrix, args -> matrix`.
+# The evolution is determined by the Hamiltonian. It is given by an addition of functions. Each of these functions depends on time, the density matrix and the simulated structure. So, a single function representing a term in the Hamiltonian has the following signature `term: time, density_matrix, args -> matrix`.
 
 ### Computing Terms
 
-# Now that we know everything, we can take out and apply individual terms of the default Hamiltonian. First, let's check that the bare hamiltonian is correct
+# Individual terms of the default Hamiltonian can be inspected and since these are functions, applied to arguments. First, consider the bare Hamiltonian
 
 # +
 import jax.numpy as jnp
@@ -83,7 +80,7 @@ time = 0.0
 jnp.all(flake.hamiltonian == h_bare( time, args.initial_density_matrix, args ))
 # -
 
-# The function  returns the bare hamiltonian, independent of the time and density matrix. Let's compute the coulomb potential at the initial time
+# The function returns the bare Hamiltonian, independent of the time and density matrix. Let's compute the Coulomb potential at the initial time
 
 # +
 coulomb = hamiltonian_model["coulomb"]
@@ -91,7 +88,9 @@ coulomb_matrix = coulomb( time, args.initial_density_matrix, args )
 jnp.all( coulomb_matrix == 0.0 )
 # -
 
-# Right at the beginning, there is no induced coulomb potential (all entries in the matrix are zero), because the system is initially in its ground state. Last, there is the external potential. Since we do not have transition dipole moments, it will be entirely diagonal
+# At the start of the simulation, there is no induced Coulomb potential (all entries in the matrix are zero), because the system is in its ground state.
+
+# Last, there is the external potential. Since no transition dipole moments are considered, it will be entirely diagonal in site basis
 
 # +
 potential = hamiltonian_model["potential"]
@@ -101,15 +100,15 @@ jnp.all( potential_matrix == jnp.diag(potential_matrix.diagonal()) )
 
 ### Modelling Terms
 
-# Now we know how to inject arbitrary terms in the time evolution. We must define a function that
+# To include arbitrary terms in the time evolution, we define a function that
 
 # 1. Accepts `time, density_matrix, args`
 # 2. Returns a NxN complex matrix
-# 3. Additionally, the function must be JAX-JIT compatible. In essence, use only Python and jax.numpy operations.
+# 3. Additionally, the function must be JAX-JIT compatible. In essence, only Python and jax.numpy operations must be used.
 
-# Then we  insert it in the dictionary, potentially overwriting a default key (remember the keys don't matter, you can add as many functions as you want and name them however you want).
+# Then, we insert it in the dictionary, potentially overwriting a default key.
 
-# Let's illustrate this at the example of a custom scalar potential. We want to replace the dipole-gauge coupling $E P$ with a scalar potential representing a plane-wave pulse. Let's define this potential first
+# Let's illustrate this at the example of a custom scalar potential. We want to replace the dipole-gauge coupling $\vec{E} \vec{P}$ with a scalar potential representing a plane-wave pulse. Let's define this potential first
 
 # +
 amplitudes = jnp.array([1e-5, 0, 0])
@@ -128,22 +127,16 @@ def pulsed_potential( time, density_matrix, args ):
 hamiltonian_model["potential"] = pulsed_potential
 # -
 
-# To run a time-domain simulation, we  pass the modified hamiltonian dictionary directly, as demonstrated in the first section
+# To run a time-domain simulation, we  pass the modified Hamiltonian dictionary directly, as demonstrated in the first section
 
 # +
 result = flake.master_equation( hamiltonian = hamiltonian_model, expectation_values = [flake.dipole_operator], relaxation_rate = 1/10, end_time = 40)
 flake.show_res( result )
 # -
 
-# That's it.
-
-### Custom Argument Objects
-
-# TBD
-
 ### Modelling Dissipators
 
-# Dissipators work exactly like the Hamiltonian.
+# Dissipators are modelled as functions with the same signature as terms in the Hamiltonian, i.e. to model a custom dissipator
 
 # 1. Define a function `diss : time, density_matrix, args -> jax.Array`
 # 2. put it in a dictionary `dissipator_model["diss"] = diss`
@@ -156,7 +149,7 @@ dissipator_model = flake.get_dissipator(relaxation_rate = 1/10)
 print( dissipator_model )
 # -
 
-# NOTE:  passing this default to the master equation won't work. You have to specify the relaxation rate again. This will likely change in the future, but ows to the separation of computation and data GRANAD tries to adhere to.
+# NOTE: To pass the dissipator above to the `master_equation` method, you have to specify the relaxation rate again. 
 
 ### Postprocesses
 

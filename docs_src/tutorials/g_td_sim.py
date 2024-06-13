@@ -26,7 +26,7 @@
 # where 
 
 # 1. $h^{0}$ is the unperturbed or bare Hamiltonian constructed from localized orbitals.
-# 2. $\vec{P}$ is the polarization operator depending on space $\vec{r}$ and transition dipole moments $\vec{d}$, leading to an interatomic potential $\vec{E}\vec{r}$ and an intra-atomic potential $\vec{E} \vec{d}$.
+# 2. $\vec{P}$ is the dipole moment operator depending on space $\vec{r}$ and transition dipole moments $\vec{d}$, leading to an interatomic potential with unit charge $e$, given by $e \vec{E} \vec{r}$, and an intra-atomic potential $\vec{E} \vec{d}$.
 # 3. $\rho^{0}$ is the stationary density matrix of the system's ground state, and $C$ is the Coulomb matrix (a subset of two-body matrix elements).
 
 # This expression is the dipole-gauge expression for the Hamiltonian including an external electric field $\vec{E}$.

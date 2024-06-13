@@ -35,13 +35,13 @@ print(flake.atoms)
 print(flake.to_xyz())
 # -
 
-# If you want to save this to a file, do
+# To save this to a file, do
 
 # +
 flake.to_xyz('flake.xyz')
 # -
 
-# You can also reload, although this is limited: all atoms in the xyz file get the same group id by default.
+# Reloading is limited: all atoms in the xyz file get the same group id by default.
 
 # +
 new_flake = OrbitalList.from_xyz('flake.xyz')

@@ -12,27 +12,38 @@
 #     name: base
 # ---
 
-# # Lindblad Dissipation
+# # Dissipation
 
-# To model dissipation in greater depth, GRANAD makes a Lindblad dissipation model available. The mathematical details are laid out in [Pelc et al., 2024](https://link.aps.org/doi/10.1103/PhysRevA.109.022237) and revolve around the following equation
+# GRANAD supports two dissipation models: A phenomenological dissipator, given by
 
-# $$\gamma_{ij}(t) = \gamma_{ij} \cdot f(t)$$
+# $$\mathcal{D}[\rho - \rho_0] = \frac{-1}{\tau} (\rho - \rho_0)$$,
 
-# where $\gamma_{ij}$ is the transition rate from state i to state j and $f$ is a relaxation functional to prevent breaking the Pauli principle (pushing more than 2 electrons into the same energetic state).
+# where $\rho_0$ is the equilibrium density matrix and $1 / \tau$ a phenomenological relaxation rate.
 
-### Lindblad Relaxation dynamics of the Metallic Chain
+# To model dissipation in greater depth, GRANAD makes available also a Lindblad dissipation model. The mathematical details are laid out in [Pelc et al., 2024](https://link.aps.org/doi/10.1103/PhysRevA.109.022237) and revolve around the following equation
 
-# In the following, we will consider a metallic chain with a uniform transition rate.
+# $$\gamma_{ij}(t) = \gamma_{ij} \cdot f(\rho(t))$$
+
+# where $\gamma_{ij}$ is the transition rate from state i to state j and $f$ is a relaxation functional to counteract problems related to the Pauli principle breaking that might occur in the single-particle model.
+# GRANAD's default relaxation functional suppresses population growth if the population approaches a limiting value of 2. It is given by a sigmoid
+
+# $$f(x) = \frac{1}{1 + e^{\beta \cdot(2.0 - x)}$$,
+
+# where x is the occupation and $\beta$ a temperature-like control parameter to mimick a smooth Heaviside function, defaulting to 1e-6.
+
+### Lindblad vs Phenomenological Relaxation dynamics of the Metallic Chain
+
+# In the following, we will consider a metallic chain with a uniform transition rate, such that of $\gamma_{ij} = \gamma$ for all $i \gt j$. We consider an initially excited state of one electron in the HOMO-LUM0+1 transition.
 
 # +
-from granad import MaterialCatalog, Hexagon, Pulse
+from granad import MaterialCatalog
 
 flake = MaterialCatalog.get("metal_1d").cut_flake( 6 )
 flake.set_excitation(flake.homo, flake.homo+2, 1)
 flake.show_energies()
 # -
 
-# We can now build the matrix of transitions rates with a uniform rate of $\gamma = 10$ as follows
+# We can now build the matrix of transition rates with a uniform $\gamma = 10$ as follows
 
 # +
 delta = flake.energies[:,None] - flake.energies
@@ -46,20 +57,25 @@ gamma_matrix = gamma * (delta > 0)
 print(gamma_matrix[flake.homo+1, flake.homo])
 # -
 
-# GRANAD dispatches the non-hermitian functional depending on the `relaxation_rate` input type. If you pass a float, GRANAD uses the decoherence approximation. If you pass an array, it uses the Lindblad dissipator with a (smooth approximation of) the Heaviside function as the saturation functional. We will talk about how to modify the relaxation functional shortly.
+# GRANAD dispatches the non-Hermitian functional depending on the `relaxation_rate` input type. If you pass a float, GRANAD uses the decoherence approximation. If you pass an array, it uses the Lindblad dissipator with a (smooth approximation of) the Heaviside function as the saturation functional. Modifications of the relaxation functional are discussed below.
 
-# We now integrate the master equation.
+# We now integrate the master equation. 
 
 # +
-labels = [f"{e:.2e}" for e in flake.energies]
 result = flake.master_equation(relaxation_rate = gamma_matrix,
                                end_time = 0.2,
                                density_matrix = ['occ_e'],
                                )
+# -
+
+# We plot the changes in single-particle energy occupations as a function of time by defining the `plot_labels` argument as the energies
+
+# +
+labels = [f"E = {e:.2e}" for e in flake.energies] # TODO: get rid of trailing zeros
 flake.show_res(result, show_illumination=False, plot_labels = labels)
 # -
 
-# Comparing this to the phenomenological approach
+# A comparison to to the phenomenological approach can be obtained by
 
 # +
 result = flake.master_equation(relaxation_rate = gamma,
@@ -69,19 +85,20 @@ result = flake.master_equation(relaxation_rate = gamma,
 flake.show_res(result, show_illumination=False, plot_labels = labels)
 # -
 
-# GRANAD imposes a degeneracy tolerance on the states. This means that all states separated by less than a numerical threshold are considered degenerate. The threshold is specified as variable `flake.params.eps`.
+# By comparing the two plots above, we observe a set of qualitative differences, discussed in greater detail in the [corresponding paper](https://link.aps.org/doi/10.1103/PhysRevA.109.022237).
 
+# GRANAD imposes a degeneracy tolerance on the states. This means that all states separated by less than a numerical threshold are considered degenerate. The threshold is specified as variable `flake.params.eps`.
 
 ### Modifying the saturation functional
 
 # The saturation functional can be customized by defining a saturation function and modifying the dissipator dict (for more information, please consult the tutorial on custom time evolution).
 
-# In short, you
-
 # 1. initialize a dissipator with your custom relaxation functional
-# 2. pass the gamma matrix as the relaxation rate as usual
+# 2. pass `relaxation_rate = gamma_matrix` as usual
 
-# We will study what happens if we completely turn off saturation 
+# To illustrate the necessity of introducing a saturation functional, we consider the case where no saturation is applied, i.e.
+
+# $$f(x) = 1$$
 
 # +
 import jax.numpy as jnp
@@ -98,7 +115,7 @@ result = flake.master_equation(relaxation_rate = gamma_matrix,
 flake.show_res(result, show_illumination=False, plot_labels = labels)
 # -
 
-# We observe an almost complete collapse into the IP ground state, prohibited only by what we can quickly check to be an interaction effect.
+# We observe an almost complete collapse into the single-particle ground state, which can be revealed to be an Coulomb interaction effect.
 
 # +
 result = flake.master_equation(relaxation_rate = gamma_matrix,
@@ -110,47 +127,14 @@ result = flake.master_equation(relaxation_rate = gamma_matrix,
 flake.show_res(result, show_illumination=False, plot_labels = labels)
 # -
 
-### Corrected Lindblad
-
-# A precursor of the saturated Linblad model replaces $D[\rho] \rightarrow D[\rho - \rho_0]$, i.e. it applies the Lindblad operators to $\rho - \rho_0$, much like the phenomenological dissipator.
-
-# It can be shown that this model for an $N$ electron system is equivalent to the phenomenological dissipator with relaxation rate $r$ if $\gamma^{ij} = \gamma = \frac{r}{N}$. We can check this is as follows
-
-# +
-from granad import dissipators
-
-gamma_matrix = jnp.ones_like(flake.hamiltonian)
-
-dissipator = {"corrected":dissipators.CorrectedLindblad(no_saturation)}
-
-result = flake.master_equation(relaxation_rate = gamma_matrix,
-                               dissipator = dissipator,
-                               end_time = 1,
-                               density_matrix = ['occ_e'],
-                               )
-flake.show_res(result, show_illumination=False, plot_labels = labels)
-# -
-
-# We can now compare to the phenomenological dissipator with its rate scaled by $N$.
-
-# +
-result = flake.master_equation(relaxation_rate = 6.,
-                               end_time = 1,
-                               density_matrix = ['occ_e'],
-                               )
-flake.show_res(result, show_illumination=False, plot_labels = labels)
-# -
-
-
 ### Wigner-Weisskopf transition rates
 
-# GRANAD also offers the IP wigner_weisskopf_transition_rates directly as a gamma matrix like
+# GRANAD offers the single-particle Wigner-Weisskopf transition rates directly in a matrix form 
 
 # +
 import matplotlib.pyplot as plt
 gamma_matrix = flake.wigner_weisskopf_transition_rates
 plt.matshow(gamma_matrix.real)
+plt.colorbar()
 plt.show()
 # -
-
-# NOTE: things will likely break if you use these rates directly without rescaling them somehow. 
