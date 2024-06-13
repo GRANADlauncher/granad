@@ -82,7 +82,7 @@ flake.show_3d()
 
 ### Modifying existing materials
 
-# You can just copy the material you want to modify and change/override its attributes. As an example, we will turn our ordinary graphene model into a variant of the Haldane model by introducing complex nnn hoppings
+# You can copy the material you want to modify and change/override its attributes. As an example, we will turn our ordinary graphene model into a variant of the Haldane model by introducing complex nnn hoppings
 
 # +
 from copy import deepcopy
@@ -92,7 +92,7 @@ graphene_haldane.add_interaction("hamiltonian", participants = ('pz', 'pz'), par
 print(graphene_haldane)
 # -
 
-# The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes
+# The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we  use the versatile properties of the orbital list datatype when we cut finite flakes
 
 # +
 hexagon =  Hexagon(31, armchair = True)

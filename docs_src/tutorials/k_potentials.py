@@ -14,7 +14,7 @@
 
 # # Potentials
 #
-# GRANAD lets you specify coupling to external light using (an arbitrary combination of) electromagnetic potentials. You do this by modifying GRANAD's internal representation of the Hamiltonian, which is just a dictionary.
+# GRANAD lets you specify coupling to external light using (an arbitrary combination of) electromagnetic potentials. You do this by modifying GRANAD's internal representation of the Hamiltonian, which is  a dictionary.
 
 ### Background
 
@@ -59,7 +59,7 @@ hamiltonian_model = flake.get_hamiltonian()
 print(hamiltonian_model)
 # -
 
-# We see that it is just a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian. You can tell which one by looking at the keys again
+# We see that it is  a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian. You can tell which one by looking at the keys again
 
 # +
 print(hamiltonian_model.keys())
@@ -74,7 +74,7 @@ hamiltonian_model_external_illu = flake.get_hamiltonian( illumination = wave )
 print(hamiltonian_model_external_illu.keys())
 # -
 
-# We add our own potentials to the Hamiltonian by adding entries to the dictionary, like `hamiltonian_model["my_potential"] = my_potential`. The name for the potential does not matter; it's just nicer for us to look at than function pointers.
+# We add our own potentials to the Hamiltonian by adding entries to the dictionary, like `hamiltonian_model["my_potential"] = my_potential`. The name for the potential does not matter; it's  nicer for us to look at than function pointers.
 
 # In choosing `my_potential`, you have several options, documented in the API. For demonstration, we will model a dipole pulse
 
@@ -87,7 +87,7 @@ dip_pulse = potentials.DipolePulse( dipole_moment = [1., 0., 0.],
                                     t0 = 3)
 # -
 
-# We can visualize its impact at any time t. The potential is a function and returns a diagonal matrix, so we can do the following (the arguments to this function will be explained in the tutorial on custom master equations, for now we just live with them).
+# We can visualize its impact at any time t. The potential is a function and returns a diagonal matrix, so we can do the following (the arguments to this function will be explained in the tutorial on custom master equations, for now we  live with them).
 
 # +
 import jax.numpy as jnp
@@ -117,7 +117,7 @@ result = flake.master_equation( end_time = 40.0,
 flake.show_res( result )
 # -
 
-# You can simulate any number of dipoles (or terms) by just adding more keys to the dictionary. **Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.**
+# You can simulate any number of dipoles (or terms) by  adding more keys to the dictionary. **Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.**
 
 # Note: The dipole potential above is purely diagonal, i.e. it will miss the intra-atomic dipolar contribution between orbitals $i$ and $j$ connected by a transition dipole moment $\vec{d}_{ij$.
 

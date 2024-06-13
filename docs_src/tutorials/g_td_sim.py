@@ -84,13 +84,14 @@ output_omega = result.ft_output( omega_min = omega_min, omega_max = omega_max )[
 
 # From the classical continuity equation, we have
 
-# $$\dot{\rho}(x, t) = -\nabla \bf{j}(x, t) = \dot{\nabla \bf{p}}(t) \implies \dot{\bf{p}}(x,t) = \bf{j}(x,t) \implies \omega \bf{p}(\omega) = \bf{j}(\omega)$$
+# $$\dot{\rho}(x, t) = -\nabla \vec{j}(x, t) = \nabla \dot{\vec{p}}(t) \implies \dot{\vec{p}}(x,t) = \vec{j}(x,t) \implies \omega \vec{p}(x, \omega) = \vec{j}(x, \omega)$$
 
-# Integrating this equation spatially leads to
+# Or, in its integrated form
 
-# $$\rho(t) = j(t)$$
+# $$\int dx \dot{\vec{p}}(x,t) = \dot{\vec{p}}(t) = \int dx \vec{j}(x,t) =  \vec{j}(t)
 
-# We can verify the spatially integrated version of this explicitly as follows
+# Where $\vec{j}$ and $\vec{p}$ are the total current and dipole moment respectively. As classical quantities are given by ensemble averages of quantum operators, we can
+# obtain these quantities directly from the time-domain simulations. The (integrated) continuity equation above can be verified as follows
 
 # +
 import matplotlib.pyplot as plt
@@ -113,7 +114,7 @@ print(result.td_illumination.shape)
 
 ### Density matrices
 
-# If we want to only get density matrices, we can simply omit the operator list. The result object then contains a one-element list.
+# If we want to only get density matrices, we can  omit the operator list. The result object then contains a one-element list.
 
 # +
 result = flake.master_equation(

@@ -42,7 +42,7 @@ print(jnp.all(flake.initial_density_matrix_x == flake.initial_density_matrix))
 print(jnp.all(flake.transform_to_energy_basis(flake.hamiltonian) == flake.hamiltonian_e))
 # -
 
-# This is useful when transforming arrays of density matrices, because appending _e only works on attributes of the orbital list. As density matrices are a simulation output and not an attribute of the orbital list, appending _e will not work and a separate method is needed.
+# This is useful when transforming arrays of density matrices, because appending _e only works on attributes of the orbital list. Density matrices are a simulation output and as such not an attribute of the orbital list. Appending _e to the variable name will thus not work and a separate method is needed.
 
 
 # Transition dipole moments can be displayed in energy basis

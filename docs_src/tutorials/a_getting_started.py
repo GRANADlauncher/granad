@@ -140,7 +140,7 @@ my_first_flake.show_energies()
 # Now that we are ready, we can study the induced dipole moment. In particular, we will:
 
 # 1. Excite the flake with an electric field.
-# 2. Compute its dipole moment $\bf{p}(t) = \text{Tr}[\rho(t) \bf{P}]$, where $\bf{P}$ is the dipole operator.
+# 2. Compute its dipole moment $\vec{p}(t) = \text{Tr}[\rho(t) \vec{P}]$, where $\vec{P}$ is the dipole operator.
 
 # The electric field is given as a function mapping the time (a single float) to a vector representing the field components like this `field : t -> vec`.
  

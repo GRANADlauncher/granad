@@ -26,7 +26,7 @@
 
 # When calling the integration for the master equation, you can give an optional argument, `hamiltonian`. As already discussed, this argument represents a Hamiltonian as a dictionary of functions.
 
-# Up to now, we just wanted to use custom potentials, so we simply added them to the dictionary. Let's look more closely at what is going on by considering a flake under CW illumination.
+# Up to now, we  wanted to use custom potentials, so we  added them to the dictionary. Let's look more closely at what is going on by considering a flake under CW illumination.
 
 # +
 from granad import MaterialCatalog, Triangle, Wave
@@ -36,7 +36,7 @@ hamiltonian_model = flake.get_hamiltonian(illumination = wave)
 print(hamiltonian_model.keys())
 # -
 
-# As discussed, the default Hamiltonian just has three terms:
+# As discussed, the default Hamiltonian  has three terms:
 
 # 1. a bare hamiltonian.
 # 2. an induced coulomb interaction.
@@ -54,7 +54,7 @@ print(hamiltonian_model.keys())
 
 ### Argument Objects
 
-# What does the `args` object contain, exactly? We can create this object ourselves. It is just a named tuple (like a C struct) and we can inspect its contents by looking at its fields 
+# What does the `args` object contain, exactly? We can create this object ourselves. It is  a named tuple (like a C struct) and we can inspect its contents by looking at its fields 
 
 # +
 args = flake.get_args()
@@ -83,7 +83,7 @@ time = 0.0
 jnp.all(flake.hamiltonian == h_bare( time, args.initial_density_matrix, args ))
 # -
 
-# The function just returns the bare hamiltonian, independent of the time and density matrix. Let's compute the coulomb potential at the initial time
+# The function  returns the bare hamiltonian, independent of the time and density matrix. Let's compute the coulomb potential at the initial time
 
 # +
 coulomb = hamiltonian_model["coulomb"]
@@ -107,7 +107,7 @@ jnp.all( potential_matrix == jnp.diag(potential_matrix.diagonal()) )
 # 2. Returns a NxN complex matrix
 # 3. Additionally, the function must be JAX-JIT compatible. In essence, use only Python and jax.numpy operations.
 
-# Then we just insert it in the dictionary, potentially overwriting a default key (remember the keys don't matter, you can add as many functions as you want and name them however you want).
+# Then we  insert it in the dictionary, potentially overwriting a default key (remember the keys don't matter, you can add as many functions as you want and name them however you want).
 
 # Let's illustrate this at the example of a custom scalar potential. We want to replace the dipole-gauge coupling $E P$ with a scalar potential representing a plane-wave pulse. Let's define this potential first
 
@@ -122,13 +122,13 @@ def pulsed_potential( time, density_matrix, args ):
     return jnp.diag( diagonal_part )
 # -
 
-# Now, we replace the default potential with our custom term, just as we did before in the case of the pulsed dipole.
+# Now, we replace the default potential with our custom term,  as we did before in the case of the pulsed dipole.
 
 # +
 hamiltonian_model["potential"] = pulsed_potential
 # -
 
-# To run a time-domain simulation, we just pass the modified hamiltonian dictionary directly, as demonstrated in the first section
+# To run a time-domain simulation, we  pass the modified hamiltonian dictionary directly, as demonstrated in the first section
 
 # +
 result = flake.master_equation( hamiltonian = hamiltonian_model, expectation_values = [flake.dipole_operator], relaxation_rate = 1/10, end_time = 40)
@@ -156,7 +156,7 @@ dissipator_model = flake.get_dissipator(relaxation_rate = 1/10)
 print( dissipator_model )
 # -
 
-# NOTE: just passing this default to the master equation won't work. You have to specify the relaxation rate again. This will likely change in the future, but ows to the separation of computation and data GRANAD tries to adhere to.
+# NOTE:  passing this default to the master equation won't work. You have to specify the relaxation rate again. This will likely change in the future, but ows to the separation of computation and data GRANAD tries to adhere to.
 
 ### Postprocesses
 

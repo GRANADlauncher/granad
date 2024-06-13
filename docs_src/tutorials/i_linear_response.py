@@ -15,7 +15,7 @@
 # # Linear response
 #
 
-# We will calculate the optical absorption in the RPA and compare it to TD simulations with a weak external field.
+# We will calculate the optical absorption in the RPA and compare it to time-domain simulations with a weak external field.
 
 ### RPA
 
@@ -47,9 +47,9 @@ polarizability = flake.get_polarizability_rpa(
 absorption_rpa = jnp.abs( polarizability.imag * 4 * jnp.pi * omegas_rpa )
 # -
 
-### TD
+### Time-domain simulations
 
-# For the TD simulations, we specify a spectrally broad external illumination (i.e. a narrow pulse in time domain) to capture the system's response over a large frequency range.
+# For the time-domain simulations, we specify a spectrally broad external illumination (i.e. a narrow pulse in time domain) to capture the system's response over a large frequency range.
 
 # +
 from granad import Pulse
@@ -58,7 +58,7 @@ pulse = Pulse(
 )
 # -
 
-# We then compute the TD dipole moment and Fourier transform it.
+# We then compute the time-dependent dipole moment and Fourier transform it.
 
 # +
 result = flake.master_equation(

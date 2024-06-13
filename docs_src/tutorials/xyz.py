@@ -29,7 +29,7 @@ flake = graphene.cut_flake( Triangle(15)  )
 print(flake.atoms)
 # -
 
-# If you supply no name to the to_xyz method, it will just return the string
+# If you supply no name to the to_xyz method, it will  return the string
 
 # + 
 print(flake.to_xyz())
