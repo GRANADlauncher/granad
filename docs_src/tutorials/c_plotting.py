@@ -14,7 +14,7 @@
 
 # # Plotting
 #
-# We take a look at built-in plotting functions. 
+# We introduce built-in plotting functions. 
 #
 # A typical simulation requires visualizing:
 
@@ -46,7 +46,9 @@ stack.show_3d()
 
 ### Simulation output
 
-# There is a dedicated function for showing TD simulation results. Let's illustrate this by tracking the current
+# There is a dedicated function for showing time-domain simulation results. Let's illustrate this by tracking the current considering the previously defined flake under x-polarized Gaussian pulsed illumination, which in GRANAD's units is equivalent to the velocity operator given by
+
+# $$\bf{v} = \frac{-i}{\hbar} [H, \bf{P}]$$
 
 # +
 from granad import Pulse
@@ -58,23 +60,27 @@ result = flake.master_equation(
     expectation_values = [flake.velocity_operator],
     end_time=40,
     relaxation_rate=1/10,
-    grid=100,
+    grid=100, # save every 100-th time step
 )
 plot_labels = ['j_x', 'j_y', 'j_z'] 
 flake.show_res( result, plot_labels = plot_labels )
 # -
 
-# We can also plot in frequency domain by specifying the omega limits
+# A detailed description of parameters to the Gaussian pulse is given in the electric fields tutorial.
+
+# We can also Fourier transform the result to obtain the frequency domain result by specifying the omega limits
 
 # +
 flake.show_res( result, omega_max = 5, omega_min = 0, plot_labels = plot_labels )
 # -
 
+# Note that the sparsity of the spectral grid ows to the sparse sampling in time domain which we have chosen for demonstrational purposes. A real simulation requires more careful refinement of the temporal grid.
+
 ### Space-dependent arrays
 
 # The functions show_2d and show_3d are a bit more versatile than initially indicated.
 
-# If we supply a "display" argument, we can plot an arbitrary array on the grid spanned by the orbitals and filter it by orbital tags. Let's demonstrate this by visualizing the lowest energy one particle state of the flake
+# If we supply a "display" argument, we can plot an arbitrary array on the grid spanned by the orbitals and filter it by orbital tags. Let's demonstrate this by visualizing the lowest energy single-particle state of the flake
 
 # +
 flake.show_2d( display = flake.eigenvectors[:, 0] )

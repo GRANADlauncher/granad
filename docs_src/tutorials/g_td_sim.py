@@ -15,9 +15,26 @@
 # # Time-Domain simulations
 #
 
+# We introduce time-domain simulations, which are based on GRANAD's default master equation
+
+# $$\dot{\rho}(t) = -i [H[t,\rho(t)], \rho] + \mathcal{D}[t, \rho]$$
+
+# The non-linear Hamiltonian is given by
+
+# $$H[t,\rho(t)] = h^{0} + \vec{E} \vec{P} + C(\rho(t) - \rho^{0})$$
+
+# where 
+
+# 1. $h^{0}$ is the unperturbed or bare Hamiltonian constructed from localized orbitals.
+# 2. $\vec{P}$ is the polarization operator depending on space $\vec{r}$ and transition dipole moments $\vec{d}$, leading to an interatomic potential $\vec{E}\vec{r}$ and an intra-atomic potential $\vec{E} \vec{d}$.
+# 3. $\rho^{0}$ is the stationary density matrix of the system's ground state, and $C$ is the Coulomb matrix (a subset of two-body matrix elements).
+
+# This expression is the dipole-gauge expression for the Hamiltonian including an external electric field $\vec{E}$.
+
 ### Observables
 
-# You can compute multiple observables in one run
+
+# You can compute multiple observables in one simulation run
 
 # +
 from granad import MaterialCatalog, Hexagon, Pulse
@@ -65,7 +82,15 @@ omegas, pulse_omega = result.ft_illumination( omega_min = omega_min, omega_max =
 output_omega = result.ft_output( omega_min = omega_min, omega_max = omega_max )[0]
 # -
 
-# So we can quickly check the continuity equation
+# From the classical continuity equation, we have
+
+# $$\dot{\rho}(x, t) = -\nabla \bf{j}(x, t) = \dot{\nabla \bf{p}}(t) \implies \dot{\bf{p}}(x,t) = \bf{j}(x,t) \implies \omega \bf{p}(\omega) = \bf{j}(\omega)$$
+
+# Integrating this equation spatially leads to
+
+# $$\rho(t) = j(t)$$
+
+# We can verify the spatially integrated version of this explicitly as follows
 
 # +
 import matplotlib.pyplot as plt

@@ -78,7 +78,7 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
             ax.annotate(str(idx), (pos[0], pos[1]), textcoords="offset points", xytext=(0,10), ha='center')
 
     # Finalize plot settings
-    plt.title('Orbital Positions in the xy-plane')
+    plt.title('Orbital positions in the xy-plane')
     plt.xlabel('X')
     plt.ylabel('Y')
     ax.grid(True)
@@ -145,7 +145,7 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
             ax.text(pos[0], pos[1], pos[2], str(idx), color='black', size=10)
 
     # Finalize plot settings
-    ax.set_title('Orbital Positions in 3D')
+    ax.set_title('Orbital positions in 3D')
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
@@ -164,7 +164,7 @@ def show_energies(orbs):
             orbs.energies,
             c=jnp.diag(orbs.electrons * orbs.initial_density_matrix_e),
         ),
-        label="ground state occupation",
+        label="initial state occupation",
     )
     ax.set_xlabel("eigenstate number")
     ax.set_ylabel("energy (eV)")
@@ -195,6 +195,8 @@ def show_res(
     plot_obs = res.output
     illu = res.td_illumination
     x_axis = res.time_axis
+    cart_list = ["x", "y", "z"]
+    
     
     if omega_max is not None and omega_min is not None:
         plot_obs = res.ft_output( omega_max, omega_min )
@@ -208,7 +210,7 @@ def show_res(
             _show( obs_flat, label )
         if show_illumination == True:
             for component, illu_flat in enumerate(illu.T):            
-                _show(illu_flat, f'illumination_{component}')
+                _show(illu_flat, f'illumination_{cart_list[component]}')
             
     plt.legend()
 

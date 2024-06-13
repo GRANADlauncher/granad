@@ -245,7 +245,7 @@ class Material:
             .add_interaction(
                 "hamiltonian",
                 participants=("pz", "pz"),
-                parameters=[0.0, 2.66],
+                parameters=[0.0, -2.66],
             )
             .add_interaction(
                 "coulomb",
@@ -592,7 +592,7 @@ def get_graphene():
             .add_interaction(
                 "hamiltonian",
                 participants=("pz", "pz"),
-                parameters=[0.0, 2.66],
+                parameters=[0.0, -2.66],
             )
             .add_interaction(
                 "coulomb",

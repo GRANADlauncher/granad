@@ -18,8 +18,8 @@
 
 # ### Features
 
-# - Computes optical and electronic properties 
-# - Full access to time-dependent density matrices via master equation
+# - Computes electronic and optical properties 
+# - Time-evolution of density matrix calculated via master equation
 # - Relies on [JAX](https://jax.readthedocs.io/en/latest/) for performance and differentiability
 
 # ### Installation
@@ -31,7 +31,7 @@
 
 # First, set up miniconda: https://docs.anaconda.com/free/miniconda/index.html
 
-# Then, create a fresh environment
+# Then, create a new environment
 
 # + {"cell_type": "markdown"}
 # ```bash
@@ -60,7 +60,7 @@
 
 # ### Quickstart
 
-# Set up the simulation
+# In the following, we demonstrate how to compute the absorption spectrum in a triangular zigzag graphene flake in the random phase approximation (RPA). The code is listed below:
 
 # +
 import jax.numpy as jnp
@@ -73,15 +73,17 @@ graphene = MaterialCatalog.get( "graphene" )
 flake = graphene.cut_flake( Triangle(15)  ) 
 
 # frequencies
-omegas = jnp.linspace( 0, 5, 50 )
+omegas = jnp.linspace( 0, 5, 100 )
 
-# compute optical properties in the RPA with GPU-acceleration
+# compute the polarizability in the RPA
 polarizability = flake.get_polarizability_rpa(
     omegas,
     relaxation_rate = 1/10,
     polarization = 0,
     hungry = 2 # higher numbers are faster and consume more RAM
 )
+
+# from the imaginary part of polarizability, obtain the absorption spectrum
 absorption = polarizability.imag * 4 * jnp.pi * omegas
 # -
 
@@ -94,6 +96,6 @@ plt.figure(figsize=(10, 6))
 plt.plot(omegas, absorption / jnp.max(absorption), linewidth=2)
 plt.xlabel(r'$\hbar\omega$', fontsize=20)
 plt.ylabel(r'$\sigma(\omega)$', fontsize=25)
-plt.title('Absorption Spectrum as a Function of Photon Energy', fontsize=15)
+plt.title('Absorption spectrum as a function of photon energy', fontsize=15)
 plt.grid(True)
 # -

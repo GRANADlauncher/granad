@@ -352,8 +352,8 @@ class OrbitalList:
     def __repr__(self):
         info = f"List with {len(self)} orbitals, {self.electrons} electrons."
         info += f"Excitation: f{self.params.excitation}"
-        # TODO: add sth about groups
-        return "\n".join((info, repr(self._list))) 
+        # TODO: format excitation more readbly
+        return info 
 
     def __iter__(self):
         return iter(self._list)
