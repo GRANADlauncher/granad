@@ -702,7 +702,7 @@ class MaterialCatalog:
             MaterialCatalog.describe('graphene')
             ```
         """
-        print(MaterialCatalog._materials[material])
+        print(MaterialCatalog._materials[material]())
     
     @staticmethod
     def available():
