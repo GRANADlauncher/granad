@@ -248,7 +248,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tutorials/l_master/">Custom Time Evolution</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/la_lindblad/">Lindblad Dissipation</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/la_lindblad/">Dissipation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tutorials/xyz/">Exporting and Importing</a>
                   </li>
@@ -1901,8 +1901,8 @@ quantity_x == quantity.</p>
 </span><span id="__span-0-351"><a id="__codelineno-0-351" name="__codelineno-0-351"></a>
 </span><span id="__span-0-352"><a id="__codelineno-0-352" name="__codelineno-0-352"></a>    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 </span><span id="__span-0-353"><a id="__codelineno-0-353" name="__codelineno-0-353"></a>        <span class="n">info</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;List with </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s2"> orbitals, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">electrons</span><span class="si">}</span><span class="s2"> electrons.&quot;</span>
-</span><span id="__span-0-354"><a id="__codelineno-0-354" name="__codelineno-0-354"></a>        <span class="n">info</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Excitation: f</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">excitation</span><span class="si">}</span><span class="s2">&quot;</span>
-</span><span id="__span-0-355"><a id="__codelineno-0-355" name="__codelineno-0-355"></a>        <span class="c1"># TODO: format excitation more readbly</span>
+</span><span id="__span-0-354"><a id="__codelineno-0-354" name="__codelineno-0-354"></a>        <span class="n">exc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">excitation</span>
+</span><span id="__span-0-355"><a id="__codelineno-0-355" name="__codelineno-0-355"></a>        <span class="n">info</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Excitation: </span><span class="si">{</span><span class="n">exc</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="si">}</span><span class="s2"> electrons excited from energy levels </span><span class="si">{</span><span class="n">exc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">exc</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">.&quot;</span>
 </span><span id="__span-0-356"><a id="__codelineno-0-356" name="__codelineno-0-356"></a>        <span class="k">return</span> <span class="n">info</span> 
 </span><span id="__span-0-357"><a id="__codelineno-0-357" name="__codelineno-0-357"></a>
 </span><span id="__span-0-358"><a id="__codelineno-0-358" name="__codelineno-0-358"></a>    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

@@ -94,7 +94,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../la_lindblad/">Lindblad Dissipation</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../la_lindblad/">Dissipation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
                   </li>
@@ -226,7 +226,8 @@ hBN
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">my_first_orbital_list</span> <span class="o">=</span> <span class="n">OrbitalList</span><span class="p">([</span><span class="n">my_first_orbital</span><span class="p">,</span> <span class="n">my_second_orbital</span><span class="p">])</span>
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_orbital_list</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>List with 2 orbitals, 2 electrons.Excitation: f[Array([0], dtype=int64), Array([0], dtype=int64), Array([0], dtype=int64)]
+<div class="language-text highlight"><pre><span></span><code>List with 2 orbitals, 2 electrons.
+Excitation: [0] electrons excited from energy levels [0] to [0].
 </code></pre></div>
 <p>This displays information about the number of orbitals, electrons and single-particle excitations involved in constructing the initial density matrix.</p>
 <p>Alternatively, orbital lists can represent flakes cut from a material. You do this by specifying the shape of the flake.
@@ -241,7 +242,8 @@ For now, we will use a built-in shape: an triangle with a base length of 18 Angs
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_flake</span><span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../a_getting_started_files/a_getting_started_23_0.png" /></p>
-<div class="language-text highlight"><pre><span></span><code>List with 46 orbitals, 46 electrons.Excitation: f[Array([0], dtype=int64), Array([0], dtype=int64), Array([0], dtype=int64)]
+<div class="language-text highlight"><pre><span></span><code>List with 46 orbitals, 46 electrons.
+Excitation: [0] electrons excited from energy levels [0] to [0].
 </code></pre></div>
 <p>Note that the <code>plot=True</code> option displays an "infinite" graphene sheet (blue points), from which only the flake (orange points) will be kept in the final structure. If you want to visualize the flake in isolation, use <code>show_2d</code>, as explained in more detail in the plotting tutorial.</p>
 <p>There is an extra option for dealing with graphene-like lattices we can pass to the built-in shape, which is the armchair boolean. It rotates the shape to get the correct edge type. The optional "shift" argument lets you shift the shape in the plane.</p>

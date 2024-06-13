@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <link rel="shortcut icon" href="../../img/favicon.ico" />
-    <title>Lindblad Dissipation - GRANAD</title>
+    <title>Dissipation - GRANAD</title>
     <link rel="stylesheet" href="../../css/theme.css" />
     <link rel="stylesheet" href="../../css/theme_extra.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
@@ -13,7 +13,7 @@
     
       <script>
         // Current page data
-        var mkdocs_page_name = "Lindblad Dissipation";
+        var mkdocs_page_name = "Dissipation";
         var mkdocs_page_input_path = "tutorials/la_lindblad.md";
         var mkdocs_page_url = null;
       </script>
@@ -82,13 +82,11 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
                   </li>
-                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Lindblad Dissipation</a>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Dissipation</a>
     <ul class="current">
-    <li class="toctree-l2"><a class="reference internal" href="#lindblad-relaxation-dynamics-of-the-metallic-chain">Lindblad Relaxation dynamics of the Metallic Chain</a>
+    <li class="toctree-l2"><a class="reference internal" href="#lindblad-vs-phenomenological-relaxation-dynamics-of-the-metallic-chain">Lindblad vs Phenomenological Relaxation dynamics of the Metallic Chain</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#modifying-the-saturation-functional">Modifying the saturation functional</a>
-    </li>
-    <li class="toctree-l2"><a class="reference internal" href="#corrected-lindblad">Corrected Lindblad</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#wigner-weisskopf-transition-rates">Wigner-Weisskopf transition rates</a>
     </li>
@@ -112,7 +110,7 @@
   <ul class="wy-breadcrumbs">
     <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
           <li class="breadcrumb-item">Tutorials</li>
-      <li class="breadcrumb-item active">Lindblad Dissipation</li>
+      <li class="breadcrumb-item active">Dissipation</li>
     <li class="wy-breadcrumbs-aside">
     </li>
   </ul>
@@ -121,20 +119,26 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
             <div class="section" itemprop="articleBody">
               
-                <h1 id="lindblad-dissipation">Lindblad Dissipation</h1>
-<p>To model dissipation in greater depth, GRANAD makes a Lindblad dissipation model available. The mathematical details are laid out in <a href="https://link.aps.org/doi/10.1103/PhysRevA.109.022237">Pelc et al., 2024</a> and revolve around the following equation</p>
-<div class="arithmatex">\[\gamma_{ij}(t) = \gamma_{ij} \cdot f(t)\]</div>
-<p>where <span class="arithmatex">\(\gamma_{ij}\)</span> is the transition rate from state i to state j and <span class="arithmatex">\(f\)</span> is a relaxation functional to prevent breaking the Pauli principle (pushing more than 2 electrons into the same energetic state).</p>
-<h2 id="lindblad-relaxation-dynamics-of-the-metallic-chain">Lindblad Relaxation dynamics of the Metallic Chain</h2>
-<p>In the following, we will consider a metallic chain with a uniform transition rate.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Hexagon</span><span class="p">,</span> <span class="n">Pulse</span>
+                <h1 id="dissipation">Dissipation</h1>
+<p>GRANAD supports two dissipation models: A phenomenological dissipator, given by</p>
+<p><span class="arithmatex">\(<span class="arithmatex">\(\mathcal{D}[\rho - \rho_0] = \frac{-1}{\tau} (\rho - \rho_0)\)</span>\)</span>,</p>
+<p>where <span class="arithmatex">\(\rho_0\)</span> is the equilibrium density matrix and <span class="arithmatex">\(1 / \tau\)</span> a phenomenological relaxation rate.</p>
+<p>To model dissipation in greater depth, GRANAD makes available also a Lindblad dissipation model. The mathematical details are laid out in <a href="https://link.aps.org/doi/10.1103/PhysRevA.109.022237">Pelc et al., 2024</a> and revolve around the following equation</p>
+<div class="arithmatex">\[\gamma_{ij}(t) = \gamma_{ij} \cdot f(\rho(t))\]</div>
+<p>where <span class="arithmatex">\(\gamma_{ij}\)</span> is the transition rate from state i to state j and <span class="arithmatex">\(f\)</span> is a relaxation functional to counteract problems related to the Pauli principle breaking that might occur in the single-particle model.
+GRANAD's default relaxation functional suppresses population growth if the population approaches a limiting value of 2. It is given by a sigmoid</p>
+<p><span class="arithmatex">\(<span class="arithmatex">\(f(x) = \frac{1}{1 + e^{\beta \cdot(2.0 - x)}\)</span>\)</span>,</p>
+<p>where x is the occupation and <span class="arithmatex">\(\beta\)</span> a temperature-like control parameter to mimick a smooth Heaviside function, defaulting to 1e-6.</p>
+<h2 id="lindblad-vs-phenomenological-relaxation-dynamics-of-the-metallic-chain">Lindblad vs Phenomenological Relaxation dynamics of the Metallic Chain</h2>
+<p>In the following, we will consider a metallic chain with a uniform transition rate, such that of <span class="arithmatex">\(\gamma_{ij} = \gamma\)</span> for all <span class="arithmatex">\(i \gt j\)</span>. We consider an initially excited state of one electron in the HOMO-LUM0+1 transition.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metal_1d&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="mi">6</span> <span class="p">)</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">flake</span><span class="o">.</span><span class="n">set_excitation</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
 </span></code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_6_0.png" /></p>
-<p>We can now build the matrix of transitions rates with a uniform rate of <span class="arithmatex">\(\gamma = 10\)</span> as follows</p>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_11_0.png" /></p>
+<p>We can now build the matrix of transition rates with a uniform <span class="arithmatex">\(\gamma = 10\)</span> as follows</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">delta</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">energies</span><span class="p">[:,</span><span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">flake</span><span class="o">.</span><span class="n">energies</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">gamma</span> <span class="o">=</span> <span class="mf">10.</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">gamma_matrix</span> <span class="o">=</span> <span class="n">gamma</span> <span class="o">*</span> <span class="p">(</span><span class="n">delta</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
@@ -144,14 +148,12 @@
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>10.0
 </code></pre></div>
-<p>GRANAD dispatches the non-hermitian functional depending on the <code>relaxation_rate</code> input type. If you pass a float, GRANAD uses the decoherence approximation. If you pass an array, it uses the Lindblad dissipator with a (smooth approximation of) the Heaviside function as the saturation functional. We will talk about how to modify the relaxation functional shortly.</p>
-<p>We now integrate the master equation.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">e</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">flake</span><span class="o">.</span><span class="n">energies</span><span class="p">]</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>                               <span class="p">)</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
+<p>GRANAD dispatches the non-Hermitian functional depending on the <code>relaxation_rate</code> input type. If you pass a float, GRANAD uses the decoherence approximation. If you pass an array, it uses the Lindblad dissipator with a (smooth approximation of) the Heaviside function as the saturation functional. Modifications of the relaxation functional are discussed below.</p>
+<p>We now integrate the master equation. </p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>                               <span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 RHS compiled
@@ -159,42 +161,17 @@ RHS compiled
 
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_13_2.png" /></p>
-<p>Comparing this to the phenomenological approach</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma</span><span class="p">,</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>                               <span class="p">)</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
+<p>We plot the changes in single-particle energy occupations as a function of time by defining the <code>plot_labels</code> argument as the energies</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;E = </span><span class="si">{</span><span class="n">e</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">flake</span><span class="o">.</span><span class="n">energies</span><span class="p">]</span> <span class="c1"># TODO: get rid of trailing zeros</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>RHS compiled
-RHS compiled
-
-
-100.0 %
-</code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_15_2.png" /></p>
-<p>GRANAD imposes a degeneracy tolerance on the states. This means that all states separated by less than a numerical threshold are considered degenerate. The threshold is specified as variable <code>flake.params.eps</code>.</p>
-<h2 id="modifying-the-saturation-functional">Modifying the saturation functional</h2>
-<p>The saturation functional can be customized by defining a saturation function and modifying the dissipator dict (for more information, please consult the tutorial on custom time evolution).</p>
-<p>In short, you</p>
-<ol>
-<li>initialize a dissipator with your custom relaxation functional</li>
-<li>pass the gamma matrix as the relaxation rate as usual</li>
-</ol>
-<p>We will study what happens if we completely turn off saturation </p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">def</span> <span class="nf">no_saturation</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="k">return</span> <span class="mf">1.</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">dissipator</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_dissipator</span><span class="p">(</span><span class="n">saturation</span> <span class="o">=</span> <span class="n">no_saturation</span><span class="p">)</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>                               <span class="n">dissipator</span> <span class="o">=</span> <span class="n">dissipator</span><span class="p">,</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>                               <span class="p">)</span>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_20_0.png" /></p>
+<p>A comparison to to the phenomenological approach can be obtained by</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma</span><span class="p">,</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>                               <span class="p">)</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 RHS compiled
@@ -203,53 +180,28 @@ RHS compiled
 100.0 %
 </code></pre></div>
 <p><img alt="png" src="../la_lindblad_files/la_lindblad_22_2.png" /></p>
-<p>We observe an almost complete collapse into the IP ground state, prohibited only by what we can quickly check to be an interaction effect.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>                               <span class="n">dissipator</span> <span class="o">=</span> <span class="n">dissipator</span><span class="p">,</span>
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>                               <span class="n">coulomb_strength</span> <span class="o">=</span> <span class="mf">0.</span> <span class="c1"># turn off Coulomb interaction</span>
-</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>                               <span class="p">)</span>
-</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
-</span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>RHS compiled
-RHS compiled
-
-
-100.0 %
-</code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_24_2.png" /></p>
-<h2 id="corrected-lindblad">Corrected Lindblad</h2>
-<p>A precursor of the saturated Linblad model replaces <span class="arithmatex">\(D[\rho] \rightarrow D[\rho - \rho_0]\)</span>, i.e. it applies the Lindblad operators to <span class="arithmatex">\(\rho - \rho_0\)</span>, much like the phenomenological dissipator.</p>
-<p>It can be shown that this model for an <span class="arithmatex">\(N\)</span> electron system is equivalent to the phenomenological dissipator with relaxation rate <span class="arithmatex">\(r\)</span> if <span class="arithmatex">\(\gamma^{ij} = \gamma = \frac{r}{N}\)</span>. We can check this is as follows</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">dissipators</span>
-</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">gamma_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">hamiltonian</span><span class="p">)</span>
-</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">dissipator</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;corrected&quot;</span><span class="p">:</span><span class="n">dissipators</span><span class="o">.</span><span class="n">CorrectedLindblad</span><span class="p">(</span><span class="n">no_saturation</span><span class="p">)}</span>
-</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
-</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
-</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>                               <span class="n">dissipator</span> <span class="o">=</span> <span class="n">dissipator</span><span class="p">,</span>
-</span><span id="__span-7-9"><a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-</span><span id="__span-7-10"><a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
-</span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>                               <span class="p">)</span>
-</span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
-</span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>RHS compiled
-
-
-RHS compiled
-
-
-100.0 %
-</code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_28_3.png" /></p>
-<p>We can now compare to the phenomenological dissipator with its rate scaled by <span class="arithmatex">\(N\)</span>.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mf">6.</span><span class="p">,</span>
-</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
-</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>                               <span class="p">)</span>
-</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
+<p>By comparing the two plots above, we observe a set of qualitative differences, discussed in greater detail in the <a href="https://link.aps.org/doi/10.1103/PhysRevA.109.022237">corresponding paper</a>.</p>
+<p>GRANAD imposes a degeneracy tolerance on the states. This means that all states separated by less than a numerical threshold are considered degenerate. The threshold is specified as variable <code>flake.params.eps</code>.</p>
+<h2 id="modifying-the-saturation-functional">Modifying the saturation functional</h2>
+<p>The saturation functional can be customized by defining a saturation function and modifying the dissipator dict (for more information, please consult the tutorial on custom time evolution).</p>
+<ol>
+<li>initialize a dissipator with your custom relaxation functional</li>
+<li>pass <code>relaxation_rate = gamma_matrix</code> as usual</li>
+</ol>
+<p>To illustrate the necessity of introducing a saturation functional, we consider the case where no saturation is applied, i.e.</p>
+<div class="arithmatex">\[f(x) = 1\]</div>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">def</span> <span class="nf">no_saturation</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="k">return</span> <span class="mf">1.</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">dissipator</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_dissipator</span><span class="p">(</span><span class="n">saturation</span> <span class="o">=</span> <span class="n">no_saturation</span><span class="p">)</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>                               <span class="n">dissipator</span> <span class="o">=</span> <span class="n">dissipator</span><span class="p">,</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-6-10"><a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
+</span><span id="__span-6-11"><a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a>                               <span class="p">)</span>
+</span><span id="__span-6-12"><a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 RHS compiled
@@ -258,15 +210,31 @@ RHS compiled
 100.0 %
 </code></pre></div>
 <p><img alt="png" src="../la_lindblad_files/la_lindblad_30_2.png" /></p>
-<h2 id="wigner-weisskopf-transition-rates">Wigner-Weisskopf transition rates</h2>
-<p>GRANAD also offers the IP wigner_weisskopf_transition_rates directly as a gamma matrix like</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">gamma_matrix</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">wigner_weisskopf_transition_rates</span>
-</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">matshow</span><span class="p">(</span><span class="n">gamma_matrix</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
-</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+<p>We observe an almost complete collapse into the single-particle ground state, which can be revealed to be an Coulomb interaction effect.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>                               <span class="n">dissipator</span> <span class="o">=</span> <span class="n">dissipator</span><span class="p">,</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>                               <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;occ_e&#39;</span><span class="p">],</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>                               <span class="n">coulomb_strength</span> <span class="o">=</span> <span class="mf">0.</span> <span class="c1"># turn off Coulomb interaction</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>                               <span class="p">)</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
 </span></code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_33_0.png" /></p>
-<p>NOTE: things will likely break if you use these rates directly without rescaling them somehow. </p>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+100.0 %
+</code></pre></div>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_32_2.png" /></p>
+<h2 id="wigner-weisskopf-transition-rates">Wigner-Weisskopf transition rates</h2>
+<p>GRANAD offers the single-particle Wigner-Weisskopf transition rates directly in a matrix form </p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">gamma_matrix</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">wigner_weisskopf_transition_rates</span>
+</span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">matshow</span><span class="p">(</span><span class="n">gamma_matrix</span><span class="o">.</span><span class="n">real</span><span class="p">)</span>
+</span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+</span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_35_0.png" /></p>
               
             </div>
           </div><footer>

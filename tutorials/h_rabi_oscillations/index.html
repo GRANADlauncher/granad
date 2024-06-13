@@ -88,7 +88,7 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../la_lindblad/">Lindblad Dissipation</a>
+                  <li class="toctree-l1"><a class="reference internal" href="../la_lindblad/">Dissipation</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
                   </li>
@@ -118,7 +118,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="rabi-oscillations">Rabi Oscillations</h1>
-<p>We study Rabi oscillations as in the paper <a href="https://www.degruyter.com/document/doi/10.1515/nanoph-2022-0154/html">Revising quantum optical phenomena in adatoms coupled to graphene nanoantennas</a>.</p>
+<p>Below, we reproduce some of the results described in the paper <a href="https://www.degruyter.com/document/doi/10.1515/nanoph-2022-0154/html">Revising quantum optical phenomena in adatoms coupled to graphene nanoantennas</a>.</p>
 <p>NOTE: It is a good idea to get familiar with orbital lists by consulting the tutorial first.</p>
 <h2 id="building-a-two-level-system">Building a two-level system</h2>
 <p>We set up an isolated adatom.</p>
@@ -153,7 +153,7 @@ RHS compiled
 </code></pre></div>
 <p><img alt="png" src="../h_rabi_oscillations_files/h_rabi_oscillations_5_2.png" /></p>
 <h2 id="coupling-to-a-flake">Coupling to a Flake</h2>
-<p>We combine the TLS with a graphene flake in the top position above an atom.</p>
+<p>We combine the TLS with a graphene flake in the top position above a selected carbon atom.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Triangle</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">graphene</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
@@ -175,7 +175,7 @@ RHS compiled
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">homo</span> <span class="o">=</span> <span class="n">flake_with_adatom</span><span class="o">.</span><span class="n">homo</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">delta_e</span> <span class="o">=</span> <span class="n">flake_with_adatom</span><span class="o">.</span><span class="n">energies</span><span class="p">[</span><span class="n">homo</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">flake_with_adatom</span><span class="o">.</span><span class="n">energies</span><span class="p">[</span><span class="n">homo</span><span class="p">]</span>
 </span></code></pre></div>
-<p>Now, the time evolution of the composite system</p>
+<p>The time evolution of the composite system is obtained as follows</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span><span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="n">delta_e</span><span class="p">)</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake_with_adatom</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">grid</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
