@@ -263,7 +263,7 @@ cut_flake_generic(material, grid_range)
 </code></pre></div>
 <p><img alt="png" src="../j_defining_materials_files/j_defining_materials_10_1.png" /></p>
 <h2 id="modifying-existing-materials">Modifying existing materials</h2>
-<p>You can just copy the material you want to modify and change/override its attributes. As an example, we will turn our ordinary graphene model into a variant of the Haldane model by introducing complex nnn hoppings</p>
+<p>You can copy the material you want to modify and change/override its attributes. As an example, we will turn our ordinary graphene model into a variant of the Haldane model by introducing complex nnn hoppings</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">graphene</span>  <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">graphene_haldane</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">graphene</span><span class="p">)</span>
@@ -296,7 +296,7 @@ cut_flake_generic(material, grid_range)
                     NN Couplings: 16.522, 8.64, 5.333
                     Other neighbors: Coupling with a (regularized) Coulomb-like potential
 </code></pre></div>
-<p>The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we simply use the versatile properties of the orbital list datatype when we cut finite flakes</p>
+<p>The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we  use the versatile properties of the orbital list datatype when we cut finite flakes</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">hexagon</span> <span class="o">=</span>  <span class="n">Hexagon</span><span class="p">(</span><span class="mi">31</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">flake_topological</span> <span class="o">=</span> <span class="n">graphene_haldane</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span><span class="n">hexagon</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span> <span class="p">)</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">delta</span> <span class="o">=</span> <span class="mf">0.3</span>

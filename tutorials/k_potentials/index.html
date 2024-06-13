@@ -118,7 +118,7 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="potentials">Potentials</h1>
-<p>GRANAD lets you specify coupling to external light using (an arbitrary combination of) electromagnetic potentials. You do this by modifying GRANAD's internal representation of the Hamiltonian, which is just a dictionary.</p>
+<p>GRANAD lets you specify coupling to external light using (an arbitrary combination of) electromagnetic potentials. You do this by modifying GRANAD's internal representation of the Hamiltonian, which is  a dictionary.</p>
 <h2 id="background">Background</h2>
 <p>Consider GRANAD's master equation </p>
 <div class="arithmatex">\[\dot{\rho}(t) = -i [H[t,\rho(t)], \rho] + \mathcal{D}[t, \rho]\]</div>
@@ -148,9 +148,9 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">hamiltonian_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_hamiltonian</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f01a1dfa840&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f01a1dfaa20&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7fa2287327a0&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7fa228732980&gt;}
 </code></pre></div>
-<p>We see that it is just a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian. You can tell which one by looking at the keys again</p>
+<p>We see that it is  a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian. You can tell which one by looking at the keys again</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>dict_keys([&#39;bare_hamiltonian&#39;, &#39;coulomb&#39;])
@@ -163,7 +163,7 @@
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>dict_keys([&#39;bare_hamiltonian&#39;, &#39;coulomb&#39;, &#39;potential&#39;])
 </code></pre></div>
-<p>We add our own potentials to the Hamiltonian by adding entries to the dictionary, like <code>hamiltonian_model["my_potential"] = my_potential</code>. The name for the potential does not matter; it's just nicer for us to look at than function pointers.</p>
+<p>We add our own potentials to the Hamiltonian by adding entries to the dictionary, like <code>hamiltonian_model["my_potential"] = my_potential</code>. The name for the potential does not matter; it's  nicer for us to look at than function pointers.</p>
 <p>In choosing <code>my_potential</code>, you have several options, documented in the API. For demonstration, we will model a dipole pulse</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">potentials</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">dip_pulse</span> <span class="o">=</span> <span class="n">potentials</span><span class="o">.</span><span class="n">DipolePulse</span><span class="p">(</span> <span class="n">dipole_moment</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span>
@@ -172,7 +172,7 @@
 </span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>                                    <span class="n">sigma</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 </span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>                                    <span class="n">t0</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
 </span></code></pre></div>
-<p>We can visualize its impact at any time t. The potential is a function and returns a diagonal matrix, so we can do the following (the arguments to this function will be explained in the tutorial on custom master equations, for now we just live with them).</p>
+<p>We can visualize its impact at any time t. The potential is a function and returns a diagonal matrix, so we can do the following (the arguments to this function will be explained in the tutorial on custom master equations, for now we  live with them).</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">time</span> <span class="o">=</span> <span class="mf">1.0</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_2d</span><span class="p">(</span> <span class="n">display</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dip_pulse</span><span class="p">(</span><span class="n">time</span><span class="p">,</span>
@@ -204,7 +204,7 @@ RHS compiled
 No artists with labels found to put in legend.  Note that artists whose label start with an underscore are ignored when legend() is called with no argument.
 </code></pre></div>
 <p><img alt="png" src="../k_potentials_files/k_potentials_30_3.png" /></p>
-<p>You can simulate any number of dipoles (or terms) by just adding more keys to the dictionary. <strong>Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.</strong></p>
+<p>You can simulate any number of dipoles (or terms) by  adding more keys to the dictionary. <strong>Just name them differently, e.g., "dipole_1", "dipole_2", to make sure they don't get overwritten.</strong></p>
 <p>Note: The dipole potential above is purely diagonal, i.e. it will miss the intra-atomic dipolar contribution between orbitals <span class="arithmatex">\(i\)</span> and <span class="arithmatex">\(j\)</span> connected by a transition dipole moment <span class="arithmatex">\(\vec{d}_{ij\)</span>.</p>
 <p>In dipole gauge, this term is expressed as <span class="arithmatex">\(\vec{E} \vec{d}_{ij}\)</span>. If you want to include this term explicitly, add another potential to the Hamiltonian.</p>
 <p>To do so, define a function evaluating the electric field of your dipole at the positions of the orbitals like so <code>dipole_electric_field : time -&gt; 3xN-Array</code>.</p>

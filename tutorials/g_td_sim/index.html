@@ -188,10 +188,11 @@ RHS compiled
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">output_omega</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ft_output</span><span class="p">(</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="n">omega_max</span> <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </span></code></pre></div>
 <p>From the classical continuity equation, we have</p>
-<div class="arithmatex">\[\dot{\rho}(x, t) = -\nabla \bf{j}(x, t) = \dot{\nabla \bf{p}}(t) \implies \dot{\bf{p}}(x,t) = \bf{j}(x,t) \implies \omega \bf{p}(\omega) = \bf{j}(\omega)\]</div>
-<p>Integrating this equation spatially leads to</p>
-<div class="arithmatex">\[\rho(t) = j(t)\]</div>
-<p>We can verify the spatially integrated version of this explicitly as follows</p>
+<div class="arithmatex">\[\dot{\rho}(x, t) = -\nabla \vec{j}(x, t) = \nabla \dot{\vec{p}}(t) \implies \dot{\vec{p}}(x,t) = \vec{j}(x,t) \implies \omega \vec{p}(x, \omega) = \vec{j}(x, \omega)\]</div>
+<p>Or, in its integrated form</p>
+<p>$$\int dx \dot{\vec{p}}(x,t) = \dot{\vec{p}}(t) = \int dx \vec{j}(x,t) =  \vec{j}(t)</p>
+<p>Where <span class="arithmatex">\(\vec{j}\)</span> and <span class="arithmatex">\(\vec{p}\)</span> are the total current and dipole moment respectively. As classical quantities are given by ensemble averages of quantum operators, we can
+obtain these quantities directly from the time-domain simulations. The (integrated) continuity equation above can be verified as follows</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">omegas</span> <span class="o">*</span> <span class="n">output_omega</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">imag</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">j</span> <span class="o">=</span> <span class="n">output_omega</span><span class="p">[:,</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">real</span>
@@ -208,7 +209,7 @@ RHS compiled
 </code></pre></div>
 <p><em>WARNING: The following behavior might change and the density_matrix argument may be removed</em></p>
 <h2 id="density-matrices">Density matrices</h2>
-<p>If we want to only get density matrices, we can simply omit the operator list. The result object then contains a one-element list.</p>
+<p>If we want to only get density matrices, we can  omit the operator list. The result object then contains a one-element list.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>

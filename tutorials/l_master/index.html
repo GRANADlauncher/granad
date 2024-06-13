@@ -134,7 +134,7 @@
 <p><em>Note</em>: This is still rough. In the future, I might package the functions into a "Term" object or sth like that, but this will be purely cosmetic. The underlying functions won't change.</p>
 <h2 id="hamiltonian">Hamiltonian</h2>
 <p>When calling the integration for the master equation, you can give an optional argument, <code>hamiltonian</code>. As already discussed, this argument represents a Hamiltonian as a dictionary of functions.</p>
-<p>Up to now, we just wanted to use custom potentials, so we simply added them to the dictionary. Let's look more closely at what is going on by considering a flake under CW illumination.</p>
+<p>Up to now, we  wanted to use custom potentials, so we  added them to the dictionary. Let's look more closely at what is going on by considering a flake under CW illumination.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Triangle</span><span class="p">,</span> <span class="n">Wave</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span> <span class="s2">&quot;graphene&quot;</span> <span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Triangle</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>  <span class="p">)</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">wave</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span> <span class="n">amplitudes</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="n">frequency</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="p">)</span>
@@ -143,7 +143,7 @@
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>dict_keys([&#39;bare_hamiltonian&#39;, &#39;coulomb&#39;, &#39;potential&#39;])
 </code></pre></div>
-<p>As discussed, the default Hamiltonian just has three terms:</p>
+<p>As discussed, the default Hamiltonian  has three terms:</p>
 <ol>
 <li>a bare hamiltonian.</li>
 <li>an induced coulomb interaction.</li>
@@ -158,7 +158,7 @@
 <p>Every function maps these arguments to a complex matrix. Before running a simulation, the functions in the dictionary get turned into a list <code>func_list</code>. </p>
 <p>The matrix representation of the Hamiltonian is then given by applying and adding these functions, like so <code>H[time] = sum( f(times[time], density_matrix[time], args) for f in func_list )</code>.</p>
 <h2 id="argument-objects">Argument Objects</h2>
-<p>What does the <code>args</code> object contain, exactly? We can create this object ourselves. It is just a named tuple (like a C struct) and we can inspect its contents by looking at its fields </p>
+<p>What does the <code>args</code> object contain, exactly? We can create this object ourselves. It is  a named tuple (like a C struct) and we can inspect its contents by looking at its fields </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">args</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_args</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">_fields</span><span class="p">)</span>
 </span></code></pre></div>
@@ -181,7 +181,7 @@ looks like <code>term: time, density_matrix, args -&gt; matrix</code>.</p>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>Array(True, dtype=bool)
 </code></pre></div>
-<p>The function just returns the bare hamiltonian, independent of the time and density matrix. Let's compute the coulomb potential at the initial time</p>
+<p>The function  returns the bare hamiltonian, independent of the time and density matrix. Let's compute the coulomb potential at the initial time</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">coulomb</span> <span class="o">=</span> <span class="n">hamiltonian_model</span><span class="p">[</span><span class="s2">&quot;coulomb&quot;</span><span class="p">]</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">coulomb_matrix</span> <span class="o">=</span> <span class="n">coulomb</span><span class="p">(</span> <span class="n">time</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">initial_density_matrix</span><span class="p">,</span> <span class="n">args</span> <span class="p">)</span> 
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span> <span class="n">coulomb_matrix</span> <span class="o">==</span> <span class="mf">0.0</span> <span class="p">)</span>
@@ -202,7 +202,7 @@ looks like <code>term: time, density_matrix, args -&gt; matrix</code>.</p>
 <li>Returns a NxN complex matrix</li>
 <li>Additionally, the function must be JAX-JIT compatible. In essence, use only Python and jax.numpy operations.</li>
 </ol>
-<p>Then we just insert it in the dictionary, potentially overwriting a default key (remember the keys don't matter, you can add as many functions as you want and name them however you want).</p>
+<p>Then we  insert it in the dictionary, potentially overwriting a default key (remember the keys don't matter, you can add as many functions as you want and name them however you want).</p>
 <p>Let's illustrate this at the example of a custom scalar potential. We want to replace the dipole-gauge coupling <span class="arithmatex">\(E P\)</span> with a scalar potential representing a plane-wave pulse. Let's define this potential first</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">amplitudes</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">omega</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">jnp</span><span class="o">.</span><span class="n">pi</span>
@@ -213,10 +213,10 @@ looks like <code>term: time, density_matrix, args -&gt; matrix</code>.</p>
 </span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">diagonal_part</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">positions</span> <span class="o">@</span> <span class="n">field</span>
 </span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span> <span class="n">diagonal_part</span> <span class="p">)</span>
 </span></code></pre></div>
-<p>Now, we replace the default potential with our custom term, just as we did before in the case of the pulsed dipole.</p>
+<p>Now, we replace the default potential with our custom term,  as we did before in the case of the pulsed dipole.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">hamiltonian_model</span><span class="p">[</span><span class="s2">&quot;potential&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pulsed_potential</span>
 </span></code></pre></div>
-<p>To run a time-domain simulation, we just pass the modified hamiltonian dictionary directly, as demonstrated in the first section</p>
+<p>To run a time-domain simulation, we  pass the modified hamiltonian dictionary directly, as demonstrated in the first section</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span> <span class="n">hamiltonian</span> <span class="o">=</span> <span class="n">hamiltonian_model</span><span class="p">,</span> <span class="n">expectation_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">],</span> <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">)</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span> <span class="n">result</span> <span class="p">)</span>
 </span></code></pre></div>
@@ -244,9 +244,9 @@ No artists with labels found to put in legend.  Note that artists whose label st
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">dissipator_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_dissipator</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">)</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">print</span><span class="p">(</span> <span class="n">dissipator_model</span> <span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;decoherence_time&#39;: &lt;function DecoherenceTime.&lt;locals&gt;.&lt;lambda&gt; at 0x7f8549852840&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;decoherence_time&#39;: &lt;function DecoherenceTime.&lt;locals&gt;.&lt;lambda&gt; at 0x7f10508ea840&gt;}
 </code></pre></div>
-<p>NOTE: just passing this default to the master equation won't work. You have to specify the relaxation rate again. This will likely change in the future, but ows to the separation of computation and data GRANAD tries to adhere to.</p>
+<p>NOTE:  passing this default to the master equation won't work. You have to specify the relaxation rate again. This will likely change in the future, but ows to the separation of computation and data GRANAD tries to adhere to.</p>
 <h2 id="postprocesses">Postprocesses</h2>
 <p>You can define custom postprocesses. These are functions with the signature <code>postprocess : density_matrix_batch, args -&gt; array</code>. The <code>density_matrix_batch</code> is an array of shape <code>TxNxN</code>, where <code>T</code> encodes time.</p>
 <p>For example, if you are only interested in the occupation of the 0-th state</p>
