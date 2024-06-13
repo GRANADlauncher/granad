@@ -15,11 +15,11 @@
 # # Linear response
 #
 
-# We will calculate the optical absorption in the RPA and compare it to time-domain simulations with a weak external field.
+# We will calculate the optical absorption in the random phase approximation (RPA) and compare it to time-domain simulations in the linear response regime, subject to a weak external field. Note, however, that the time-domain simulaton is not limited to the linear-response case, as demonstrated in [Cox et al.](https://www.nature.com/articles/ncomms6725).
 
 ### RPA
 
-# First, we set up the RPA simulation. We will consider a small triangle such that the required simulation time stays in the seconds range.
+# First, we set up the RPA simulation. We will consider a triangular nanoflake
 
 # +
 import jax.numpy as jnp
@@ -36,7 +36,13 @@ omegas_rpa = jnp.linspace( 0, 6, 40 )
 # -
 
 
-# We obtain the polarizability for an external $x$ polarized field and from its imaginary part the absorption.
+# We obtain the polarizability for a uniform external field according to 
+
+# $$\alpha_{ij}(\omega) = x_j \chi_0(\omega)/ (1- C \chi_0(\omega)) x_i$$,
+
+# where $\chi_0(\omega)$ is the bare density-density correlator and $C$ is the Coulomb matrix, as in [Thongrattanasiri et al.](https://pubs.acs.org/doi/10.1021/nn204780e)
+
+# Here, we focus on an external x-polarized field
 
 # +
 polarizability = flake.get_polarizability_rpa(
@@ -44,6 +50,11 @@ polarizability = flake.get_polarizability_rpa(
     relaxation_rate = 1/10,
     polarization = 0, 
     hungry = 2 )
+# -
+
+# From the imaginary part of the polarizability, we obtain the absorption spectrum as follows
+
+# +
 absorption_rpa = jnp.abs( polarizability.imag * 4 * jnp.pi * omegas_rpa )
 # -
 
@@ -69,7 +80,7 @@ result = flake.master_equation(
 )
 # -
 
-# The polarizability is given by $p / E$ (we only take the $x$ - component).
+# The polarizability tensor is given by $\alpha_{ij} = p_i / E_j$. Here, we investigate the xx-component.
 
 # +
 omega_max = omegas_rpa.max()
@@ -89,7 +100,7 @@ plt.plot(omegas_rpa, absorption_rpa / jnp.max(absorption_rpa), 'o', linewidth=2,
 plt.plot(omegas_td, absorption_td / jnp.max(absorption_td), linewidth=2, ls = '--', label = 'TD' ) 
 plt.xlabel(r'$\hbar\omega$', fontsize=20)
 plt.ylabel(r'$\sigma(\omega)$', fontsize=25)
-plt.title('Absorption Spectrum as a Function of Photon Energy', fontsize=15)
+plt.title('Absorption spectrum as a function of photon energy', fontsize=15)
 plt.legend()
 plt.grid(True)
 plt.show()

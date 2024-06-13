@@ -14,7 +14,7 @@
 
 # # Rabi Oscillations
 #
-# We study Rabi oscillations as in the paper [Revising quantum optical phenomena in adatoms coupled to graphene nanoantennas](https://www.degruyter.com/document/doi/10.1515/nanoph-2022-0154/html).
+# Below, we reproduce some of the results described in the paper [Revising quantum optical phenomena in adatoms coupled to graphene nanoantennas](https://www.degruyter.com/document/doi/10.1515/nanoph-2022-0154/html).
 
 # NOTE: It is a good idea to get familiar with orbital lists by consulting the tutorial first.
 
@@ -52,7 +52,7 @@ adatom.show_res(result, plot_only = [adatom.homo, adatom.homo+1], plot_labels = 
 
 ### Coupling to a Flake
 
-# We combine the TLS with a graphene flake in the top position above an atom.
+# We combine the TLS with a graphene flake in the top position above a selected carbon atom.
 
 # +
 import jax.numpy as jnp
@@ -80,7 +80,7 @@ homo = flake_with_adatom.homo
 delta_e = flake_with_adatom.energies[homo + 1] - flake_with_adatom.energies[homo]
 # -
 
-# Now, the time evolution of the composite system
+# The time evolution of the composite system is obtained as follows
 
 # +
 wave = Wave(amplitudes=[0, 0.05, 0], frequency=delta_e)

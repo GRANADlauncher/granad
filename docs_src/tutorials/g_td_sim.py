@@ -82,15 +82,19 @@ omegas, pulse_omega = result.ft_illumination( omega_min = omega_min, omega_max =
 output_omega = result.ft_output( omega_min = omega_min, omega_max = omega_max )[0]
 # -
 
-# From the classical continuity equation, we have
+# From the classical continuity equation for the charge and current density $\rho(\vec{r},t), \vec{j}(\vec{r},t)$ and dipole moment density $\vec{p}(\vec{r},t)$, we have
 
-# $$\dot{\rho}(x, t) = -\nabla \vec{j}(x, t) = \nabla \dot{\vec{p}}(t) \implies \dot{\vec{p}}(x,t) = \vec{j}(x,t) \implies \omega \vec{p}(x, \omega) = \vec{j}(x, \omega)$$
+# $$\dot{\rho}(\vec{r}, t) = -\nabla \vec{j}(\vec{r}, t) = \nabla \dot{\vec{p}}(\vec{r}, t) \implies \dot{\vec{p}}(\vec{r},t) = \vec{j}(\vec{r},t)$$
 
-# Or, in its integrated form
+# After Fourier transformation, we obtain
 
-# $$\int dx \dot{\vec{p}}(x,t) = \dot{\vec{p}}(t) = \int dx \vec{j}(x,t) =  \vec{j}(t)
+# $$-i\omega \vec{p}(\vec{r}, \omega) = \vec{j}(\vec{r}, \omega)$$
 
-# Where $\vec{j}$ and $\vec{p}$ are the total current and dipole moment respectively. As classical quantities are given by ensemble averages of quantum operators, we can
+# Its integrated form is given by
+
+# $$\int d\vec{r} \dot{\vec{p}}(\vec{r},t) = \dot{\vec{p}}(t) = \int d\vec{r} \vec{j}(\vec{r},t) =  \vec{j}(t)$$ 
+
+# $\vec{j}(t)$ and $\vec{p}(t)$ are the total current and dipole moment respectively. As classical quantities are given by ensemble averages of quantum operators, we can
 # obtain these quantities directly from the time-domain simulations. The (integrated) continuity equation above can be verified as follows
 
 # +
@@ -110,8 +114,6 @@ plt.show()
 print(result.td_illumination.shape)
 # -
 
-# *WARNING: The following behavior might change and the density_matrix argument may be removed*
-
 ### Density matrices
 
 # If we want to only get density matrices, we can  omit the operator list. The result object then contains a one-element list.
@@ -121,7 +123,7 @@ result = flake.master_equation(
     relaxation_rate = 1/10,
     illumination = pulse,
     end_time = 40,
-    density_matrix = ["full"],
+    density_matrix = ["full"], # this argument may be removed
      )
 density_matrix = result.output[0]
 print(density_matrix.shape)
@@ -136,7 +138,7 @@ print(density_matrix_e.shape)
 
 ### Occupations
 
-# We can extract only site occupations
+# To reduce memory consumption, we can extract only the site occupations to avoid storing the entire stack of density matices in memory. 
 
 # +
 result = flake.master_equation(
@@ -149,13 +151,26 @@ occ_x = result.output[0]
 print(occ_x.shape)
 # -
 
-# We can extract only energy occupations
+# Further reduction of the memory consumption can be controlled by the grid argument, which describes the density of the time domain sampling grid, explained in the API section on the `master_equation` method.
 
-# *DANGER*: this introduces additional cubic complexity 
+### Initially excited states
+
+# GRANAD allows to set initially excited states by specifying the single-particle transition in the density matrix as follows
 
 # +
 flake.set_excitation( flake.homo, flake.homo + 1, 1)
 flake.show_energies()
+# -
+
+# In case of degeneracies, GRANAD distributes electrons equally among all degenerate energy levels, as demonstrated in the figure above.
+
+### Energy occupations
+
+# Similarly to site occupations, only energy occupations can also be obtained from the time-domain simulations.
+
+# *Warning*: this introduces additional cubic complexity 
+
+# +
 result = flake.master_equation(
     relaxation_rate = 1/10,
     density_matrix = ["occ_e"],
@@ -166,7 +181,7 @@ flake.show_res(result, plot_only = [flake.homo, flake.homo+1], plot_labels = ["h
 
 ### Combinations
 
-# We can also extract multiple things at the same time
+# We can also extract multiple quantities at the same time
 
 # +
 result = flake.master_equation(
@@ -187,10 +202,6 @@ print(result.output[1].shape) # we specified ["full", "occ_x"] => full density m
 print(result.output[2].shape) # we specified ["full", "occ_x"] => site occupations
 # -
 
-### Automatic Convergence Check
+### EPI
 
-# TBD
-
-### Parameters
-
-# TBD
+# The energy-based plasmonicity index is a quantity to characterize the steady-state plasmonicity. We can use plane wave 

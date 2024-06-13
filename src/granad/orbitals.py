@@ -351,8 +351,8 @@ class OrbitalList:
 
     def __repr__(self):
         info = f"List with {len(self)} orbitals, {self.electrons} electrons."
-        info += f"Excitation: f{self.params.excitation}"
-        # TODO: format excitation more readbly
+        exc = self.params.excitation
+        info += f"\nExcitation: {exc[2]} electrons excited from energy levels {exc[0]} to {exc[1]}."
         return info 
 
     def __iter__(self):
