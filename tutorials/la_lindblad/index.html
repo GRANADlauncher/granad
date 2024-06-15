@@ -127,7 +127,7 @@
 <div class="arithmatex">\[\gamma_{ij}(t) = \gamma_{ij} \cdot f(\rho(t))\]</div>
 <p>where <span class="arithmatex">\(\gamma_{ij}\)</span> is the transition rate from state i to state j and <span class="arithmatex">\(f\)</span> is a relaxation functional to counteract problems related to the Pauli principle breaking that might occur in the single-particle model.
 GRANAD's default relaxation functional suppresses population growth if the population approaches a limiting value of 2. It is given by a sigmoid</p>
-<div class="arithmatex">\[f(x) = \frac{1}{1 + e^{\beta \cdot(2 - x)}\]</div>
+<div class="arithmatex">\[f(x) = \frac{1}{1 + e^{\beta \cdot(2 - x)}}\]</div>
 <p>where x is the occupation and <span class="arithmatex">\(\beta\)</span> a temperature-like control parameter to mimick a smooth Heaviside function, defaulting to 1e-6.</p>
 <h2 id="lindblad-vs-phenomenological-relaxation-dynamics-of-the-metallic-chain">Lindblad vs Phenomenological Relaxation dynamics of the Metallic Chain</h2>
 <p>In the following, we will consider a metallic chain with a uniform transition rate, such that of <span class="arithmatex">\(\gamma_{ij} = \gamma\)</span> for all <span class="arithmatex">\(i \gt j\)</span>. We consider an initially excited state of one electron in the HOMO-LUMO+1 transition.</p>
