@@ -32,7 +32,7 @@ def SaturationLindblad(saturation):
 
 # TODO: DRY
 def CorrectedLindblad(saturation):
-    """Function for modelling dissipation according to a corrected Lindblad model, replacing the density matrix with an "out-of-equilibrium" derivation $rho - \rho_0$
+    """Function for modelling dissipation according to a corrected Lindblad model, replacing the density matrix with an "out-of-equilibrium" derivation $\\rho - \\rho_0$
     """
     saturation = jax.vmap(saturation, 0, 0)
 
