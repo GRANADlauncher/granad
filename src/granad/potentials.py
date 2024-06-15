@@ -63,7 +63,7 @@ def WavePulse( amplitudes, omega = None, sigma = None, t0 = 0.0, kick = False ):
     
 # TODO: clean up, RWA messy, allocates 3 potentially big intermediate matrices
 def DipoleGauge(illumination, use_rwa = False, intra_only = False):     
-    """Dipole gauge coupling to an external electric field, represented as $\vec{E} \cdot \hat{\vec{P}}$. The dipole / polarization operator is
+    """Dipole gauge coupling to an external electric field, represented as $\\vec{E} \cdot \hat{\\vec{P}}$. The dipole / polarization operator is
     defined by $P^{c}_{ij} = <i|\hat{r}_c|j>$, where $i,j$ correspond to localized (TB) orbitals, such that $\hat{r}^c|i> = r^c{i}|i>$ in absence of dipole transitions.
 
     Args:
@@ -113,7 +113,7 @@ def Induced():
     return inner
 
 def Paramagnetic(vector_potential):
-    """Paramagnetic Coulomb gauge coupling to an external vector potential represented as $\sim \vec{A} \hat{\vec{v}}$. 
+    """Paramagnetic Coulomb gauge coupling to an external vector potential represented as $\sim \\vec{A} \hat{\\vec{v}}$. 
 
     Args:
         vector_potential (callable): Function that returns the vector potential at a given time.
@@ -128,7 +128,7 @@ def Paramagnetic(vector_potential):
     return inner
 
 def Diamagnetic(vector_potential):
-    """Diamagnetic Coulomb gauge coupling to an external vector potential represented as $\sim \vec{A}^2$. 
+    """Diamagnetic Coulomb gauge coupling to an external vector potential represented as $\sim \\vec{A}^2$. 
 
     Args:
         vector_potential (callable): Function that returns the vector potential at a given time.
