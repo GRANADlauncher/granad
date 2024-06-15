@@ -16,7 +16,7 @@
 
 # GRANAD supports two dissipation models: A phenomenological dissipator, given by
 
-# $$\mathcal{D}[\rho - \rho_0] = \frac{-1}{\tau} (\rho - \rho_0)$$,
+# $$\mathcal{D}[\rho - \rho_0] = \frac{-1}{\tau} (\rho - \rho_0)$$
 
 # where $\rho_0$ is the equilibrium density matrix and $1 / \tau$ a phenomenological relaxation rate.
 
@@ -27,13 +27,13 @@
 # where $\gamma_{ij}$ is the transition rate from state i to state j and $f$ is a relaxation functional to counteract problems related to the Pauli principle breaking that might occur in the single-particle model.
 # GRANAD's default relaxation functional suppresses population growth if the population approaches a limiting value of 2. It is given by a sigmoid
 
-# $$f(x) = \frac{1}{1 + e^{\beta \cdot(2.0 - x)}$$,
+# $$f(x) = \frac{1}{1 + e^{\beta \cdot(2 - x)}$$
 
 # where x is the occupation and $\beta$ a temperature-like control parameter to mimick a smooth Heaviside function, defaulting to 1e-6.
 
 ### Lindblad vs Phenomenological Relaxation dynamics of the Metallic Chain
 
-# In the following, we will consider a metallic chain with a uniform transition rate, such that of $\gamma_{ij} = \gamma$ for all $i \gt j$. We consider an initially excited state of one electron in the HOMO-LUM0+1 transition.
+# In the following, we will consider a metallic chain with a uniform transition rate, such that of $\gamma_{ij} = \gamma$ for all $i \gt j$. We consider an initially excited state of one electron in the HOMO-LUMO+1 transition.
 
 # +
 from granad import MaterialCatalog
@@ -96,9 +96,7 @@ flake.show_res(result, show_illumination=False, plot_labels = labels)
 # 1. initialize a dissipator with your custom relaxation functional
 # 2. pass `relaxation_rate = gamma_matrix` as usual
 
-# To illustrate the necessity of introducing a saturation functional, we consider the case where no saturation is applied, i.e.
-
-# $$f(x) = 1$$
+# To illustrate the necessity of introducing a saturation functional, we consider the case where no saturation is applied, i.e. $f(x) = 1$
 
 # +
 import jax.numpy as jnp
