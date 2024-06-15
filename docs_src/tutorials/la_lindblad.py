@@ -27,7 +27,7 @@
 # where $\gamma_{ij}$ is the transition rate from state i to state j and $f$ is a relaxation functional to counteract problems related to the Pauli principle breaking that might occur in the single-particle model.
 # GRANAD's default relaxation functional suppresses population growth if the population approaches a limiting value of 2. It is given by a sigmoid
 
-# $$f(x) = \frac{1}{1 + e^{\beta \cdot(2 - x)}$$
+# $$f(x) = \frac{1}{1 + e^{\beta \cdot(2 - x)}}$$
 
 # where x is the occupation and $\beta$ a temperature-like control parameter to mimick a smooth Heaviside function, defaulting to 1e-6.
 
