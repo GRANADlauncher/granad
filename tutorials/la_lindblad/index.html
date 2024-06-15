@@ -121,16 +121,16 @@
               
                 <h1 id="dissipation">Dissipation</h1>
 <p>GRANAD supports two dissipation models: A phenomenological dissipator, given by</p>
-<p><span class="arithmatex">\(<span class="arithmatex">\(\mathcal{D}[\rho - \rho_0] = \frac{-1}{\tau} (\rho - \rho_0)\)</span>\)</span>,</p>
+<div class="arithmatex">\[\mathcal{D}[\rho - \rho_0] = \frac{-1}{\tau} (\rho - \rho_0)\]</div>
 <p>where <span class="arithmatex">\(\rho_0\)</span> is the equilibrium density matrix and <span class="arithmatex">\(1 / \tau\)</span> a phenomenological relaxation rate.</p>
 <p>To model dissipation in greater depth, GRANAD makes available also a Lindblad dissipation model. The mathematical details are laid out in <a href="https://link.aps.org/doi/10.1103/PhysRevA.109.022237">Pelc et al., 2024</a> and revolve around the following equation</p>
 <div class="arithmatex">\[\gamma_{ij}(t) = \gamma_{ij} \cdot f(\rho(t))\]</div>
 <p>where <span class="arithmatex">\(\gamma_{ij}\)</span> is the transition rate from state i to state j and <span class="arithmatex">\(f\)</span> is a relaxation functional to counteract problems related to the Pauli principle breaking that might occur in the single-particle model.
 GRANAD's default relaxation functional suppresses population growth if the population approaches a limiting value of 2. It is given by a sigmoid</p>
-<p><span class="arithmatex">\(<span class="arithmatex">\(f(x) = \frac{1}{1 + e^{\beta \cdot(2.0 - x)}\)</span>\)</span>,</p>
+<div class="arithmatex">\[f(x) = \frac{1}{1 + e^{\beta \cdot(2 - x)}\]</div>
 <p>where x is the occupation and <span class="arithmatex">\(\beta\)</span> a temperature-like control parameter to mimick a smooth Heaviside function, defaulting to 1e-6.</p>
 <h2 id="lindblad-vs-phenomenological-relaxation-dynamics-of-the-metallic-chain">Lindblad vs Phenomenological Relaxation dynamics of the Metallic Chain</h2>
-<p>In the following, we will consider a metallic chain with a uniform transition rate, such that of <span class="arithmatex">\(\gamma_{ij} = \gamma\)</span> for all <span class="arithmatex">\(i \gt j\)</span>. We consider an initially excited state of one electron in the HOMO-LUM0+1 transition.</p>
+<p>In the following, we will consider a metallic chain with a uniform transition rate, such that of <span class="arithmatex">\(\gamma_{ij} = \gamma\)</span> for all <span class="arithmatex">\(i \gt j\)</span>. We consider an initially excited state of one electron in the HOMO-LUMO+1 transition.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metal_1d&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="mi">6</span> <span class="p">)</span>
@@ -188,8 +188,7 @@ RHS compiled
 <li>initialize a dissipator with your custom relaxation functional</li>
 <li>pass <code>relaxation_rate = gamma_matrix</code> as usual</li>
 </ol>
-<p>To illustrate the necessity of introducing a saturation functional, we consider the case where no saturation is applied, i.e.</p>
-<div class="arithmatex">\[f(x) = 1\]</div>
+<p>To illustrate the necessity of introducing a saturation functional, we consider the case where no saturation is applied, i.e. <span class="arithmatex">\(f(x) = 1\)</span></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span> <span class="nn">jax.numpy</span> <span class="k">as</span> <span class="nn">jnp</span>
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="k">def</span> <span class="nf">no_saturation</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="k">return</span> <span class="mf">1.</span>
@@ -209,7 +208,7 @@ RHS compiled
 
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_30_2.png" /></p>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_29_2.png" /></p>
 <p>We observe an almost complete collapse into the single-particle ground state, which can be revealed to be an Coulomb interaction effect.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>                               <span class="n">dissipator</span> <span class="o">=</span> <span class="n">dissipator</span><span class="p">,</span>
@@ -225,7 +224,7 @@ RHS compiled
 
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_32_2.png" /></p>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_31_2.png" /></p>
 <h2 id="wigner-weisskopf-transition-rates">Wigner-Weisskopf transition rates</h2>
 <p>GRANAD offers the single-particle Wigner-Weisskopf transition rates directly in a matrix form </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
@@ -234,7 +233,7 @@ RHS compiled
 </span><span id="__span-8-4"><a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
 </span><span id="__span-8-5"><a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </span></code></pre></div>
-<p><img alt="png" src="../la_lindblad_files/la_lindblad_35_0.png" /></p>
+<p><img alt="png" src="../la_lindblad_files/la_lindblad_34_0.png" /></p>
               
             </div>
           </div><footer>
