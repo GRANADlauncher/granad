@@ -580,10 +580,10 @@ class OrbitalList:
     def set_open_shell( self ):
         if any( orb.spin is None for orb in self._list ):
             raise ValueError
-        self.simulation_params.spin_degeneracy = 1.0
+        self.params.spin_degeneracy = 1.0
 
     def set_closed_shell( self ):
-        self.simulation_params.spin_degeneracy = 2.0
+        self.params.spin_degeneracy = 2.0
         
     def index(self, orb):
         return self._list.index(orb)
