@@ -71,7 +71,7 @@ result = flake.master_equation(relaxation_rate = gamma_matrix,
 # We plot the changes in single-particle energy occupations as a function of time by defining the `plot_labels` argument as the energies
 
 # +
-labels = [f"E = {e:.2e}" for e in flake.energies] # TODO: get rid of trailing zeros
+labels = [f"E = {e:.2f}" for e in flake.energies] 
 flake.show_res(result, show_illumination=False, plot_labels = labels)
 # -
 
