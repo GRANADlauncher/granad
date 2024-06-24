@@ -209,6 +209,7 @@ print(result.output[2].shape) # we specified ["full", "occ_x"] => site occupatio
 # The energy-based plasmonicity index is a quantity to characterize the steady-state plasmonicity. We use plane wave illumination to drive the system into a steady state and then compute the EPI
 
 # +
+import jax.numpy as jnp
 from granad import Wave
 
 omega = 2.5 # we pick the approximate resonance at 2.5 
