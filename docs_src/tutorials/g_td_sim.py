@@ -103,6 +103,8 @@ p = -(omegas * output_omega[:,0]).imag
 j = output_omega[:,3].real
 plt.plot(omegas, p, label = r'$- \text{Im}[\omega p_x]$')
 plt.plot(omegas, j, '--', label = r'$\text{Re}[j_x]$')
+plt.xlabel(r'$\omega$ (eV)')
+plt.ylabel(r'$j$')
 plt.legend()
 plt.show()
 # -
@@ -204,4 +206,18 @@ print(result.output[2].shape) # we specified ["full", "occ_x"] => site occupatio
 
 ### EPI
 
-# The energy-based plasmonicity index is a quantity to characterize the steady-state plasmonicity. We can use plane wave 
+# The energy-based plasmonicity index is a quantity to characterize the steady-state plasmonicity. We use plane wave illumination to drive the system into a steady state and then compute the EPI
+
+# +
+omega = 2.5 # we pick the approximate resonance at 2.5 
+res = flake.master_equation(
+    relaxation_rate = 1/10,
+    illumination = Wave(frequency = omega / 2 * jnp.pi, amplitudes = [1e-5, 0, 0]),
+    end_time = 40)
+
+# numerical broadening parameter of 0.05 eV
+epsilon = 0.05
+
+# print and compute the EPI
+print(flake.get_epi(res.final_density_matrix, omega = omega, epsilon = epsilon))
+# -
