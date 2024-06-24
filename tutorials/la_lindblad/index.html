@@ -70,8 +70,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">Cutting</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">Time-Domain simulations</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">Rabi Oscillations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
@@ -162,7 +160,7 @@ RHS compiled
 100.0 %
 </code></pre></div>
 <p>We plot the changes in single-particle energy occupations as a function of time by defining the <code>plot_labels</code> argument as the energies</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;E = </span><span class="si">{</span><span class="n">e</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">flake</span><span class="o">.</span><span class="n">energies</span><span class="p">]</span> <span class="c1"># TODO: get rid of trailing zeros</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;E = </span><span class="si">{</span><span class="n">e</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">flake</span><span class="o">.</span><span class="n">energies</span><span class="p">]</span> 
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">show_illumination</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">labels</span><span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../la_lindblad_files/la_lindblad_20_0.png" /></p>
