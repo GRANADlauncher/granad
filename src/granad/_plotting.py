@@ -5,6 +5,7 @@ import jax
 import jax.numpy as jnp
 import matplotlib.pyplot as plt
 
+from granad._numerics import get_coulomb_field_to_from
 
 def _plot_wrapper(plot_func):
     @wraps(plot_func)
@@ -56,11 +57,12 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
 
     # Create plot
     fig, ax = plt.subplots()
-    
+
     if display is not None:
         cmap = plt.cm.bwr if cmap is None else cmap
-        colors = scale_vals(display) 
+        colors = scale_vals(display)
         scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
+        scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], color='black', s=10, marker='o')
         cbar = fig.colorbar(scatter, ax=ax)
     else:
         # Color by tags if no show_state is given
@@ -218,12 +220,11 @@ def show_res(
 
 
 @_plot_wrapper
-def show_induced_field(orbs, x=None, y=None, z=None, component = 0, density_matrix=None):
+def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None):
     """Displays the normalized logarithm of the absolute value of the induced field in 2D
 
     - `x`: 
     - `y`: 
-    - `z`: 
     - `component`: field component to display
     - `density_matrix` : if not given, initial density_matrix 
     """
@@ -231,30 +232,25 @@ def show_induced_field(orbs, x=None, y=None, z=None, component = 0, density_matr
     density_matrix = (
         density_matrix if density_matrix is not None else orbs.initial_density_matrix
     )
-    charge = density_matrix.diag().real
+    charge = density_matrix.diagonal().real
 
-    x = jnp.linspace(-5, 5, 100)
-    y = jnp.linspace(-5, 5, 100)
-    z = jnp.linspace(-1, 1, 10)
     X, Y, Z = jnp.meshgrid(x, y, z)
-    positions = jnp.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T
+    positions = jnp.vstack([X.ravel(), Y.ravel(), Z.ravel()]).T    
 
-    induced_field = get_induced_electric_field(
-        get_coulomb_field_to_from(orbs.positions, positions), charge
-    )
-    E_induced_abs_rescaled = jnp.log(jnp.abs(14.39 * induced_field))
+    induced_field = jnp.einsum('jir,i->jr', get_coulomb_field_to_from(orbs.positions, positions, jnp.arange(len(positions))), charge)
+    
+    E_induced_abs_rescaled = jnp.log(jnp.abs(induced_field) / jnp.abs(induced_field).max() )
 
     fig, ax = plt.subplots(1, 1)
     fig.colorbar(
         ax.contourf(
-            first, second, E_induced_abs_rescaled[:, component].reshape(first.shape)
+            X[:, :, 0], Y[:, :, 0], E_induced_abs_rescaled[:, component].reshape(X[:, :, 0].shape),
+            cmap = plt.cm.bwr
         ),
         label=r"$\log(|E|/|E_0|)$",
     )
 
-    ax.scatter(*zip(*orbs.positions[:, plane_indices[plane][:2]]), s=16)
-    ax.set_xlabel(plane[0])
-    ax.set_ylabel(plane[1])
+    ax.scatter(*zip(*orbs.positions[:, :2]), color = 'black', s=16)
 
 def _display_lattice_cut(positions, selected_positions, polygon = None):
     fig, ax = plt.subplots(1, 1)

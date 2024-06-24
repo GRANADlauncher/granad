@@ -301,13 +301,11 @@ def get_coulomb_field_to_from(source_positions, target_positions, compute_at=Non
     # Calculate the contributions
     coulomb_field_to_from = distance_vector * one_over_distance_cubed[:, :, None]
     # final array
-    coulomb_field_to_from_final = jnp.zeros_like(contributions)        
+    coulomb_field_to_from_final = jnp.zeros_like(coulomb_field_to_from)        
     # include only contributions where desired
-    coulomb_field_to_from_final.at[compute_only_at].set(
-        contributions[compute_only_at]
+    return coulomb_field_to_from_final.at[compute_at].set(
+        coulomb_field_to_from[compute_at]
     )
-    
-    return coulomb_field_to_from_final
 
 def get_time_axis( mat_size, grid, start_time, end_time, max_mem_gb, dt ):
 
