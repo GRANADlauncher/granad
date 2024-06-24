@@ -62,7 +62,7 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
         cmap = plt.cm.bwr if cmap is None else cmap
         colors = scale_vals(display)
         scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
-        scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], color='black', s=10, marker='o')
+        ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], color='black', s=10, marker='o')
         cbar = fig.colorbar(scatter, ax=ax)
     else:
         # Color by tags if no show_state is given

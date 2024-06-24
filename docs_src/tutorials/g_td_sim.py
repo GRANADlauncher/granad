@@ -209,6 +209,8 @@ print(result.output[2].shape) # we specified ["full", "occ_x"] => site occupatio
 # The energy-based plasmonicity index is a quantity to characterize the steady-state plasmonicity. We use plane wave illumination to drive the system into a steady state and then compute the EPI
 
 # +
+from granad import Wave
+
 omega = 2.5 # we pick the approximate resonance at 2.5 
 res = flake.master_equation(
     relaxation_rate = 1/10,
