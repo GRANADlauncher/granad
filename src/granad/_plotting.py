@@ -250,7 +250,9 @@ def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None):
         label=r"$\log(|E|/|E_0|)$",
     )
 
-    ax.scatter(*zip(*orbs.positions[:, :2]), color = 'black', s=16)
+    ax.scatter(*zip(*orbs.positions[:, :2]), color = 'black', s=8)
+    ax.axis('equal')
+
 
 def _display_lattice_cut(positions, selected_positions, polygon = None):
     fig, ax = plt.subplots(1, 1)
