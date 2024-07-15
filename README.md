@@ -26,6 +26,7 @@ After that, you can get started by exploring the tutorials.
 The documentation is made with [mkdocs](https://www.mkdocs.org/). You can view it by typing
 
 ```
+bash build_docs.sh
 mkdocs serve
 ```
 
