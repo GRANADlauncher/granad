@@ -1216,6 +1216,34 @@ class OrbitalList:
             time_axis = jnp.concatenate( time_axis )
         )
 
+    
+    def get_ip_green_function(self, A, B, omegas, occupations = None, energies = None, relaxation_rate = 1e-1):
+        """independent-particle greens function at the specified frequency according to 
+
+        $G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i\varepsilon} A_{nm} B_{mn}$
+
+        Parameters: 
+          A, B : operators *in energy basis*, square jax.Array
+          omegas (jax.Array) : frequency grid
+          rho_e (jax.Array) : energy occupations, if omitted, current density matrix diagonal is used
+          energies (jax.Array) : energies, if omitted, current energies are used
+          relaxation_rate (float): broadening parameter
+        
+        Returns:
+          jax.Array: Values of the Green's function
+        """
+
+        def inner(omega):
+            return jnp.trace( (delta_occ / (omega + delta_e + 1j*relaxation_rate)) @ operator_product)
+        
+        operator_product =  A.T * B
+        occupations = self.initial_density_matrix_e.diagonal() * self.electrons if occupations is None else occupations
+        energies = self.energies if energies is None else energies
+        delta_occ = (occupations[:, None] - occupations)
+        delta_e = energies[:, None] - energies
+        
+        return jax.lax.map(jax.jit(inner), omegas)
+
     def get_polarizability_rpa(
         self,
         omegas,            
