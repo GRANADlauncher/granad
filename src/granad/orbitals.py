@@ -838,6 +838,27 @@ class OrbitalList:
             x_times_h = jnp.einsum("kj,Lik->Lij", self._hamiltonian, positions)
             h_times = jnp.einsum("ik,Lkj->Lij", self._hamiltonian, positions)
         return -1j * (x_times_h - h_times)
+    
+    @property
+    @recomputes
+    def oam_operator(self):
+        """
+        Calculates the orbital angular momentum operator from the dipole $P$ and velocity operator $J$ as $L_{k} = \epsilon_{ijk} P_j J_k$.
+        
+        Returns:
+           jax.Array: A 3 x N x N tensor representing the orbital angular momentum operator
+        """
+        epsilon = jnp.array([[[ 0,  0,  0],
+                             [ 0,  0,  1],
+                             [ 0, -1,  0]],
+                            [[ 0,  0, -1],
+                             [ 0,  0,  0],
+                             [ 1,  0,  0]],
+                            [[ 0,  1,  0],
+                             [-1,  0,  0],
+                             [ 0,  0,  0]]])
+        
+        return jnp.einsum('ijk,jlm,kmn->iln', epsilon, self.dipole_operator, self.velocity_operator)
 
     @property
     @recomputes
