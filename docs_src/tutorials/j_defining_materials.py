@@ -89,6 +89,8 @@ flake.show_3d()
 # The example below illustrates this for the Haldane model of graphene.
 
 # +
+import jax.numpy as jnp
+
 delta, t1, t2 = 0.2, -2.66, 1j + 1    
 haldane_graphene =  (
     Material("haldane_graphene")
