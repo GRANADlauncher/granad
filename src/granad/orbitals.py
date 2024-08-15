@@ -440,9 +440,7 @@ class OrbitalList:
 
         # TODO: rounding
         positions = self.positions
-        distances = jnp.round(
-            jnp.linalg.norm(positions - positions[:, None], axis=-1), 6
-        )
+        distances = jnp.round(positions - positions[:, None], 6)
         group_ids = jnp.array( [orb.group_id.id for orb in self._list] )
 
         hamiltonian = fill_matrix(

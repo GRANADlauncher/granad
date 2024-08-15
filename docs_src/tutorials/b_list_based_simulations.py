@@ -164,12 +164,12 @@ stack.show_3d()
 # 2. get their nearest neighbor in the upper flake.
 # 3. call stack.set_hamiltonian_element to set the coupling to 1.0.
 
-# This is very cumbersome, so we take a more flexible approach: specifying the coupling by a distance-dependent function. We want a function that is 2.0 for a distance of 1.0 and 0.0 else. One way to express this is a narrow gaussian around 1.0.
+# This is very cumbersome, so we take a more flexible approach: specifying the coupling by a function dependent on the distance vector. We want a function that is 2.0 for a distance of 1.0 and 0.0 else. One way to express this is a narrow gaussian around 1.0.
 
 # +
 import jax.numpy as jnp
 def interlayer_hopping( distance ):
-    return 2.0 * jnp.exp( -100*(distance - 1.0)**2 )
+    return 2.0 * jnp.exp( -100*(jnp.linalg.norm(distance) - 1.0)**2 )
 # -
 
 # To set the coupling, we do
@@ -183,7 +183,7 @@ stack.set_hamiltonian_groups( flake, second_flake, interlayer_hopping )
 # +
 def interlayer_hopping_factory( coupling ):
     def interlayer_hopping( distance ):
-        return coupling * jnp.exp( -100*(distance - 1.0)**2 )    
+        return coupling * jnp.exp( -100*(jnp.linalg.norm(distance) - 1.0)**2 )    
     return interlayer_hopping
 # -
 

@@ -78,7 +78,7 @@ def test_layer_orbital_coupling():
     orbs.set_coulomb_element( -1, 0, 0.3j )
 
     # for all other pz orbitals, we apply a function
-    func = lambda d : d
+    func = lambda d : jnp.linalg.norm(d)
     orbs.set_hamiltonian_groups( orbs[-1].group_id, orbs[0].group_id, func )
     orbs.set_coulomb_groups( orbs[-1].group_id, orbs[0].group_id, func )
 

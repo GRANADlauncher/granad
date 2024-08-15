@@ -46,7 +46,7 @@ def ohno_potential( offset = 0, start = 14.399 ):
     """
     def inner(d):
         """Coupling with a (regularized) Coulomb-like potential"""
-        return start / (d + offset) + 0j
+        return start / (jnp.linalg.norm(d) + offset) + 0j
     return inner
 
 
@@ -424,8 +424,34 @@ class Material:
     def _couplings_to_function(
         self, couplings, outside_fun, species
     ):
+
+        # no couplings
         if len(couplings) == 0:
             return outside_fun
+
+        # vector couplings
+        if all(isinstance(i, list) for i in couplings):
+            return self._vector_couplings_to_function(couplings, outside_fun, species)
+
+        # distance couplings
+        return self._distance_couplings_to_function(couplings, outside_fun, species)
+        
+    
+    def _vector_couplings_to_function(self, couplings, outside_fun, species):
+
+        vecs, couplings_vals = jnp.array(couplings).astype(float)[:, :3], jnp.array(couplings).astype(complex)[:, 3]
+        distances = jnp.linalg.norm(vecs, axis=1)
+        
+        def inner(d):
+            return jax.lax.cond(
+                jnp.min(jnp.abs(jnp.linalg.norm(d) - distances)) < 1e-5,
+                lambda x: couplings_vals[jnp.argmin(jnp.linalg.norm(d - vecs, axis=1))],
+                outside_fun,
+                d,
+            )
+        return inner
+
+    def _distance_couplings_to_function(self, couplings, outside_fun, species):
         
         couplings = jnp.array(couplings).astype(complex)
         grid = self._get_grid( [ (0, len(couplings)) for i in range(self.dim) ] )
@@ -439,12 +465,14 @@ class Material:
         )[: len(couplings)]
 
         def inner(d):
+            d = jnp.linalg.norm(d)
             return jax.lax.cond(
                 jnp.min(jnp.abs(d - distances)) < 1e-5,
                 lambda x: couplings[jnp.argmin(jnp.abs(x - distances))],
                 outside_fun,
                 d,
             )
+        
         return inner
 
     def _set_couplings(self, setter_func, interaction_type):

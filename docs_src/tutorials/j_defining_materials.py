@@ -80,36 +80,100 @@ flake = hubbard.cut_flake( [(0,3), (0,3), (0,3)] ) # 3*3*3 = 27 unit cells, 3 in
 flake.show_3d()
 # -
 
-### Modifying existing materials
+### Direction-dependent couplings
 
-# You can copy the material you want to modify and change/override its attributes. As an example, we will turn our ordinary graphene model into a variant of the Haldane model by introducing complex nnn hoppings
-
-# +
-from copy import deepcopy
-graphene  = MaterialCatalog.get("graphene")
-graphene_haldane = deepcopy(graphene)
-graphene_haldane.add_interaction("hamiltonian", participants = ('pz', 'pz'), parameters = [0, 1.0, 1j*0.1])
-print(graphene_haldane)
-# -
-
-# The Haldane model breaks inversion symmetry explicity by a staggered onsite potential. There is no (nice) way to achieve this with a few modifications from the normal graphene model, so we  use the versatile properties of the orbital list datatype when we cut finite flakes
+# Up to now, we have only considered couplings dependent on the scalar distance between two orbitals.
+# They can also be given as direction-dependent functions, like in Slater-Koster orbitals.
+# To this end, replace the neighbor coupling list by another list, where each entry specifies the coupling
+# as [d_x, d_y, d_z, coupling], where d_i are the distance vector components.
+# The example below illustrates this for the Haldane model of graphene.
 
 # +
-hexagon =  Hexagon(31, armchair = True)
-flake_topological = graphene_haldane.cut_flake(hexagon, plot = True )
-delta = 0.3
-for orb_1 in [orb for orb in flake_topological if orb.tag == 'sublattice_1']:
-    flake_topological.set_hamiltonian_element(orb_1, orb_1, delta)    
+delta, t1, t2 = 0.2, -2.66, 1j + 1    
+haldane_graphene =  (
+    Material("haldane_graphene")
+    .lattice_constant(2.46)
+    .lattice_basis([
+        [1, 0, 0],
+        [-0.5, jnp.sqrt(3)/2, 0]
+    ])
+    .add_orbital_species("pz1", l=1, atom='C')
+    .add_orbital_species("pz2", l=1, atom='C')
+    .add_orbital(position=(0, 0), tag="sublattice_1", species="pz1")
+    .add_orbital(position=(-1/3, -2/3), tag="sublattice_2", species="pz2")
+    .add_interaction(
+        "hamiltonian",
+        participants=("pz1", "pz2"),
+        parameters= [t1],
+    )
+    .add_interaction(
+        "hamiltonian",
+        participants=("pz1", "pz1"),            
+        # a bit overcomplicated
+        parameters=[                
+            [0, 0, 0, delta], # onsite                
+            # clockwise hoppings
+            [-2.46, 0, 0, t2], 
+            [2.46, 0, 0, jnp.conj(t2)],
+            [2.46*0.5, 2.46*jnp.sqrt(3)/2, 0, t2],
+            [-2.46*0.5, -2.46*jnp.sqrt(3)/2, 0, jnp.conj(t2)],
+            [2.46*0.5, -2.46*jnp.sqrt(3)/2, 0, t2],
+            [-2.46*0.5, 2.46*jnp.sqrt(3)/2, 0, jnp.conj(t2)]
+        ],
+    )
+    .add_interaction(
+        "hamiltonian",
+            participants=("pz2", "pz2"),
+            parameters=[                
+                [0, 0, 0, delta],
+                [-2.46, 0, 0, jnp.conj(t2)], 
+                [2.46, 0, 0, t2],
+                [2.46*0.5, 2.46*jnp.sqrt(3)/2, 0, jnp.conj(t2)],
+                [-2.46*0.5, -2.46*jnp.sqrt(3)/2, 0, t2],
+                [2.46*0.5, -2.46*jnp.sqrt(3)/2, 0, jnp.conj(t2)],
+                [-2.46*0.5, 2.46*jnp.sqrt(3)/2, 0, t2]
+            ],
+        )
+        .add_interaction(                
+            "coulomb",
+            participants=("pz1", "pz2"),
+            parameters=[8.64],
+        )
+        .add_interaction(
+            "coulomb",
+            participants=("pz1", "pz1"),
+            parameters=[16.522, 5.333],
+        )
+        .add_interaction(
+            "coulomb",
+            participants=("pz2", "pz2"),
+            parameters=[16.522, 5.333],
+        )
+    )
 # -
 
 # We now display the edge state
 
 # +
 import jax.numpy as jnp
+flake_topological = haldane_graphene.cut_flake(Hexagon(30))
 idx = jnp.argwhere(jnp.abs(flake_topological.energies) < 1e-1)[0].item()
 flake_topological.show_2d( display = flake_topological.eigenvectors[:, idx], scale = True  )
 # -
 
+
+### Modifying existing materials
+
+# You can copy the material you want to modify and change/override its attributes.
+# As an example, we will turn our ordinary graphene model into a direction-independent variant of the Haldane model by introducing complex nnn hoppings and without the staggered onsite potential
+
+# +
+from copy import deepcopy
+graphene  = MaterialCatalog.get("graphene")
+graphene_haldane_variant = deepcopy(graphene)
+graphene_haldane_variant.add_interaction("hamiltonian", participants = ('pz', 'pz'), parameters = [0, 1.0, 1j*0.1])
+print(graphene_haldane_variant)
+# -
 
 ### Handling non-periodic dimensions
 
