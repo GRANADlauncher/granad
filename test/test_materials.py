@@ -73,7 +73,7 @@ def test_haldane():
             participants=("pz1", "pz1"),            
             # a bit overcomplicated
             parameters=[                
-                [0, 0, 0, delta], # onsite                
+                [0, 0, 0, 0], # onsite                
                 # clockwise hoppings
                 [-2.46, 0, 0, t2], 
                 [2.46, 0, 0, jnp.conj(t2)],
