@@ -127,7 +127,7 @@ haldane_graphene =  (
         "hamiltonian",
             participants=("pz2", "pz2"),
             parameters=[                
-                [0, 0, 0, delta],
+                [0, 0, 0, 0],
                 [-2.46, 0, 0, jnp.conj(t2)], 
                 [2.46, 0, 0, t2],
                 [2.46*0.5, 2.46*jnp.sqrt(3)/2, 0, jnp.conj(t2)],
