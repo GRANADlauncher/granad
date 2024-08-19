@@ -1236,7 +1236,7 @@ class OrbitalList:
         )
 
     
-    def get_ip_green_function(self, A, B, omegas, occupations = None, energies = None, relaxation_rate = 1e-1):
+    def get_ip_green_function(self, A, B, omegas, occupations = None, energies = None, mask = None, relaxation_rate = 1e-1):
         """independent-particle greens function at the specified frequency according to 
 
         $G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i\varepsilon} A_{nm} B_{mn}$
@@ -1246,6 +1246,7 @@ class OrbitalList:
           omegas (jax.Array) : frequency grid
           rho_e (jax.Array) : energy occupations, if omitted, current density matrix diagonal is used
           energies (jax.Array) : energies, if omitted, current energies are used
+          mask (jax.Array): boolean mask excluding energy states from the summation
           relaxation_rate (float): broadening parameter
         
         Returns:
@@ -1257,8 +1258,10 @@ class OrbitalList:
         
         operator_product =  A.T * B
         occupations = self.initial_density_matrix_e.diagonal() * self.electrons if occupations is None else occupations
-        energies = self.energies if energies is None else energies
+        energies = self.energies if energies is None else energies        
         delta_occ = (occupations[:, None] - occupations)
+        if mask is not None:        
+            delta_occ = delta_occ.at[mask].set(0) 
         delta_e = energies[:, None] - energies
         
         return jax.lax.map(jax.jit(inner), omegas)
