@@ -1255,6 +1255,8 @@ class OrbitalList:
 
         def inner(omega):
             return jnp.trace( (delta_occ / (omega + delta_e + 1j*relaxation_rate)) @ operator_product)
+
+        print("Computing Greens function. Remember we default to site basis")
         
         operator_product =  A.T * B
         occupations = self.initial_density_matrix_e.diagonal() * self.electrons if occupations is None else occupations
