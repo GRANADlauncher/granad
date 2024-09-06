@@ -528,6 +528,12 @@ class OrbitalList:
         """
         self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), self._ensure_complex(val), self.couplings.coulomb)
 
+    @property
+    def center_index(self):
+        """index of approximate center orbital of the structure"""
+        distances = jnp.round(jnp.linalg.norm(self.positions - self.positions[:, None], axis = -1), 4)
+        return jnp.argmin(distances.sum(axis=0))
+
     def _ensure_complex(self, func_or_val):
         if callable(func_or_val):
             return lambda x: func_or_val(x) + 0.0j
