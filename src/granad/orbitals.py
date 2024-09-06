@@ -498,10 +498,10 @@ class OrbitalList:
 
     def set_onsite_hopping(self, orb, val):
         """
-        Sets onsite hopping element of the Hamiltonian matrix between two orbitals or indices.
+        Sets onsite hopping element of the Hamiltonian matrix.
 
         Parameters:
-            orb: Identifier for orbital(s) for the first element.
+            orb: Identifier for orbital(s).
             val (real): The value to set for the onsite hopping.
         """
         self.set_hamiltonian_element(orb1, orb1, val)        
@@ -693,7 +693,45 @@ class OrbitalList:
         for orb in filtered_orbs:
             orb.position = position
 
-            
+    @mutates
+    def rotate(self, x, phi, axis = 'z'):
+        """rotates all orbitals an angle phi around a point p around axis.    
+    
+        Args:
+        x : jnp.ndarray
+            A 3D point around which to rotate.
+        phi : float
+            Angle by which to rotate.
+        axis : str
+            Axis to rotate around ('x', 'y', or 'z'). Default is 'z'.
+        """
+        
+        # Define the rotation matrix based on the specified axis
+        if axis == 'x':
+            rotation_matrix = jnp.array([
+                [1, 0, 0],
+                [0, jnp.cos(phi), -jnp.sin(phi)],
+                [0, jnp.sin(phi), jnp.cos(phi)]
+            ])
+        elif axis == 'y':
+            rotation_matrix = jnp.array([
+                [jnp.cos(phi), 0, jnp.sin(phi)],
+                [0, 1, 0],
+                [-jnp.sin(phi), 0, jnp.cos(phi)]
+            ])
+        elif axis == 'z':
+            rotation_matrix = jnp.array([
+                [jnp.cos(phi), -jnp.sin(phi), 0],
+                [jnp.sin(phi), jnp.cos(phi), 0],
+                [0, 0, 1]
+            ])
+        else:
+            raise ValueError("Axis must be 'x', 'y', or 'z'.")
+
+        for orb in self._list:
+            # Perform the rotation (translate along x, rotate, translate back)
+            self.set_position(rotation_matrix @ (orb.position - x) + x, orb)
+             
     @mutates
     def set_self_consistent(self, **kwargs):
         """
