@@ -496,6 +496,16 @@ class OrbitalList:
             self.filter_orbs(orb1, _watchdog.GroupId), self.filter_orbs(orb2, _watchdog.GroupId), self._ensure_complex(func), self.couplings.coulomb
         )
 
+    def set_onsite_hopping(self, orb, val):
+        """
+        Sets onsite hopping element of the Hamiltonian matrix between two orbitals or indices.
+
+        Parameters:
+            orb: Identifier for orbital(s) for the first element.
+            val (real): The value to set for the onsite hopping.
+        """
+        self.set_hamiltonian_element(orb1, orb1, val)        
+
     def set_hamiltonian_element(self, orb1, orb2, val):
         """
         Sets an element of the Hamiltonian matrix between two orbitals or indices.
