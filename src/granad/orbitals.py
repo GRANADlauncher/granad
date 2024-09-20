@@ -504,7 +504,7 @@ class OrbitalList:
             orb: Identifier for orbital(s).
             val (real): The value to set for the onsite hopping.
         """
-        self.set_hamiltonian_element(orb1, orb1, val)        
+        self.set_hamiltonian_element(orb, orb, val)        
 
     def set_hamiltonian_element(self, orb1, orb2, val):
         """
