@@ -782,6 +782,7 @@ class OrbitalList:
 
     @mutates
     def set_electrons( self, val ):
+        assert val <= self.params.spin_degeneracy * len(self), "Max electrons exceeded"
         self.params.electrons = val
 
     @property
