@@ -5,3 +5,5 @@
 ::: granad.shapes
 ::: granad.potentials
 ::: granad.dissipators
+::: granad._numerics
+::: granad._plotting
