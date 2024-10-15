@@ -2999,7 +2999,7 @@ quantity_x == quantity.</p>
 </span><span id="__span-0-1294"><a id="__codelineno-0-1294" name="__codelineno-0-1294"></a>    <span class="k">def</span> <span class="nf">get_ip_green_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">omegas</span><span class="p">,</span> <span class="n">occupations</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">energies</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mf">1e-1</span><span class="p">):</span>
 </span><span id="__span-0-1295"><a id="__codelineno-0-1295" name="__codelineno-0-1295"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;independent-particle greens function at the specified frequency according to </span>
 </span><span id="__span-0-1296"><a id="__codelineno-0-1296" name="__codelineno-0-1296"></a>
-</span><span id="__span-0-1297"><a id="__codelineno-0-1297" name="__codelineno-0-1297"></a><span class="sd">        $G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i\varepsilon} A_{nm} B_{mn}$</span>
+</span><span id="__span-0-1297"><a id="__codelineno-0-1297" name="__codelineno-0-1297"></a><span class="sd">        $G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i\epsilon} A_{nm} B_{mn}$</span>
 </span><span id="__span-0-1298"><a id="__codelineno-0-1298" name="__codelineno-0-1298"></a>
 </span><span id="__span-0-1299"><a id="__codelineno-0-1299" name="__codelineno-0-1299"></a><span class="sd">        Parameters: </span>
 </span><span id="__span-0-1300"><a id="__codelineno-0-1300" name="__codelineno-0-1300"></a><span class="sd">          A, B : operators *in energy basis*, square jax.Array</span>
@@ -4232,7 +4232,7 @@ quantity_x == quantity.</p>
     <div class="doc doc-contents ">
 
         <p>independent-particle greens function at the specified frequency according to </p>
-<p><span class="arithmatex">\(G_{AB}(\omega) = \sum_{nm} rac{P_m - P_n}{\omega + E_m - E_n + iarepsilon} A_{nm} B_{mn}\)</span></p>
+<p><span class="arithmatex">\(G_{AB}(\omega) = \sum_{nm} rac{P_m - P_n}{\omega + E_m - E_n + i\epsilon} A_{nm} B_{mn}\)</span></p>
 
 
 <table class="field-list">
@@ -4361,7 +4361,7 @@ quantity_x == quantity.</p>
 <span class="normal"><a href="#__codelineno-0-1324">1324</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-1294"><a id="__codelineno-0-1294" name="__codelineno-0-1294"></a><span class="k">def</span> <span class="nf">get_ip_green_function</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">omegas</span><span class="p">,</span> <span class="n">occupations</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">energies</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mf">1e-1</span><span class="p">):</span>
 </span><span id="__span-0-1295"><a id="__codelineno-0-1295" name="__codelineno-0-1295"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;independent-particle greens function at the specified frequency according to </span>
 </span><span id="__span-0-1296"><a id="__codelineno-0-1296" name="__codelineno-0-1296"></a>
-</span><span id="__span-0-1297"><a id="__codelineno-0-1297" name="__codelineno-0-1297"></a><span class="sd">    $G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i\varepsilon} A_{nm} B_{mn}$</span>
+</span><span id="__span-0-1297"><a id="__codelineno-0-1297" name="__codelineno-0-1297"></a><span class="sd">    $G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i\epsilon} A_{nm} B_{mn}$</span>
 </span><span id="__span-0-1298"><a id="__codelineno-0-1298" name="__codelineno-0-1298"></a>
 </span><span id="__span-0-1299"><a id="__codelineno-0-1299" name="__codelineno-0-1299"></a><span class="sd">    Parameters: </span>
 </span><span id="__span-0-1300"><a id="__codelineno-0-1300" name="__codelineno-0-1300"></a><span class="sd">      A, B : operators *in energy basis*, square jax.Array</span>
@@ -12438,64 +12438,64 @@ on points at <code>target_positions</code>.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-              <b><code>-</code></b>
-                  (<code>`orbs` (list</code>)
+              <b><code>`orbs`</code></b>
+                  (<code>list</code>)
               –
               <div class="doc-md-description">
                 <p>List of orbital objects, each containing attributes such as 'tag' (for labeling) and 'position' (xy-coordinates).</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`show_tags` (list of str</code>)
+              <b><code>`show_tags`</code></b>
+                  (<code>list of str</code>)
               –
               <div class="doc-md-description">
                 <p>Filters the orbitals to display based on their tags. Only orbitals with matching tags will be shown. If <code>None</code>, all orbitals are displayed.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`show_index` (bool</code>)
+              <b><code>`show_index`</code></b>
+                  (<code>bool</code>)
               –
               <div class="doc-md-description">
                 <p>If <code>True</code>, displays the index of each orbital next to its corresponding point on the plot.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`display` (array-like</code>)
+              <b><code>`display`</code></b>
+                  (<code>array - like</code>)
               –
               <div class="doc-md-description">
                 <p>Data used to color and scale the points (e.g., eigenvector amplitudes). Each value corresponds to an orbital.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`scale` (bool</code>)
+              <b><code>`scale`</code></b>
+                  (<code>bool</code>)
               –
               <div class="doc-md-description">
                 <p>If <code>True</code>, the values in <code>display</code> are normalized and their absolute values are used.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`cmap` (optional</code>)
+              <b><code>`cmap`</code></b>
+                  (<code>optional</code>)
               –
               <div class="doc-md-description">
                 <p>Colormap used for the scatter plot when <code>display</code> is provided. If <code>None</code>, a default colormap (<code>bwr</code>) is used.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`circle_scale` (float</code>)
+              <b><code>`circle_scale`</code></b>
+                  (<code>float</code>)
               –
               <div class="doc-md-description">
                 <p>A scaling factor for the size of the scatter plot points. Larger values result in larger circles. Default is 1000.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`title` (str</code>)
+              <b><code>`title`</code></b>
+                  (<code>str</code>)
               –
               <div class="doc-md-description">
                 <p>Custom title for the plot. If <code>None</code>, the default title "Orbital positions in the xy-plane" is used.</p>
@@ -12509,11 +12509,9 @@ on points at <code>target_positions</code>.</p>
 
 <details class="notes" open>
   <summary>Notes</summary>
-  <ul>
-<li>If <code>display</code> is provided, the points are colored and sized according to the values in the <code>display</code> array, and a color bar is added to the plot.</li>
-<li>If <code>show_index</code> is <code>True</code>, the indices of the orbitals are annotated next to their corresponding points.</li>
-<li>The plot is automatically adjusted to ensure equal scaling of the axes, and grid lines are displayed.</li>
-</ul>
+  <p>If <code>display</code> is provided, the points are colored and sized according to the values in the <code>display</code> array, and a color bar is added to the plot.
+If <code>show_index</code> is <code>True</code>, the indices of the orbitals are annotated next to their corresponding points.
+The plot is automatically adjusted to ensure equal scaling of the axes, and grid lines are displayed.</p>
 </details>
             <details class="quote">
               <summary>Source code in <code>src/granad/_plotting.py</code></summary>
@@ -12591,19 +12589,19 @@ on points at <code>target_positions</code>.</p>
 </span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25"></a><span class="sd">    Generates a 2D scatter plot representing the positions of orbitals in the xy-plane, with optional filtering, coloring, and sizing.</span>
 </span><span id="__span-0-26"><a id="__codelineno-0-26" name="__codelineno-0-26"></a>
 </span><span id="__span-0-27"><a id="__codelineno-0-27" name="__codelineno-0-27"></a><span class="sd">    Parameters:</span>
-</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">        - `orbs` (list): List of orbital objects, each containing attributes such as &#39;tag&#39; (for labeling) and &#39;position&#39; (xy-coordinates).</span>
-</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="sd">        - `show_tags` (list of str, optional): Filters the orbitals to display based on their tags. Only orbitals with matching tags will be shown. If `None`, all orbitals are displayed.</span>
-</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">        - `show_index` (bool, optional): If `True`, displays the index of each orbital next to its corresponding point on the plot.</span>
-</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">        - `display` (array-like, optional): Data used to color and scale the points (e.g., eigenvector amplitudes). Each value corresponds to an orbital.</span>
-</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">        - `scale` (bool, optional): If `True`, the values in `display` are normalized and their absolute values are used.</span>
-</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">        - `cmap` (optional): Colormap used for the scatter plot when `display` is provided. If `None`, a default colormap (`bwr`) is used.</span>
-</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">        - `circle_scale` (float, optional): A scaling factor for the size of the scatter plot points. Larger values result in larger circles. Default is 1000.</span>
-</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        - `title` (str, optional): Custom title for the plot. If `None`, the default title &quot;Orbital positions in the xy-plane&quot; is used.</span>
+</span><span id="__span-0-28"><a id="__codelineno-0-28" name="__codelineno-0-28"></a><span class="sd">        `orbs` (list): List of orbital objects, each containing attributes such as &#39;tag&#39; (for labeling) and &#39;position&#39; (xy-coordinates).</span>
+</span><span id="__span-0-29"><a id="__codelineno-0-29" name="__codelineno-0-29"></a><span class="sd">        `show_tags` (list of str, optional): Filters the orbitals to display based on their tags. Only orbitals with matching tags will be shown. If `None`, all orbitals are displayed.</span>
+</span><span id="__span-0-30"><a id="__codelineno-0-30" name="__codelineno-0-30"></a><span class="sd">        `show_index` (bool, optional): If `True`, displays the index of each orbital next to its corresponding point on the plot.</span>
+</span><span id="__span-0-31"><a id="__codelineno-0-31" name="__codelineno-0-31"></a><span class="sd">        `display` (array-like, optional): Data used to color and scale the points (e.g., eigenvector amplitudes). Each value corresponds to an orbital.</span>
+</span><span id="__span-0-32"><a id="__codelineno-0-32" name="__codelineno-0-32"></a><span class="sd">        `scale` (bool, optional): If `True`, the values in `display` are normalized and their absolute values are used.</span>
+</span><span id="__span-0-33"><a id="__codelineno-0-33" name="__codelineno-0-33"></a><span class="sd">        `cmap` (optional): Colormap used for the scatter plot when `display` is provided. If `None`, a default colormap (`bwr`) is used.</span>
+</span><span id="__span-0-34"><a id="__codelineno-0-34" name="__codelineno-0-34"></a><span class="sd">        `circle_scale` (float, optional): A scaling factor for the size of the scatter plot points. Larger values result in larger circles. Default is 1000.</span>
+</span><span id="__span-0-35"><a id="__codelineno-0-35" name="__codelineno-0-35"></a><span class="sd">        `title` (str, optional): Custom title for the plot. If `None`, the default title &quot;Orbital positions in the xy-plane&quot; is used.</span>
 </span><span id="__span-0-36"><a id="__codelineno-0-36" name="__codelineno-0-36"></a>
 </span><span id="__span-0-37"><a id="__codelineno-0-37" name="__codelineno-0-37"></a><span class="sd">    Notes:</span>
-</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        - If `display` is provided, the points are colored and sized according to the values in the `display` array, and a color bar is added to the plot.</span>
-</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        - If `show_index` is `True`, the indices of the orbitals are annotated next to their corresponding points.</span>
-</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        - The plot is automatically adjusted to ensure equal scaling of the axes, and grid lines are displayed.</span>
+</span><span id="__span-0-38"><a id="__codelineno-0-38" name="__codelineno-0-38"></a><span class="sd">        If `display` is provided, the points are colored and sized according to the values in the `display` array, and a color bar is added to the plot.</span>
+</span><span id="__span-0-39"><a id="__codelineno-0-39" name="__codelineno-0-39"></a><span class="sd">        If `show_index` is `True`, the indices of the orbitals are annotated next to their corresponding points.</span>
+</span><span id="__span-0-40"><a id="__codelineno-0-40" name="__codelineno-0-40"></a><span class="sd">        The plot is automatically adjusted to ensure equal scaling of the axes, and grid lines are displayed.</span>
 </span><span id="__span-0-41"><a id="__codelineno-0-41" name="__codelineno-0-41"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-42"><a id="__codelineno-0-42" name="__codelineno-0-42"></a>
 </span><span id="__span-0-43"><a id="__codelineno-0-43" name="__codelineno-0-43"></a>    <span class="c1"># decider whether to take abs val and normalize </span>
@@ -12685,64 +12683,64 @@ on points at <code>target_positions</code>.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-              <b><code>-</code></b>
-                  (<code>`orbs` (list</code>)
+              <b><code>`orbs`</code></b>
+                  (<code>list</code>)
               –
               <div class="doc-md-description">
                 <p>List of orbital objects, each containing attributes such as 'tag' (for labeling) and 'position' (3D coordinates).</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`show_tags` (list of str</code>)
+              <b><code>`show_tags`</code></b>
+                  (<code>list of str</code>)
               –
               <div class="doc-md-description">
                 <p>Filters the orbitals to display based on their tags. Only orbitals with matching tags will be shown. If <code>None</code>, all orbitals are displayed.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`show_index` (bool</code>)
+              <b><code>`show_index`</code></b>
+                  (<code>bool</code>)
               –
               <div class="doc-md-description">
                 <p>If <code>True</code>, displays the index of each orbital next to its corresponding point on the plot.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`display` (array-like</code>)
+              <b><code>`display`</code></b>
+                  (<code>array - like</code>)
               –
               <div class="doc-md-description">
                 <p>Data used to color and scale the points (e.g., eigenvector amplitudes). Each value corresponds to an orbital.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`scale` (bool</code>)
+              <b><code>`scale`</code></b>
+                  (<code>bool</code>)
               –
               <div class="doc-md-description">
                 <p>If <code>True</code>, the values in <code>display</code> are normalized and their absolute values are used.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`cmap` (optional</code>)
+              <b><code>`cmap`</code></b>
+                  (<code>optional</code>)
               –
               <div class="doc-md-description">
                 <p>Colormap used for the scatter plot when <code>display</code> is provided. If <code>None</code>, a default colormap (<code>bwr</code>) is used.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`circle_scale` (float</code>)
+              <b><code>`circle_scale`</code></b>
+                  (<code>float</code>)
               –
               <div class="doc-md-description">
                 <p>A scaling factor for the size of the scatter plot points. Larger values result in larger circles. Default is 1000.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`title` (str</code>)
+              <b><code>`title`</code></b>
+                  (<code>str</code>)
               –
               <div class="doc-md-description">
                 <p>Custom title for the plot. If <code>None</code>, the default title "Orbital positions in 3D" is used.</p>
@@ -12756,11 +12754,9 @@ on points at <code>target_positions</code>.</p>
 
 <details class="notes" open>
   <summary>Notes</summary>
-  <ul>
-<li>If <code>display</code> is provided, the points are colored and sized according to the values in the <code>display</code> array, and a color bar is added to the plot.</li>
-<li>If <code>show_index</code> is <code>True</code>, the indices of the orbitals are annotated next to their corresponding points.</li>
-<li>The plot is automatically adjusted to display grid lines and 3D axes labels for X, Y, and Z.</li>
-</ul>
+  <p>If <code>display</code> is provided, the points are colored and sized according to the values in the <code>display</code> array, and a color bar is added to the plot.
+If <code>show_index</code> is <code>True</code>, the indices of the orbitals are annotated next to their corresponding points.
+The plot is automatically adjusted to display grid lines and 3D axes labels for X, Y, and Z.</p>
 </details>
             <details class="quote">
               <summary>Source code in <code>src/granad/_plotting.py</code></summary>
@@ -12838,19 +12834,19 @@ on points at <code>target_positions</code>.</p>
 </span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">    Generates a 3D scatter plot representing the positions of orbitals in 3D space, with optional filtering, coloring, and sizing.</span>
 </span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a>
 </span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a><span class="sd">    Parameters:</span>
-</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">        - `orbs` (list): List of orbital objects, each containing attributes such as &#39;tag&#39; (for labeling) and &#39;position&#39; (3D coordinates).</span>
-</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">        - `show_tags` (list of str, optional): Filters the orbitals to display based on their tags. Only orbitals with matching tags will be shown. If `None`, all orbitals are displayed.</span>
-</span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">        - `show_index` (bool, optional): If `True`, displays the index of each orbital next to its corresponding point on the plot.</span>
-</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        - `display` (array-like, optional): Data used to color and scale the points (e.g., eigenvector amplitudes). Each value corresponds to an orbital.</span>
-</span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">        - `scale` (bool, optional): If `True`, the values in `display` are normalized and their absolute values are used.</span>
-</span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">        - `cmap` (optional): Colormap used for the scatter plot when `display` is provided. If `None`, a default colormap (`bwr`) is used.</span>
-</span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">        - `circle_scale` (float, optional): A scaling factor for the size of the scatter plot points. Larger values result in larger circles. Default is 1000.</span>
-</span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        - `title` (str, optional): Custom title for the plot. If `None`, the default title &quot;Orbital positions in 3D&quot; is used.</span>
+</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a><span class="sd">        `orbs` (list): List of orbital objects, each containing attributes such as &#39;tag&#39; (for labeling) and &#39;position&#39; (3D coordinates).</span>
+</span><span id="__span-0-99"><a id="__codelineno-0-99" name="__codelineno-0-99"></a><span class="sd">        `show_tags` (list of str, optional): Filters the orbitals to display based on their tags. Only orbitals with matching tags will be shown. If `None`, all orbitals are displayed.</span>
+</span><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="sd">        `show_index` (bool, optional): If `True`, displays the index of each orbital next to its corresponding point on the plot.</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="sd">        `display` (array-like, optional): Data used to color and scale the points (e.g., eigenvector amplitudes). Each value corresponds to an orbital.</span>
+</span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="sd">        `scale` (bool, optional): If `True`, the values in `display` are normalized and their absolute values are used.</span>
+</span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">        `cmap` (optional): Colormap used for the scatter plot when `display` is provided. If `None`, a default colormap (`bwr`) is used.</span>
+</span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a><span class="sd">        `circle_scale` (float, optional): A scaling factor for the size of the scatter plot points. Larger values result in larger circles. Default is 1000.</span>
+</span><span id="__span-0-105"><a id="__codelineno-0-105" name="__codelineno-0-105"></a><span class="sd">        `title` (str, optional): Custom title for the plot. If `None`, the default title &quot;Orbital positions in 3D&quot; is used.</span>
 </span><span id="__span-0-106"><a id="__codelineno-0-106" name="__codelineno-0-106"></a>
 </span><span id="__span-0-107"><a id="__codelineno-0-107" name="__codelineno-0-107"></a><span class="sd">    Notes:</span>
-</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">        - If `display` is provided, the points are colored and sized according to the values in the `display` array, and a color bar is added to the plot.</span>
-</span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">        - If `show_index` is `True`, the indices of the orbitals are annotated next to their corresponding points.</span>
-</span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">        - The plot is automatically adjusted to display grid lines and 3D axes labels for X, Y, and Z.</span>
+</span><span id="__span-0-108"><a id="__codelineno-0-108" name="__codelineno-0-108"></a><span class="sd">        If `display` is provided, the points are colored and sized according to the values in the `display` array, and a color bar is added to the plot.</span>
+</span><span id="__span-0-109"><a id="__codelineno-0-109" name="__codelineno-0-109"></a><span class="sd">        If `show_index` is `True`, the indices of the orbitals are annotated next to their corresponding points.</span>
+</span><span id="__span-0-110"><a id="__codelineno-0-110" name="__codelineno-0-110"></a><span class="sd">        The plot is automatically adjusted to display grid lines and 3D axes labels for X, Y, and Z.</span>
 </span><span id="__span-0-111"><a id="__codelineno-0-111" name="__codelineno-0-111"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-112"><a id="__codelineno-0-112" name="__codelineno-0-112"></a>    <span class="c1"># decider whether to take abs val and normalize </span>
 </span><span id="__span-0-113"><a id="__codelineno-0-113" name="__codelineno-0-113"></a>    <span class="k">def</span> <span class="nf">scale_vals</span><span class="p">(</span> <span class="n">vals</span> <span class="p">):</span>
@@ -12932,8 +12928,7 @@ on points at <code>target_positions</code>.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-              <b><code>-</code></b>
-                  (<code>`orbs`</code>)
+              <b><code>`orbs`</code></b>
               –
               <div class="doc-md-description">
                 <p>An object containing the orbital data, including energies, electron counts, and initial density matrix.</p>
@@ -12947,11 +12942,9 @@ on points at <code>target_positions</code>.</p>
 
 <details class="notes" open>
   <summary>Notes</summary>
-  <ul>
-<li>The scatter plot displays the eigenstate number on the x-axis and the corresponding energy (in eV) on the y-axis.</li>
-<li>The color of each point represents the initial state occupation, calculated as the product of the electron count and the initial density matrix diagonal element for each state.</li>
-<li>A color bar is added to indicate the magnitude of the initial state occupation for each eigenstate.</li>
-</ul>
+  <p>The scatter plot displays the eigenstate number on the x-axis and the corresponding energy (in eV) on the y-axis.
+The color of each point represents the initial state occupation, calculated as the product of the electron count and the initial density matrix diagonal element for each state.
+A color bar is added to indicate the magnitude of the initial state occupation for each eigenstate.</p>
 </details>
             <details class="quote">
               <summary>Source code in <code>src/granad/_plotting.py</code></summary>
@@ -12984,12 +12977,12 @@ on points at <code>target_positions</code>.</p>
 </span><span id="__span-0-165"><a id="__codelineno-0-165" name="__codelineno-0-165"></a><span class="sd">    Depicts the energy and occupation landscape of a stack, with energies plotted on the y-axis and eigenstates ordered by size on the x-axis.</span>
 </span><span id="__span-0-166"><a id="__codelineno-0-166" name="__codelineno-0-166"></a>
 </span><span id="__span-0-167"><a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">    Parameters:</span>
-</span><span id="__span-0-168"><a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">        - `orbs`: An object containing the orbital data, including energies, electron counts, and initial density matrix.</span>
+</span><span id="__span-0-168"><a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">        `orbs`: An object containing the orbital data, including energies, electron counts, and initial density matrix.</span>
 </span><span id="__span-0-169"><a id="__codelineno-0-169" name="__codelineno-0-169"></a>
 </span><span id="__span-0-170"><a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="sd">    Notes:</span>
-</span><span id="__span-0-171"><a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">        - The scatter plot displays the eigenstate number on the x-axis and the corresponding energy (in eV) on the y-axis.</span>
-</span><span id="__span-0-172"><a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">        - The color of each point represents the initial state occupation, calculated as the product of the electron count and the initial density matrix diagonal element for each state.</span>
-</span><span id="__span-0-173"><a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">        - A color bar is added to indicate the magnitude of the initial state occupation for each eigenstate.</span>
+</span><span id="__span-0-171"><a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="sd">        The scatter plot displays the eigenstate number on the x-axis and the corresponding energy (in eV) on the y-axis.</span>
+</span><span id="__span-0-172"><a id="__codelineno-0-172" name="__codelineno-0-172"></a><span class="sd">        The color of each point represents the initial state occupation, calculated as the product of the electron count and the initial density matrix diagonal element for each state.</span>
+</span><span id="__span-0-173"><a id="__codelineno-0-173" name="__codelineno-0-173"></a><span class="sd">        A color bar is added to indicate the magnitude of the initial state occupation for each eigenstate.</span>
 </span><span id="__span-0-174"><a id="__codelineno-0-174" name="__codelineno-0-174"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-175"><a id="__codelineno-0-175" name="__codelineno-0-175"></a>    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </span><span id="__span-0-176"><a id="__codelineno-0-176" name="__codelineno-0-176"></a>    <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span>
@@ -13033,48 +13026,47 @@ on points at <code>target_positions</code>.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-              <b><code>-</code></b>
-                  (<code>`orbs`</code>)
+              <b><code>`orbs`</code></b>
               –
               <div class="doc-md-description">
                 <p>An object containing the orbital data and field information.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`x` (array-like</code>)
+              <b><code>`x`</code></b>
+                  (<code>array - like</code>)
               –
               <div class="doc-md-description">
                 <p>x-coordinates for the 2D grid on which the field is evaluated.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`y` (array-like</code>)
+              <b><code>`y`</code></b>
+                  (<code>array - like</code>)
               –
               <div class="doc-md-description">
                 <p>y-coordinates for the 2D grid on which the field is evaluated.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`z` (float</code>)
+              <b><code>`z`</code></b>
+                  (<code>float</code>)
               –
               <div class="doc-md-description">
                 <p>z-coordinate slice at which the field is evaluated in the xy-plane.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`component` (int</code>)
+              <b><code>`component`</code></b>
+                  (<code>int</code>)
               –
               <div class="doc-md-description">
                 <p>The field component to display (default is 0). Represents the direction (e.g., x, y, or z) of the field.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`density_matrix` (optional</code>)
+              <b><code>`density_matrix`</code></b>
+                  (<code>optional</code>)
               –
               <div class="doc-md-description">
                 <p>The density matrix used to calculate the induced field. If not provided, the initial density matrix will be used.</p>
@@ -13088,10 +13080,8 @@ on points at <code>target_positions</code>.</p>
 
 <details class="note" open>
   <summary>Note</summary>
-  <ul>
-<li>The plot visualizes the induced field's magnitude using a logarithmic scale for better representation of variations in field strength.</li>
-<li>The field is normalized before applying the logarithm, ensuring that relative differences in field strength are emphasized.</li>
-</ul>
+  <p>The plot visualizes the induced field's magnitude using a logarithmic scale for better representation of variations in field strength.
+The field is normalized before applying the logarithm, ensuring that relative differences in field strength are emphasized.</p>
 </details>
             <details class="quote">
               <summary>Source code in <code>src/granad/_plotting.py</code></summary>
@@ -13141,16 +13131,16 @@ on points at <code>target_positions</code>.</p>
 </span><span id="__span-0-246"><a id="__codelineno-0-246" name="__codelineno-0-246"></a><span class="sd">    Displays a 2D plot of the normalized logarithm of the absolute value of the induced field, for a given field component.</span>
 </span><span id="__span-0-247"><a id="__codelineno-0-247" name="__codelineno-0-247"></a>
 </span><span id="__span-0-248"><a id="__codelineno-0-248" name="__codelineno-0-248"></a><span class="sd">    Parameters:</span>
-</span><span id="__span-0-249"><a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">        - `orbs`: An object containing the orbital data and field information.</span>
-</span><span id="__span-0-250"><a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">        - `x` (array-like): x-coordinates for the 2D grid on which the field is evaluated.</span>
-</span><span id="__span-0-251"><a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">        - `y` (array-like): y-coordinates for the 2D grid on which the field is evaluated.</span>
-</span><span id="__span-0-252"><a id="__codelineno-0-252" name="__codelineno-0-252"></a><span class="sd">        - `z` (float): z-coordinate slice at which the field is evaluated in the xy-plane.</span>
-</span><span id="__span-0-253"><a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="sd">        - `component` (int, optional): The field component to display (default is 0). Represents the direction (e.g., x, y, or z) of the field.</span>
-</span><span id="__span-0-254"><a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">        - `density_matrix` (optional): The density matrix used to calculate the induced field. If not provided, the initial density matrix will be used.</span>
+</span><span id="__span-0-249"><a id="__codelineno-0-249" name="__codelineno-0-249"></a><span class="sd">        `orbs`: An object containing the orbital data and field information.</span>
+</span><span id="__span-0-250"><a id="__codelineno-0-250" name="__codelineno-0-250"></a><span class="sd">        `x` (array-like): x-coordinates for the 2D grid on which the field is evaluated.</span>
+</span><span id="__span-0-251"><a id="__codelineno-0-251" name="__codelineno-0-251"></a><span class="sd">        `y` (array-like): y-coordinates for the 2D grid on which the field is evaluated.</span>
+</span><span id="__span-0-252"><a id="__codelineno-0-252" name="__codelineno-0-252"></a><span class="sd">        `z` (float): z-coordinate slice at which the field is evaluated in the xy-plane.</span>
+</span><span id="__span-0-253"><a id="__codelineno-0-253" name="__codelineno-0-253"></a><span class="sd">        `component` (int, optional): The field component to display (default is 0). Represents the direction (e.g., x, y, or z) of the field.</span>
+</span><span id="__span-0-254"><a id="__codelineno-0-254" name="__codelineno-0-254"></a><span class="sd">        `density_matrix` (optional): The density matrix used to calculate the induced field. If not provided, the initial density matrix will be used.</span>
 </span><span id="__span-0-255"><a id="__codelineno-0-255" name="__codelineno-0-255"></a>
 </span><span id="__span-0-256"><a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="sd">    Note:</span>
-</span><span id="__span-0-257"><a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">        - The plot visualizes the induced field&#39;s magnitude using a logarithmic scale for better representation of variations in field strength.</span>
-</span><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">        - The field is normalized before applying the logarithm, ensuring that relative differences in field strength are emphasized.</span>
+</span><span id="__span-0-257"><a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="sd">        The plot visualizes the induced field&#39;s magnitude using a logarithmic scale for better representation of variations in field strength.</span>
+</span><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">        The field is normalized before applying the logarithm, ensuring that relative differences in field strength are emphasized.</span>
 </span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a>
 </span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">(</span>
@@ -13207,56 +13197,54 @@ on points at <code>target_positions</code>.</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-              <b><code>-</code></b>
-                  (<code>`orbs`</code>)
+              <b><code>`orbs`</code></b>
               –
               <div class="doc-md-description">
                 <p>Not typically required in most use cases, as this function is generally attached to a 'flake' object (e.g., <code>flake.show_res</code>).</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`res`</code>)
+              <b><code>`res`</code></b>
               –
               <div class="doc-md-description">
                 <p>A result object containing the simulation data, including the output values and corresponding time or frequency axis.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`plot_only` (jax.Array</code>)
+              <b><code>`plot_only`</code></b>
+                  (<code>Array</code>)
               –
               <div class="doc-md-description">
                 <p>Indices of specific components to be plotted. If not provided, all components will be plotted.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`plot_labels` (list[str]</code>)
+              <b><code>`plot_labels`</code></b>
+                  (<code>list[str]</code>)
               –
               <div class="doc-md-description">
                 <p>Labels for each plotted quantity. If not provided, no labels will be added.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`show_illumination` (bool</code>)
+              <b><code>`show_illumination`</code></b>
+                  (<code>bool</code>)
               –
               <div class="doc-md-description">
                 <p>Whether to include illumination data in the plot. If <code>True</code>, illumination components are displayed.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`omega_max` (optional</code>)
+              <b><code>`omega_max`</code></b>
+                  (<code>optional</code>)
               –
               <div class="doc-md-description">
                 <p>Upper bound for the frequency range, used when plotting in the frequency domain.</p>
               </div>
             </li>
             <li>
-              <b><code>-</code></b>
-                  (<code>`omega_min` (optional</code>)
+              <b><code>`omega_min`</code></b>
+                  (<code>optional</code>)
               –
               <div class="doc-md-description">
                 <p>Lower bound for the frequency range, used when plotting in the frequency domain.</p>
@@ -13270,11 +13258,9 @@ on points at <code>target_positions</code>.</p>
 
 <details class="notes" open>
   <summary>Notes</summary>
-  <ul>
-<li>The function adapts automatically to display either time-dependent or frequency-dependent results based on the presence of <code>omega_max</code> and <code>omega_min</code>.</li>
-<li>If <code>show_illumination</code> is enabled, the function plots the illumination components (<code>x</code>, <code>y</code>, <code>z</code>) as additional curves.</li>
-<li>The x-axis label changes to represent time or frequency, depending on the mode of operation.</li>
-</ul>
+  <p>The function adapts automatically to display either time-dependent or frequency-dependent results based on the presence of <code>omega_max</code> and <code>omega_min</code>.
+If <code>show_illumination</code> is enabled, the function plots the illumination components (<code>x</code>, <code>y</code>, <code>z</code>) as additional curves.
+The x-axis label changes to represent time or frequency, depending on the mode of operation.</p>
 </details>
             <details class="quote">
               <summary>Source code in <code>src/granad/_plotting.py</code></summary>
@@ -13344,18 +13330,18 @@ on points at <code>target_positions</code>.</p>
 </span><span id="__span-0-199"><a id="__codelineno-0-199" name="__codelineno-0-199"></a><span class="sd">    Visualizes the evolution of an expectation value over time or frequency, based on the given simulation results.</span>
 </span><span id="__span-0-200"><a id="__codelineno-0-200" name="__codelineno-0-200"></a>
 </span><span id="__span-0-201"><a id="__codelineno-0-201" name="__codelineno-0-201"></a><span class="sd">    Parameters:</span>
-</span><span id="__span-0-202"><a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">        - `orbs`: Not typically required in most use cases, as this function is generally attached to a &#39;flake&#39; object (e.g., `flake.show_res`).</span>
-</span><span id="__span-0-203"><a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">        - `res`: A result object containing the simulation data, including the output values and corresponding time or frequency axis.</span>
-</span><span id="__span-0-204"><a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">        - `plot_only` (jax.Array, optional): Indices of specific components to be plotted. If not provided, all components will be plotted.</span>
-</span><span id="__span-0-205"><a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">        - `plot_labels` (list[str], optional): Labels for each plotted quantity. If not provided, no labels will be added.</span>
-</span><span id="__span-0-206"><a id="__codelineno-0-206" name="__codelineno-0-206"></a><span class="sd">        - `show_illumination` (bool, optional): Whether to include illumination data in the plot. If `True`, illumination components are displayed.</span>
-</span><span id="__span-0-207"><a id="__codelineno-0-207" name="__codelineno-0-207"></a><span class="sd">        - `omega_max` (optional): Upper bound for the frequency range, used when plotting in the frequency domain.</span>
-</span><span id="__span-0-208"><a id="__codelineno-0-208" name="__codelineno-0-208"></a><span class="sd">        - `omega_min` (optional): Lower bound for the frequency range, used when plotting in the frequency domain.</span>
+</span><span id="__span-0-202"><a id="__codelineno-0-202" name="__codelineno-0-202"></a><span class="sd">        `orbs`: Not typically required in most use cases, as this function is generally attached to a &#39;flake&#39; object (e.g., `flake.show_res`).</span>
+</span><span id="__span-0-203"><a id="__codelineno-0-203" name="__codelineno-0-203"></a><span class="sd">        `res`: A result object containing the simulation data, including the output values and corresponding time or frequency axis.</span>
+</span><span id="__span-0-204"><a id="__codelineno-0-204" name="__codelineno-0-204"></a><span class="sd">        `plot_only` (jax.Array, optional): Indices of specific components to be plotted. If not provided, all components will be plotted.</span>
+</span><span id="__span-0-205"><a id="__codelineno-0-205" name="__codelineno-0-205"></a><span class="sd">        `plot_labels` (list[str], optional): Labels for each plotted quantity. If not provided, no labels will be added.</span>
+</span><span id="__span-0-206"><a id="__codelineno-0-206" name="__codelineno-0-206"></a><span class="sd">        `show_illumination` (bool, optional): Whether to include illumination data in the plot. If `True`, illumination components are displayed.</span>
+</span><span id="__span-0-207"><a id="__codelineno-0-207" name="__codelineno-0-207"></a><span class="sd">        `omega_max` (optional): Upper bound for the frequency range, used when plotting in the frequency domain.</span>
+</span><span id="__span-0-208"><a id="__codelineno-0-208" name="__codelineno-0-208"></a><span class="sd">        `omega_min` (optional): Lower bound for the frequency range, used when plotting in the frequency domain.</span>
 </span><span id="__span-0-209"><a id="__codelineno-0-209" name="__codelineno-0-209"></a>
 </span><span id="__span-0-210"><a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="sd">    Notes:</span>
-</span><span id="__span-0-211"><a id="__codelineno-0-211" name="__codelineno-0-211"></a><span class="sd">        - The function adapts automatically to display either time-dependent or frequency-dependent results based on the presence of `omega_max` and `omega_min`.</span>
-</span><span id="__span-0-212"><a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">        - If `show_illumination` is enabled, the function plots the illumination components (`x`, `y`, `z`) as additional curves.</span>
-</span><span id="__span-0-213"><a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">        - The x-axis label changes to represent time or frequency, depending on the mode of operation.</span>
+</span><span id="__span-0-211"><a id="__codelineno-0-211" name="__codelineno-0-211"></a><span class="sd">        The function adapts automatically to display either time-dependent or frequency-dependent results based on the presence of `omega_max` and `omega_min`.</span>
+</span><span id="__span-0-212"><a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">        If `show_illumination` is enabled, the function plots the illumination components (`x`, `y`, `z`) as additional curves.</span>
+</span><span id="__span-0-213"><a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">        The x-axis label changes to represent time or frequency, depending on the mode of operation.</span>
 </span><span id="__span-0-214"><a id="__codelineno-0-214" name="__codelineno-0-214"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-215"><a id="__codelineno-0-215" name="__codelineno-0-215"></a>    <span class="k">def</span> <span class="nf">_show</span><span class="p">(</span> <span class="n">obs</span><span class="p">,</span> <span class="n">name</span> <span class="p">):</span>
 </span><span id="__span-0-216"><a id="__codelineno-0-216" name="__codelineno-0-216"></a>        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x_axis</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="n">name</span><span class="p">)</span>
