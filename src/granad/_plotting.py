@@ -22,20 +22,22 @@ def _plot_wrapper(plot_func):
 @_plot_wrapper
 def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None):
     """
-    Generates a 2D scatter plot representing the positions of orbitals in the xy-plane,
-    filtered by specified tags. Optionally colors and sizes points by, e.g., eigenvector
-    amplitudes.
+    Generates a 2D scatter plot representing the positions of orbitals in the xy-plane, with optional filtering, coloring, and sizing.
 
     Parameters:
-    - orbs (list): List of orbital objects, each with attributes 'tag' and 'position'.
-    - show_tags (list of str, optional): Tags used to filter orbitals for display.
-    - show_index (bool): If True, indexes of the orbitals will be shown on the plot.
-    - display: N-element array to display
-    - circle_size (float): larger values mean larger circles 
-    - title: title of the plot
+    - `orbs` (list): List of orbital objects, each containing attributes such as 'tag' (for labeling) and 'position' (xy-coordinates).
+    - `show_tags` (list of str, optional): Filters the orbitals to display based on their tags. Only orbitals with matching tags will be shown. If `None`, all orbitals are displayed.
+    - `show_index` (bool, optional): If `True`, displays the index of each orbital next to its corresponding point on the plot.
+    - `display` (array-like, optional): Data used to color and scale the points (e.g., eigenvector amplitudes). Each value corresponds to an orbital.
+    - `scale` (bool, optional): If `True`, the values in `display` are normalized and their absolute values are used.
+    - `cmap` (optional): Colormap used for the scatter plot when `display` is provided. If `None`, a default colormap (`bwr`) is used.
+    - `circle_scale` (float, optional): A scaling factor for the size of the scatter plot points. Larger values result in larger circles. Default is 1000.
+    - `title` (str, optional): Custom title for the plot. If `None`, the default title "Orbital positions in the xy-plane" is used.
 
-    Returns:
-    - None: A 2D scatter plot is displayed.
+    Notes:
+    - If `display` is provided, the points are colored and sized according to the values in the `display` array, and a color bar is added to the plot.
+    - If `show_index` is `True`, the indices of the orbitals are annotated next to their corresponding points.
+    - The plot is automatically adjusted to ensure equal scaling of the axes, and grid lines are displayed.
     """
 
     # decider whether to take abs val and normalize 
@@ -90,20 +92,22 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
 @_plot_wrapper
 def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None):
     """
-    Generates a 3D scatter plot representing the positions of orbitals in 3D space,
-    filtered by specified tags. Optionally colors and sizes points by, e.g., eigenvector
-    amplitudes.
+    Generates a 3D scatter plot representing the positions of orbitals in 3D space, with optional filtering, coloring, and sizing.
 
     Parameters:
-    - orbs (list): List of orbital objects, each with attributes 'tag', 'position', and 'eigenvectors'.
-    - show_tags (list of str, optional): Tags used to filter orbitals for display.
-    - show_index (bool): If True, indexes of the orbitals will be shown on the plot.
-    - display: N-element array to display
-    - circle_scale: larger values means larger circles
-    - title: title of the plot
+    - `orbs` (list): List of orbital objects, each containing attributes such as 'tag' (for labeling) and 'position' (3D coordinates).
+    - `show_tags` (list of str, optional): Filters the orbitals to display based on their tags. Only orbitals with matching tags will be shown. If `None`, all orbitals are displayed.
+    - `show_index` (bool, optional): If `True`, displays the index of each orbital next to its corresponding point on the plot.
+    - `display` (array-like, optional): Data used to color and scale the points (e.g., eigenvector amplitudes). Each value corresponds to an orbital.
+    - `scale` (bool, optional): If `True`, the values in `display` are normalized and their absolute values are used.
+    - `cmap` (optional): Colormap used for the scatter plot when `display` is provided. If `None`, a default colormap (`bwr`) is used.
+    - `circle_scale` (float, optional): A scaling factor for the size of the scatter plot points. Larger values result in larger circles. Default is 1000.
+    - `title` (str, optional): Custom title for the plot. If `None`, the default title "Orbital positions in 3D" is used.
 
-    Returns:
-    - None: A 3D scatter plot is displayed.
+    Notes:
+    - If `display` is provided, the points are colored and sized according to the values in the `display` array, and a color bar is added to the plot.
+    - If `show_index` is `True`, the indices of the orbitals are annotated next to their corresponding points.
+    - The plot is automatically adjusted to display grid lines and 3D axes labels for X, Y, and Z.
     """
     # decider whether to take abs val and normalize 
     def scale_vals( vals ):
@@ -157,9 +161,16 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
 
 @_plot_wrapper
 def show_energies(orbs):
-    """Depicts the energy and occupation landscape of a stack (energies are plotted on the y-axis ordered by size)
+    """
+    Depicts the energy and occupation landscape of a stack, with energies plotted on the y-axis and eigenstates ordered by size on the x-axis.
 
-    - `stack`: stack object
+    Parameters:
+    - `orbs`: An object containing the orbital data, including energies, electron counts, and initial density matrix.
+
+    Notes:
+    - The scatter plot displays the eigenstate number on the x-axis and the corresponding energy (in eV) on the y-axis.
+    - The color of each point represents the initial state occupation, calculated as the product of the electron count and the initial density matrix diagonal element for each state.
+    - A color bar is added to indicate the magnitude of the initial state occupation for each eigenstate.
     """
     fig, ax = plt.subplots(1, 1)
     plt.colorbar(
@@ -184,12 +195,22 @@ def show_res(
     omega_max = None,
     omega_min = None,
 ):
-    """Depicts an expectation value as a function of time.
+    """
+    Visualizes the evolution of an expectation value over time or frequency, based on the given simulation results.
 
+    Parameters:
+    - `orbs`: Not typically required in most use cases, as this function is generally attached to a 'flake' object (e.g., `flake.show_res`).
+    - `res`: A result object containing the simulation data, including the output values and corresponding time or frequency axis.
+    - `plot_only` (jax.Array, optional): Indices of specific components to be plotted. If not provided, all components will be plotted.
+    - `plot_labels` (list[str], optional): Labels for each plotted quantity. If not provided, no labels will be added.
+    - `show_illumination` (bool, optional): Whether to include illumination data in the plot. If `True`, illumination components are displayed.
+    - `omega_max` (optional): Upper bound for the frequency range, used when plotting in the frequency domain.
+    - `omega_min` (optional): Lower bound for the frequency range, used when plotting in the frequency domain.
 
-    - `res`: result object
-    - `plot_only`: only these indices will be plotted
-    - `plot_legend`: names associated to the indexed quantities
+    Notes:
+    - The function adapts automatically to display either time-dependent or frequency-dependent results based on the presence of `omega_max` and `omega_min`.
+    - If `show_illumination` is enabled, the function plots the illumination components (`x`, `y`, `z`) as additional curves.
+    - The x-axis label changes to represent time or frequency, depending on the mode of operation.
     """
     def _show( obs, name ):
         ax.plot(x_axis, obs, label = name)
@@ -221,12 +242,20 @@ def show_res(
 
 @_plot_wrapper
 def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None):
-    """Displays the normalized logarithm of the absolute value of the induced field in 2D
+    """
+    Displays a 2D plot of the normalized logarithm of the absolute value of the induced field, for a given field component.
 
-    - `x`: 
-    - `y`: 
-    - `component`: field component to display
-    - `density_matrix` : if not given, initial density_matrix 
+    Parameters:
+    - `orbs`: An object containing the orbital data and field information.
+    - `x` (array-like): x-coordinates for the 2D grid on which the field is evaluated.
+    - `y` (array-like): y-coordinates for the 2D grid on which the field is evaluated.
+    - `z` (float): z-coordinate slice at which the field is evaluated in the xy-plane.
+    - `component` (int, optional): The field component to display (default is 0). Represents the direction (e.g., x, y, or z) of the field.
+    - `density_matrix` (optional): The density matrix used to calculate the induced field. If not provided, the initial density matrix will be used.
+
+    Notes:
+    - The plot visualizes the induced field's magnitude using a logarithmic scale for better representation of variations in field strength.
+    - The field is normalized before applying the logarithm, ensuring that relative differences in field strength are emphasized.
     """
 
     density_matrix = (
