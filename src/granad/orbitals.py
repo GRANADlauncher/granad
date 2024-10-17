@@ -944,7 +944,7 @@ class OrbitalList:
             (te * (te > self.eps)) ** 3
             * transition_dipole_moments
             * factor
-        )
+        ).real
 
     @staticmethod
     def _transform_basis(observable, vectors):

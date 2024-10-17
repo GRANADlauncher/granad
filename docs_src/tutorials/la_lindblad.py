@@ -132,7 +132,7 @@ flake.show_res(result, show_illumination=False, plot_labels = labels)
 # +
 import matplotlib.pyplot as plt
 gamma_matrix = flake.wigner_weisskopf_transition_rates
-plt.matshow(gamma_matrix.real)
+plt.matshow(gamma_matrix)
 plt.colorbar()
 plt.show()
 # -
