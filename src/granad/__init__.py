@@ -1,4 +1,3 @@
-# TODO: remove warning suppression
 import warnings
 warnings.filterwarnings('ignore')
 

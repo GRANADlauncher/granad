@@ -1,7 +1,6 @@
 import jax
 import jax.numpy as jnp
 
-# TODO: not really pythonic naming style ...    
 def Wave(
     amplitudes: list[float],
     frequency: float,

@@ -191,7 +191,6 @@ def _density_aufbau(
     return jnp.diag(occupation) / electrons
 
 
-# TODO: DRY: abstract out basis trafo
 def _get_self_consistent(
     hamiltonian,
     coulomb,
@@ -359,7 +358,6 @@ def get_integrator( hamiltonian, dissipator, postprocesses, solver, stepsize_con
     
     return integrator
 
-# TODO: result handling
 def td_run(d_ini, integrator, time_axis, args):
     shapes_known = False
     for ts in time_axis:

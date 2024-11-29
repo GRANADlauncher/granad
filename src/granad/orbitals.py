@@ -409,10 +409,8 @@ class OrbitalList:
             dummy = jnp.arange(len(self))
             triangle_mask = dummy[:, None] >= dummy
 
-            # TODO: in principle we can build a big tensor NxNxgroups, vmap over the last axis and sum the groups
             # first, we loop over all group_id couplings => interactions between groups
             for key, function in coupling_dict.group_id_items():
-                # TODO:  big uff:  we rely on the correct ordering of the group_ids for cols and rows, first key is always smaller than last keys => we get upper triangular valid indices
                 # if it were the other way around, these would be zeroed by the triangle mask
                 cols = group_ids == key[0].id
                 rows = (group_ids == key[1].id)[:, None]
@@ -431,14 +429,12 @@ class OrbitalList:
                 cols.append(self._list.index(key[1]))
                 vals.append(val)
 
-            # TODO: uff not good
             vals = jnp.array(vals)
             matrix = matrix.at[rows, cols].set(vals)
             matrix = matrix.at[cols, rows].set(vals.conj())
 
             return matrix
 
-        # TODO: rounding
         positions = self.positions
         distances = jnp.round(positions - positions[:, None], 6)
         group_ids = jnp.array( [orb.group_id.id for orb in self._list] )
@@ -451,7 +447,6 @@ class OrbitalList:
         )
         return hamiltonian, coulomb
 
-    # TODO: abstract this boilerplate away
     @mutates
     def set_dipole_element(self, orb1, orb2, arr):
         """
@@ -547,7 +542,6 @@ class OrbitalList:
 
         self._hamiltonian, self._coulomb = self._hamiltonian_coulomb()
 
-        # TODO: there is something weird happening here!        
         self._eigenvectors, self._energies = jax.lax.linalg.eigh(self._hamiltonian)
 
         self._initial_density_matrix = _numerics._density_matrix(
@@ -621,7 +615,6 @@ class OrbitalList:
         self._list.append(other)
         self.params.electrons += 1
 
-    # TODO: replace if else with action map
     def filter_orbs( self, orb_id, t ):
         def filter_single_orb(orb_id, t):
             if type(orb_id) == t:
@@ -659,7 +652,6 @@ class OrbitalList:
             if isinstance(orb_id, Orbital) and t == str:
                 return [orb_id.tag]
 
-        # TODO: this is bad, do action map
         if not isinstance(orb_id, OrbitalList):
             orb_id = [orb_id]
 
@@ -775,7 +767,6 @@ class OrbitalList:
     def positions(self):
         return jnp.array([orb.position for orb in self._list])
 
-    # TODO: too verbose
     @property
     def electrons( self ):
         return self.params.electrons
@@ -1140,7 +1131,6 @@ class OrbitalList:
             contents["induced"] = potentials.Induced( )
         return contents
 
-    # TODO: default saturation
     @staticmethod
     def get_dissipator(relaxation_rate = None, saturation = None):
         """Dict holding the term of the default dissipator: either decoherence time from relaxation_rate as float and ignored saturation or lindblad from relaxation_rate as array and saturation function"""
@@ -1151,7 +1141,6 @@ class OrbitalList:
         func  = (lambda x: 1 / (1 + jnp.exp(-1e6 * (2.0 - x)))) if saturation is None else saturation
         return {"lindblad" : dissipators.SaturationLindblad(func) }        
 
-    # TODO: rewrite, should be static, leaks mem
     def get_postprocesses( self, expectation_values, density_matrix ):
         postprocesses = {}
         if isinstance(expectation_values, jax.Array):
@@ -1176,7 +1165,6 @@ class OrbitalList:
         return postprocesses
 
 
-    # TODO: illumination is too implicit, args may be too implicit, but idk what else to do rn
     @recomputes
     def master_equation(            
             self,
@@ -1410,7 +1398,6 @@ class OrbitalList:
         with open( name, "w" ) as f:
             f.writelines(str_rep)
 
-    # TODO: this far too simplistic
     @classmethod
     def from_xyz( cls, name : str ):
         orbs, group_id = [], _watchdog._Watchdog.next_value()        

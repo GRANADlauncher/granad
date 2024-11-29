@@ -533,17 +533,17 @@ def get_mos2():
             .add_interaction(
                 "hamiltonian",
                 participants=("d_molybdenum", "p_sulfur"),
-                parameters=[-3.352]  # Hypothetical hamiltonian parameter
+                parameters=[-3.352]  
             )
             .add_interaction(
                 "hamiltonian",
                 participants=("p_sulfur", "p_sulfur"),
-                parameters=[-2., 0.1, 0.1]  # Hypothetical hamiltonian parameter
+                parameters=[-2., 0.1, 0.1]  
             )
             .add_interaction(
                 "hamiltonian",
                 participants=("d_molybdenum", "d_molybdenum"),
-                parameters=[0.201, 0.2175]  # Hypothetical hamiltonian parameter
+                parameters=[0.201, 0.2175]  
             )
             .add_interaction(
                 "coulomb",
@@ -577,17 +577,17 @@ def get_hbn():
             .add_interaction(
                 "hamiltonian",
                 participants=("pz_boron", "pz_boron"),
-                parameters=[2.46, -0.04],  # Hypothetical hamiltonian parameter
+                parameters=[2.46, -0.04],  
             )
             .add_interaction(
                 "hamiltonian",
                 participants=("pz_nitrogen", "pz_nitrogen"),
-                parameters=[-2.55, -0.04],  # Hypothetical hamiltonian parameter
+                parameters=[-2.55, -0.04],  
             )
             .add_interaction(
                 "hamiltonian",
                 participants=("pz_boron", "pz_nitrogen"),
-                parameters=[-2.16],  # Hypothetical hamiltonian parameter
+                parameters=[-2.16],  
             )
             .add_interaction(
                 "coulomb",

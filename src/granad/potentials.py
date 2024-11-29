@@ -1,7 +1,6 @@
 import jax
 import jax.numpy as jnp
 
-# TODO: not really pythonic naming style ...        
 def DipolePulse( dipole_moment, source_location, omega = None, sigma = None, t0 = 0.0, kick = False ):
     """Function to compute the potential due to a pulsed dipole. The potential can optionally include a 'kick' which is an instantaneous spike at a specific time.
     If the dipole is placed at a position occupied by orbitals, its contribution will be set to zero.
@@ -61,7 +60,6 @@ def WavePulse( amplitudes, omega = None, sigma = None, t0 = 0.0, kick = False ):
 
     return pot
     
-# TODO: clean up, RWA messy, allocates 3 potentially big intermediate matrices
 def DipoleGauge(illumination, use_rwa = False, intra_only = False):     
     """Dipole gauge coupling to an external electric field, represented as $\\vec{E} \cdot \hat{\\vec{P}}$. The dipole / polarization operator is
     defined by $P^{c}_{ij} = <i|\hat{r}_c|j>$, where $i,j$ correspond to localized (TB) orbitals, such that $\hat{r}^c|i> = r^c{i}|i>$ in absence of dipole transitions.
@@ -90,7 +88,6 @@ def DipoleGauge(illumination, use_rwa = False, intra_only = False):
         # make hermitian again
         return tmp - 1j*jnp.diag(tmp.diagonal().imag)
 
-    # TODO: redundant evaluation
     maybe_diag = lambda f : f
     if intra_only == True:
         maybe_diag = lambda f : lambda t, r, args : f(t,r,args) - jnp.diag( f(t,r,args).diagonal() )

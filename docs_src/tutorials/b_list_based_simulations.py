@@ -178,7 +178,7 @@ def interlayer_hopping( distance ):
 stack.set_hamiltonian_groups( flake, second_flake, interlayer_hopping )
 # -
 
-# We can perform a slightly more interesting simulation by looping over a bunch of nearest-neighbor couplings and study the impact on the energy landscape. To this end, we rewrite the coupling function: TODO: explain more
+# We can perform a slightly more interesting simulation by looping over a bunch of nearest-neighbor couplings and study the impact on the energy landscape. To this end, we rewrite the coupling function: 
 
 # +
 def interlayer_hopping_factory( coupling ):
