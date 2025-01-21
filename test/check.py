@@ -9,7 +9,7 @@ def rpa_vs_td(flake, omegas_rpa, name):
     res_rpa, res_td = [], []
 
     # coulomb parameters
-    cs =  jnp.linspace(0, 1, 40)
+    cs =  jnp.linspace(0, 1, 20)
     
     for c in cs:
 
@@ -47,25 +47,30 @@ def rpa_vs_td(flake, omegas_rpa, name):
         res_td.append(absorption_td)
 
     ## plot comparison
-    res_td = jnp.array(res_td)
-    res_rpa = jnp.array(res_rpa)
+    res_td = jnp.array(res_td).T
+    res_rpa = jnp.array(res_rpa).T
 
     interpolation = None #'sinc'
-    plt.imshow(res_rpa / res_rpa.max(), extent=[cs.min(), cs.max(), omegas_rpa.min(), omegas_rpa.max()],
+    plt.imshow( (res_rpa / res_rpa.max())**(1/4) , extent=[cs.min(), cs.max(), omegas_rpa.min(), omegas_rpa.max()],
                origin='lower', aspect='auto', cmap='viridis', interpolation=interpolation)
     
     plt.savefig(f'{name}_rpa.pdf')
-    plt.imshow(res_td / res_td.max(), extent=[cs.min(), cs.max(), omegas_td.min(), omegas_td.max()],
+    plt.imshow( (res_td / res_td.max())**(1/4), extent=[cs.min(), cs.max(), omegas_td.min(), omegas_td.max()],
                origin='lower', aspect='auto', cmap='viridis', interpolation=interpolation)
     plt.savefig(f'{name}_td.pdf')
 
 if __name__ == '__main__':
-    # get material
+    doping = 10
     graphene = MaterialCatalog.get( "graphene" )
-    # cut a 15 Angström wide triangle from the lattice (can also be an arbitrary polygon)
-    flake = graphene.cut_flake( Triangle(15), plot = False  ) 
-
-    # frequencies
-    omegas_rpa = jnp.linspace(0, 6, 40)
-
+    flake = graphene.cut_flake( Triangle(30), plot = False  )
+    flake.set_electrons(flake.electrons + doping)
+    flake.show_2d(name = 'graphene.pdf')
+    omegas_rpa = jnp.linspace(0, 4, 40)
     rpa_vs_td(flake, omegas_rpa, "graphene")
+
+    doping = 10
+    flake = MaterialCatalog.get("metal_1d").cut_flake( 70 )
+    flake.set_electrons(flake.electrons + doping)
+    flake.show_2d(name = 'chain.pdf')
+    omegas_rpa = jnp.linspace(0, 4, 40)    
+    rpa_vs_td(flake, omegas_rpa, "chain")
