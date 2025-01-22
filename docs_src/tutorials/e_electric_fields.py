@@ -45,7 +45,53 @@ print(e_field.shape)
 # -
 
 # +
-plt.plot(time, e_field.real)
-plt.plot(time, e_field.imag, '--')
+plt.plot(time, e_field.real, label="Real Part")
+plt.plot(time, e_field.imag, '--', label="Imaginary Part")
+plt.title("Electric Field")
+plt.xlabel("Time")
+plt.ylabel("Field Amplitude")
 plt.show()
 # -
+
+# The `Ramp` electric field introduces a ramping effect to the field amplitude. 
+# The field starts ramping up at a specified time (`time_ramp`) and the duration of this ramping effect is controlled by `ramp_duration`.
+# The `amplitudes` parameter defines the field components in the x, y, and z directions, while `frequency` specifies the time-harmonic oscillation of the field.
+
+# +
+from granad import Ramp
+ramp = Ramp(amplitudes=[1, 0, 0], frequency=1, ramp_duration=5, time_ramp=10)
+time = jnp.linspace(0, 20, 500)
+e_field_ramp = jax.vmap(ramp)(time)
+
+plt.figure()
+plt.plot(time, e_field_ramp.real, label="Real Part")
+plt.plot(time, e_field_ramp.imag, '--', label="Imaginary Part")
+plt.title("Ramp Electric Field")
+plt.xlabel("Time")
+plt.ylabel("Field Amplitude")
+plt.legend()
+plt.show()
+# -
+
+# The `Pulse` electric field introduces a temporally localized oscillation using a Gaussian envelope.
+# The `peak` parameter specifies the time at which the pulse reaches its maximum amplitude, and `fwhm` (full width at half maximum) controls the width of the pulse.
+# Similar to `Wave` and `Ramp`, `amplitudes` and `frequency` define the field components and oscillation frequency.
+
+# +
+from granad import Pulse
+pulse = Pulse(amplitudes=[1, 0, 0], frequency=1, peak=10, fwhm=2)
+time = jnp.linspace(0, 20, 500)
+e_field_pulse = jax.vmap(pulse)(time)
+
+plt.figure()
+plt.plot(time, e_field_pulse.real, label="Real Part")
+plt.plot(time, e_field_pulse.imag, '--', label="Imaginary Part")
+plt.title("Pulse Electric Field")
+plt.xlabel("Time")
+plt.ylabel("Field Amplitude")
+plt.legend()
+plt.show()
+# -
+
+
+
