@@ -194,6 +194,8 @@ def show_res(
     show_illumination = False,
     omega_max = None,
     omega_min = None,
+    xlabel = None,
+    ylabel = None
 ):
     """
     Visualizes the evolution of an expectation value over time or frequency, based on the given simulation results.
@@ -206,6 +208,8 @@ def show_res(
         `show_illumination` (bool, optional): Whether to include illumination data in the plot. If `True`, illumination components are displayed.
         `omega_max` (optional): Upper bound for the frequency range, used when plotting in the frequency domain.
         `omega_min` (optional): Lower bound for the frequency range, used when plotting in the frequency domain.
+         `xlabel` (optional) : x-axis label for the plot
+         `ylabel` (optional) : y-axis label for the plot
 
     Notes:
         The function adapts automatically to display either time-dependent or frequency-dependent results based on the presence of `omega_max` and `omega_min`.
@@ -238,6 +242,11 @@ def show_res(
                 _show(illu_flat, f'illumination_{cart_list[component]}')
             
     plt.legend()
+    
+    if xlabel:
+        ax.set_xlabel(xlabel)
+    if ylabel:
+        ax.set_ylabel(ylabel)
 
 
 @_plot_wrapper

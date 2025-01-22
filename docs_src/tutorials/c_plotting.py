@@ -65,12 +65,12 @@ result = flake.master_equation(
     grid=100, # save every 100-th time step
 )
 plot_labels = ['j_x', 'j_y', 'j_z'] 
-flake.show_res( result, plot_labels = plot_labels )
+flake.show_res( result, plot_labels = plot_labels, xlabel = r'$t$', ylabel = r'$j$')
 # -
 
 # A detailed description of parameters to the Gaussian pulse is given in the electric fields tutorial.
 
-# We can also Fourier transform the result to obtain the frequency domain result by specifying the omega limits
+# We can also Fourier transform the result to obtain the frequency domain result by specifying the omega limits. Note that omitting the variables xlabel and ylabel will result in no axis labels.
 
 # +
 flake.show_res( result, omega_max = 5, omega_min = 0, plot_labels = plot_labels )
