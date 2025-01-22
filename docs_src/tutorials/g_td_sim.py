@@ -206,7 +206,7 @@ print(result.output[2].shape) # we specified ["full", "occ_x"] => site occupatio
 
 ### EPI
 
-# The energy-based plasmonicity index is a quantity to characterize the steady-state plasmonicity. We use plane wave illumination to drive the system into a steady state and then compute the EPI
+# The energy-based plasmonicity index introduced by [Müller et al.](https://pubs.acs.org/doi/10.1021/acs.jpcc.0c07964) is a quantity to characterize the steady-state plasmonicity. We use plane wave illumination to drive the system into a steady state and then compute the EPI.
 
 # +
 import jax.numpy as jnp

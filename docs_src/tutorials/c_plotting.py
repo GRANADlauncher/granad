@@ -46,9 +46,11 @@ stack.show_3d()
 
 ### Simulation output
 
-# There is a dedicated function for showing time-domain simulation results. Let's illustrate this by tracking the current considering the previously defined flake under x-polarized Gaussian pulsed illumination, which in GRANAD's units is equivalent to the velocity operator given by
+# There is a dedicated function for showing time-domain simulation results. Let's illustrate this by tracking the current considering the previously defined flake under x-polarized Gaussian pulsed illumination, which in GRANAD's units is equivalent to the velocity operator given by the commutator of the system hamiltonian $H$ and the polarization operator $P$
 
 # $$\bf{v} = \frac{-i}{\hbar} [H, \bf{P}]$$
+
+# The time-dependent induced current (density) is given by the expectation value of the current density operator $j$, which is related to the velocity operator as $j = ev$. In GRANAD's units, setting the elementary charge $e = 1$, the velocity operator is thus identical to the current density operator, with which we can immediately evalute the induced currents due to the external field.
 
 # +
 from granad import Pulse
@@ -74,7 +76,7 @@ flake.show_res( result, plot_labels = plot_labels )
 flake.show_res( result, omega_max = 5, omega_min = 0, plot_labels = plot_labels )
 # -
 
-# Note that the sparsity of the spectral grid ows to the sparse sampling in time domain which we have chosen for demonstrational purposes. A real simulation requires more careful refinement of the temporal grid.
+# Note that the sparsity of the spectral grid ows to the sparse sampling in time domain which we have chosen for demonstrational purposes. A real simulation requires more careful refinement of the temporal grid. A finer temporal grid or longer integration time generally results in higher quality spectra.
 
 ### Space-dependent arrays
 
