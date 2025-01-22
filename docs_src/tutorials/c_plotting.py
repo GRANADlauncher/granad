@@ -46,11 +46,11 @@ stack.show_3d()
 
 ### Simulation output
 
-# There is a dedicated function for showing time-domain simulation results. Let's illustrate this by tracking the current considering the previously defined flake under x-polarized Gaussian pulsed illumination, which in GRANAD's units is equivalent to the velocity operator given by the commutator of the system hamiltonian $H$ and the polarization operator $P$
+# There is a dedicated function for showing time-domain simulation results. Let's illustrate this by tracking the current considering the previously defined flake under x-polarized Gaussian pulsed illumination, which in GRANAD's units is equivalent to the velocity operator given by the commutator of the system hamiltonian $H$ and the polarization operator $\bf{P}$
 
 # $$\bf{v} = \frac{-i}{\hbar} [H, \bf{P}]$$
 
-# The time-dependent induced current (density) is given by the expectation value of the current density operator $j$, which is related to the velocity operator as $j = ev$. In GRANAD's units, setting the elementary charge $e = 1$, the velocity operator is thus identical to the current density operator, with which we can immediately evalute the induced currents due to the external field.
+# The time-dependent induced current (density) is given by the expectation value of the current density operator $\bf{j}$, which is related to the velocity operator as $\bf{j} = e\bf{v}$. In GRANAD's units, setting the elementary charge $e = 1$, the velocity operator is thus identical to the current density operator, with which we can immediately evalute the induced currents due to the external field.
 
 # +
 from granad import Pulse
