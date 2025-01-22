@@ -95,3 +95,32 @@ flake.show_2d( display = flake.eigenvectors[:, 0], scale = True )
 # -
 
 # Additionally, if you supply the keyword argument name = "MY-PLOT-NAME.pdf" to any plotting function, the plot will not be displayed, but instead saved to disk in the directory you invoked Python.
+
+
+# There exists a convenience function to compute and visualize the induced field at an arbitrary time step. To this end, we run a full simulation
+
+# +
+result = flake.master_equation(
+    relaxation_rate = 1/10,
+    illumination = pulse,
+    end_time = 40,
+    density_matrix = ["full"], # this argument may be removed
+     )
+density_matrix = result.output[-1]
+# -
+
+# Then, we define the extent of a 2D grid
+
+# +
+import jax.numpy as jnp
+xmin, xmax = flake.positions[:, 0].min(), flake.positions[:, 0].max()
+x_grid = jnp.linspace(xmin - 1, xmax + 1, 40)
+ymin, ymax = flake.positions[:, 1].min(), flake.positions[:, 1].max()
+y_grid = jnp.linspace(ymin - 1, ymax + 1, 40)
+# -
+
+# Then, we plot the field
+
+# +
+flake.show_induced_field(x = x_grid, y = y_grid, component = 0, z = jnp.array([0]), density_matrix = density_matrix[-1])
+# -
