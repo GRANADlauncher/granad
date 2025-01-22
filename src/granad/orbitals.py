@@ -1255,7 +1255,10 @@ class OrbitalList:
         # set reasonable default 
         initial_density_matrix = initial_density_matrix if initial_density_matrix is not None else rhs_args.initial_density_matrix
 
-        return self._integrate_master_equation( list(hamiltonian.values()), list(dissipator.values()), list(postprocesses.values()), rhs_args, illumination, solver, stepsize_controller, initial_density_matrix, start_time, end_time, grid, max_mem_gb, dt )
+        try:        
+            return self._integrate_master_equation( list(hamiltonian.values()), list(dissipator.values()), list(postprocesses.values()), rhs_args, illumination, solver, stepsize_controller, initial_density_matrix, start_time, end_time, grid, max_mem_gb, dt )
+        except Exception as e:
+            print("Simulation crashed with exception {e}. Try increasing the time mesh and make your sure your illumination is differentiable.")
 
     @staticmethod
     def _integrate_master_equation( hamiltonian, dissipator, postprocesses, rhs_args, illumination, solver, stepsize_controller, initial_density_matrix, start_time, end_time, grid, max_mem_gb, dt ):
