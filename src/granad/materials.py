@@ -562,10 +562,13 @@ def get_mos2():
             )
             )
 
+def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_hoppings = None):
+    bb_hoppings = [2.46, -0.04] or bb_hoppings
+    bn_hoppings = [-2.16] or bn_hoppings
+    nn_hoppings = [-2.55, -0.04] or nn_hoppings
     
-def get_hbn():
     return (Material("hBN")
-            .lattice_constant(2.50)  # Approximate lattice constant of hBN
+            .lattice_constant(lattice_constant)  # Approximate lattice constant of hBN
             .lattice_basis([
                 [1, 0, 0],
                 [-0.5, jnp.sqrt(3)/2, 0],  # Hexagonal lattice
@@ -577,17 +580,17 @@ def get_hbn():
             .add_interaction(
                 "hamiltonian",
                 participants=("pz_boron", "pz_boron"),
-                parameters=[2.46, -0.04],  
+                parameters=bb_hoppings,  
             )
             .add_interaction(
                 "hamiltonian",
                 participants=("pz_nitrogen", "pz_nitrogen"),
-                parameters=[-2.55, -0.04],  
+                parameters=nn_hoppings,  
             )
             .add_interaction(
                 "hamiltonian",
                 participants=("pz_boron", "pz_nitrogen"),
-                parameters=[-2.16],  
+                parameters=bn_hoppings,
             )
             .add_interaction(
                 "coulomb",
