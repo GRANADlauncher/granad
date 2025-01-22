@@ -96,8 +96,9 @@ flake.show_2d( display = flake.eigenvectors[:, 0], scale = True )
 
 # Additionally, if you supply the keyword argument name = "MY-PLOT-NAME.pdf" to any plotting function, the plot will not be displayed, but instead saved to disk in the directory you invoked Python.
 
-
-# There exists a convenience function to compute and visualize the induced field at an arbitrary time step. To this end, we run a full simulation
+# There exists a convenience function to compute and visualize the induced field at an arbitrary time step. 
+# To achieve this, we first run a full simulation of the system using the `flake.master_equation` function
+# and extract the density matrix at the last time step.
 
 # +
 result = flake.master_equation(
@@ -109,18 +110,36 @@ result = flake.master_equation(
 density_matrix = result.output[-1]
 # -
 
-# Then, we define the extent of a 2D grid
+# Next, we define the extent of a 2D grid. This grid represents the spatial domain where the induced field 
+# will be evaluated. The grid points are created to encompass the range of particle positions in the x and y 
+# dimensions, extended slightly to include a buffer region.
 
 # +
 import jax.numpy as jnp
-xmin, xmax = flake.positions[:, 0].min(), flake.positions[:, 0].max()
-x_grid = jnp.linspace(xmin - 1, xmax + 1, 40)
-ymin, ymax = flake.positions[:, 1].min(), flake.positions[:, 1].max()
-y_grid = jnp.linspace(ymin - 1, ymax + 1, 40)
+xmin, xmax = flake.positions[:, 0].min(), flake.positions[:, 0].max()  # Compute the minimum and maximum x-coordinates 
+                                                                       # of the particle positions.
+x_grid = jnp.linspace(xmin - 1, xmax + 1, 40)  # Create a 1D array of 40 evenly spaced points in the x-direction, 
+                                               # extending slightly beyond the range of the particles.
+
+ymin, ymax = flake.positions[:, 1].min(), flake.positions[:, 1].max()  # Compute the minimum and maximum y-coordinates 
+                                                                       # of the particle positions.
+y_grid = jnp.linspace(ymin - 1, ymax + 1, 40)  # Create a 1D array of 40 evenly spaced points in the y-direction, 
+                                               # extending slightly beyond the range of the particles.
 # -
 
-# Then, we plot the field
+# Finally, we use the `show_induced_field` function to compute and visualize the induced field on the 
+# defined 2D grid. This function calculates the field based on the density matrix, evaluates it on the grid, 
+# and plots the normalized logarithmic magnitude of the induced field.
 
 # +
-flake.show_induced_field(x = x_grid, y = y_grid, component = 0, z = jnp.array([0]), density_matrix = density_matrix[-1])
+flake.show_induced_field(
+    x = x_grid,              # The x-coordinates of the grid points where the field will be evaluated.
+    y = y_grid,              # The y-coordinates of the grid points where the field will be evaluated.
+    component = 0,           # Specifies which component (direction) of the field to visualize. 
+                             # Here, the x-component (0) is selected.
+    z = jnp.array([0]),      # The z-coordinate of the plane in which the field is evaluated. 
+                             # Here, it is set to 0 to visualize the field in the xy-plane.
+    density_matrix = density_matrix[-1]  # The final density matrix from the simulation is passed as an argument, 
+                                         # ensuring that the field reflects the system's state at the final time step.
+)
 # -
