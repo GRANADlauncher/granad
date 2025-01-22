@@ -130,7 +130,7 @@
 <p>All public plotting functions are associated with a list of orbitals.</p>
 <h2 id="geometry">Geometry</h2>
 <p>Geometries can be visualized in 2D or 3D.</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Rectangle</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Rectangle</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span> <span class="p">)</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_2d</span><span class="p">()</span>
@@ -146,7 +146,7 @@
 <h2 id="simulation-output">Simulation output</h2>
 <p>There is a dedicated function for showing time-domain simulation results. Let's illustrate this by tracking the current considering the previously defined flake under x-polarized Gaussian pulsed illumination, which in GRANAD's units is equivalent to the velocity operator given by</p>
 <div class="arithmatex">\[\bf{v} = \frac{-i}{\hbar} [H, \bf{P}]\]</div>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span> <span class="nn">granad</span> <span class="kn">import</span> <span class="n">Pulse</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">2.3</span><span class="p">,</span> <span class="n">peak</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mi">2</span>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="p">)</span>
@@ -161,14 +161,12 @@
 </span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span> <span class="n">result</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">plot_labels</span> <span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
-
-
 RHS compiled
 
 
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../c_plotting_files/c_plotting_10_3.png" /></p>
+<p><img alt="png" src="../c_plotting_files/c_plotting_10_2.png" /></p>
 <p>A detailed description of parameters to the Gaussian pulse is given in the electric fields tutorial.</p>
 <p>We can also Fourier transform the result to obtain the frequency domain result by specifying the omega limits</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span> <span class="n">result</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">plot_labels</span> <span class="p">)</span>
