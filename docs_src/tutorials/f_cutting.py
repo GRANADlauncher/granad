@@ -101,22 +101,3 @@ help(Rectangle)
 # +
 flake = graphene.cut_flake( Rectangle(10,12), plot = True, minimum_neighbor_number = 0 )
 # -
-
-
-### Layers
-
-# If you have a naturally layered structure, eg MoS2, and you cut by keeping every atom with < 2 neighbors, you get
-
-# +
-from granad import MaterialCatalog, Rectangle
-mos2 = MaterialCatalog.get("MoS2")
-flake = mos2.cut_flake( Rectangle(10,10), plot = True )
-# -
-
-# So there seem to be dangling atoms. The reason is that in "3d", we need to remove < 3 neighbors
-
-# +
-from granad import MaterialCatalog, Rectangle
-mos2 = MaterialCatalog.get("MoS2")
-flake = mos2.cut_flake( Rectangle(10,10), plot = True, minimum_neighbor_number = 3 )
-# -
