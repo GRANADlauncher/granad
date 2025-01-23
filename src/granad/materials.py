@@ -518,6 +518,24 @@ class Material:
         return orbital_list
 
 def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_hoppings = None):
+    """
+    Get a material representation for hexagonal boron nitride (hBN).
+
+    Parameters:
+    - lattice_constant (float): The lattice constant for hBN. Default is 2.50.
+    - bb_hoppings (list or None): Hopping parameters for B-B interactions. 
+                                  Default is [2.46, -0.04].
+    - nn_hoppings (list or None): Hopping parameters for nearest-neighbor interactions. 
+                                  Default is [-2.55, -0.04].
+    - bn_hoppings (list or None): Hopping parameters for B-N interactions. 
+                                  Default is [-2.16].
+
+    Default values are derived from the study of the electronic structure of hexagonal boron nitride (hBN).
+    See https://www.semanticscholar.org/paper/Study-of-the-Electronic-Structure-of-hexagonal-on-Unibertsitatea-Thesis/ff1e000bbad5d8e2df5f85cb724b1a9e42a8b0f0 for more details.
+
+    Returns:
+    - A tuple containing the lattice constant and hopping parameters.
+    """
     bb_hoppings = [2.46, -0.04] or bb_hoppings
     bn_hoppings = [-2.16] or bn_hoppings
     nn_hoppings = [-2.55, -0.04] or nn_hoppings
