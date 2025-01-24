@@ -43,7 +43,7 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     # decider whether to take abs val and normalize 
     def scale_vals( vals ):
         return jnp.abs(vals) / jnp.abs(vals).max() if scale else vals
-    
+
     # Determine which tags to display
     if show_tags is None:
         show_tags = {orb.tag for orb in orbs}
@@ -60,12 +60,20 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     # Create plot
     fig, ax = plt.subplots()
 
-    if display is not None:
+    if display is not None:        
         cmap = plt.cm.bwr if cmap is None else cmap
-        colors = scale_vals(display)
-        scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
-        ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], color='black', s=10, marker='o')
+        # symmetrize for real, two-signed input
+        if not jnp.iscomplex(display).any() and jnp.sum(display.real <= 0) != display.size:
+            dmin, dmax = jnp.min(display), jnp.max(display)
+            lim = dmax if dmax > jnp.abs(dmin) else -dmin
+            scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c = display, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
+            scatter.set_clim(-lim, lim)
+        else:
+            colors = scale_vals(display)            
+            scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
+        ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], color='black', s=10, marker='o')            
         cbar = fig.colorbar(scatter, ax=ax)
+        
     else:
         # Color by tags if no show_state is given
         unique_tags = list(set(orb.tag for orb in orbs))
