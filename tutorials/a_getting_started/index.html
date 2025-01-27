@@ -218,6 +218,7 @@ hBN
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>List with 2 orbitals, 2 electrons.
 Excitation: [0] electrons excited from energy levels [0] to [0].
+Included tags with number of orbitals: {&#39;a tag contains arbitrary information&#39;: 1, &#39;a new, shifted orbital&#39;: 1}
 </code></pre></div>
 <p>This displays information about the number of orbitals, electrons and single-particle excitations involved in constructing the initial density matrix.</p>
 <p>Alternatively, orbital lists can represent flakes cut from a material. You do this by specifying the shape of the flake.
@@ -234,6 +235,7 @@ For now, we will use a built-in shape: an triangle with a base length of 18 Angs
 <p><img alt="png" src="../a_getting_started_files/a_getting_started_23_0.png" /></p>
 <div class="language-text highlight"><pre><span></span><code>List with 46 orbitals, 46 electrons.
 Excitation: [0] electrons excited from energy levels [0] to [0].
+Included tags with number of orbitals: {&#39;sublattice_1&#39;: 25, &#39;sublattice_2&#39;: 21}
 </code></pre></div>
 <p>Note that the <code>plot=True</code> option displays an "infinite" graphene sheet (blue points), from which only the flake (orange points) will be kept in the final structure. If you want to visualize the flake in isolation, use <code>show_2d</code>, as explained in more detail in the plotting tutorial.</p>
 <p>There is an extra option for dealing with graphene-like lattices we can pass to the built-in shape, which is the armchair boolean. It rotates the shape to get the correct edge type. The optional "shift" argument lets you shift the shape in the plane.</p>

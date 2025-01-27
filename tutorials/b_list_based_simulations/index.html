@@ -149,6 +149,7 @@
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>List with 2 orbitals, 2 electrons.
 Excitation: [0] electrons excited from energy levels [0] to [0].
+Included tags with number of orbitals: {&#39;atom&#39;: 2}
 </code></pre></div>
 <p>We can tell that the total electron number in our system is 2, since by default GRANAD considers each orbital to contribute 1 electron. This can be changed as follows</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">atom</span><span class="o">.</span><span class="n">set_electrons</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -156,6 +157,7 @@ Excitation: [0] electrons excited from energy levels [0] to [0].
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>List with 2 orbitals, 1 electrons.
 Excitation: [0] electrons excited from energy levels [0] to [0].
+Included tags with number of orbitals: {&#39;atom&#39;: 2}
 </code></pre></div>
 <p>We can compute static quantities of the atom, like its energies. By default, GRANAD considers all couplings to be zero unless stated otherwise. </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">energies</span><span class="p">)</span>
