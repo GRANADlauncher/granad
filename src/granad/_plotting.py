@@ -70,12 +70,12 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
             display = display.real
             dmin, dmax = jnp.min(display), jnp.max(display)
             lim = float(dmax) if float(dmax) > jnp.abs(dmin) else -float(dmin)
-            scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c = display, edgecolor='black', cmap=cmap, s = circle_scale )
+            scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c = display, edgecolor='black', cmap=cmap, s = circle_scale / 10 )
             scatter.set_clim(-lim, lim)
         elif mode == 'one-signed':
             cmap = plt.cm.Reds
             display = display.real
-            scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c = display, edgecolor='black', cmap=cmap, s = circle_scale )
+            scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c = display, edgecolor='black', cmap=cmap, s = circle_scale / 10 )
         else:
             colors = scale_vals(display)            
             scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
