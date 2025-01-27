@@ -94,6 +94,8 @@ from granad import Rectangle
 help(Rectangle)
 # -
 
+# Note: The "extent" of the shape refers to its minimum dimensions. For instance, when working with graphene, which has a bond length of approximately 1.42 Å, you should specify dimensions that avoid cutting into very small fragments, such as a single benzene ring (~2.46 Å in diameter). For meaningful simulations, ensure that the shape dimensions exceeds this scale.
+
 ### Bearded configurations
 
 # Cutting removes "dangling" atoms by default. Dangling atoms are defined by their neighbor number: if they have only one neighbor, they are removed. If you want to deactivate this to keep "bearded" configurations, do
