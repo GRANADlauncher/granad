@@ -97,17 +97,9 @@ flake.show_2d( display = flake.eigenvectors[:, 0], scale = True )
 
 # Furthermore, there are two special plot modes, given by the `mode` argument:
 # 
-# 1. `mode = 'two-signed'`:
-#    - This mode is designed for visualizing data with both positive and negative values, such as real parts of eigenvectors or signed distributions.
-#    - The plot uses a diverging colormap (centered at zero) to clearly distinguish between positive and negative values. 
-#    - The color limits are symmetrically set based on the maximum absolute value in the data, ensuring an even visual emphasis on both extremes.
-#    - This mode is particularly useful for understanding symmetry or changes in sign within the data.
+# 1. `mode = 'two-signed'`: This mode is designed for visualizing data with both positive and negative values, such as real parts of eigenvectors or signed distributions. The plot uses a diverging colormap (centered at zero) to clearly distinguish between positive and negative values.  The color limits are symmetrically set based on the maximum absolute value in the data, ensuring an even visual emphasis on both extremes. This mode is particularly useful for understanding symmetry or changes in sign within the data.
 # 
-# 2. `mode = 'one-signed'`:
-#    - This mode is intended for visualizing non-negative data or cases where only the magnitude of values is meaningful.
-#    - A sequential colormap is used to highlight variations in the data, with darker shades typically representing larger values.
-#    - Negative values in the `display` array are ignored in this mode, as the focus is on positive contributions.
-#    - This mode works well for showing absolute values of data, such as the magnitude of eigenvectors or probabilities.
+# 2. `mode = 'one-signed'`: This mode is intended for visualizing non-negative data or cases where only the magnitude of values is meaningful. A sequential colormap is used to highlight variations in the data, with darker shades typically representing larger values. Negative values in the `display` array are ignored in this mode, as the focus is on positive contributions. This mode works well for showing absolute values of data, such as the magnitude of eigenvectors or probabilities.
 # 
 # These modes provide flexibility in how data is visualized, depending on whether sign information is important or not.
 
