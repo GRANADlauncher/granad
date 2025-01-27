@@ -176,30 +176,46 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     ax.grid(True)
 
 @_plot_wrapper
-def show_energies(orbs):
+def show_energies(orbs, e_max = None, e_min = None):
     """
     Depicts the energy and occupation landscape of a stack, with energies plotted on the y-axis and eigenstates ordered by size on the x-axis.
 
     Parameters:
         `orbs`: An object containing the orbital data, including energies, electron counts, and initial density matrix.
+        `e_max` (float, optional): The upper limit of the energy range to display on the y-axis. 
+            - If `None`, the maximum energy is used by default.
+            - This parameter allows you to zoom into a specific range of energies for a more focused view.
+        `e_min` (float, optional): The lower limit of the energy range to display on the y-axis.
+            - If `None`, the minimum energy is used by default.
+            - This parameter allows you to filter out higher-energy states and focus on the lower-energy range.
 
     Notes:
         The scatter plot displays the eigenstate number on the x-axis and the corresponding energy (in eV) on the y-axis.
         The color of each point represents the initial state occupation, calculated as the product of the electron count and the initial density matrix diagonal element for each state.
         A color bar is added to indicate the magnitude of the initial state occupation for each eigenstate.
     """
+    from matplotlib.ticker import MaxNLocator
+    e_max = e_max or orbs.energies.max()
+    e_min = e_min or orbs.energies.min()
+    energies_filtered_idxs = jnp.argwhere( jnp.logical_and(orbs.energies <= e_max, orbs.energies >= e_min))
+    state_numbers = energies_filtered_idxs[:, 0]
+    energies_filtered = orbs.energies[energies_filtered_idxs]
+  
+    colors =  (jnp.diag(orbs.electrons * orbs.initial_density_matrix_e))[energies_filtered_idxs]
+
     fig, ax = plt.subplots(1, 1)
     plt.colorbar(
         ax.scatter(
-            jnp.arange(orbs.energies.size),
-            orbs.energies,
-            c=jnp.diag(orbs.electrons * orbs.initial_density_matrix_e),
+            state_numbers,
+            energies_filtered,
+            c=colors,
         ),
         label="initial state occupation",
     )
     ax.set_xlabel("eigenstate number")
     ax.set_ylabel("energy (eV)")
-
+    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.set_ylim(e_min, e_max)    
 
 @_plot_wrapper
 def show_res(
