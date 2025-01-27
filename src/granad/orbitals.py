@@ -1,4 +1,5 @@
 import os
+import traceback
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field, replace, asdict
 from functools import wraps
@@ -1263,7 +1264,8 @@ class OrbitalList:
         try:        
             return self._integrate_master_equation( list(hamiltonian.values()), list(dissipator.values()), list(postprocesses.values()), rhs_args, illumination, solver, stepsize_controller, initial_density_matrix, start_time, end_time, grid, max_mem_gb, dt )
         except Exception as e:
-            print("Simulation crashed with exception {e}. Try increasing the time mesh and make your sure your illumination is differentiable.")
+            print("Simulation crashed with exception {e}. Try increasing the time mesh and make your sure your illumination is differentiable. The full diffrax traceback follows below.")
+            traceback.print_stack()
 
     @staticmethod
     def _integrate_master_equation( hamiltonian, dissipator, postprocesses, rhs_args, illumination, solver, stepsize_controller, initial_density_matrix, start_time, end_time, grid, max_mem_gb, dt ):
