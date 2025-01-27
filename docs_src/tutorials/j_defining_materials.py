@@ -25,7 +25,7 @@ from granad import MaterialCatalog, Material, Hexagon
 print(Material.__doc__)
 # -
 
-# So, the Material class essentially defines a small language we can use to specify a material. The Hubbard model would look like this
+# So, the Material class essentially defines a small language we can use to specify a material. A preliminary, work-in-progress version of the Hubbard model would look like this
 
 # +
 t = 1. # nearest-neighbor hopping
@@ -86,7 +86,7 @@ flake.show_3d()
 # They can also be given as direction-dependent functions, like in Slater-Koster orbitals.
 # To this end, replace the neighbor coupling list by another list, where each entry specifies the coupling
 # as [d_x, d_y, d_z, coupling], where d_i are the distance vector components.
-# The example below illustrates this for the Haldane model of graphene.
+# The example below illustrates this for a preliminary, work-in-progress version of the Haldane model of graphene.
 
 # +
 import jax.numpy as jnp
