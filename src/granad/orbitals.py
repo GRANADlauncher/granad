@@ -23,14 +23,8 @@ class Orbital:
                                      may be None if not specified.
         tag (Optional[str]): An optional tag for additional identification or categorization of the orbital,
                              defaults to None.
-        energy_level (Optional[int]): The principal quantum number indicating the energy level of the orbital,
-                                      can be None.
-        angular_momentum (Optional[int]): The quantum number representing the angular momentum of the orbital,
-                                          optional and can be None.
-        angular_momentum_z (Optional[int]): The magnetic quantum number related to the z-component of the orbital's
-                                            angular momentum, optional.
         spin (Optional[int]): The spin quantum number of the orbital, indicating its intrinsic angular momentum,
-                              optional and may be None.
+                              optional and may be None. *Note* This is experimental.
         atom_name (Optional[str]): The name of the atom this orbital belongs to, can be None if not applicable.
         group_id (int): A group identifier for the orbital, automatically assigned by a Watchdog class
                         default factory method. For example, all pz orbitals in a single graphene flake get the same 
@@ -39,9 +33,6 @@ class Orbital:
     position: jax.Array = field(default_factory=lambda : jnp.array([0, 0, 0]), hash=False, compare=False)
     layer_index: Optional[int] = None
     tag: Optional[str] = None
-    energy_level: Optional[int] = None
-    angular_momentum: Optional[int] = None
-    angular_momentum_z: Optional[int] = None
     spin: Optional[int] = None
     atom_name: Optional[str] = None
     group_id: _watchdog.GroupId = field(default_factory=_watchdog._Watchdog.next_value)
@@ -55,10 +46,6 @@ class Orbital:
             (
                 self.layer_index,
                 self.tag,
-                self.energy_level,
-                self.angular_momentum,
-                self.angular_momentum_z,
-                self.angular_momentum,
                 self.spin,
                 self.atom_name,
                 self.group_id.id,

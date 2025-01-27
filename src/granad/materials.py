@@ -212,9 +212,7 @@ class Material:
     Attributes:
         name (str): The name of the material.
         species (dict): Dictionary mapping species names to their quantum numbers and associated atoms.
-                        Each species is defined with properties like principal quantum number (n),
-                        angular momentum quantum number (l), magnetic quantum number (m), spin quantum number (s),
-                        and the atom type.
+                        Each species is defined with properties like spin quantum number (s), and the atom type.
         orbitals (defaultdict[list]): A mapping from species to lists of orbitals. Each orbital is represented
                                       as a dictionary containing the orbital's position and an optional tag
                                       for further identification.
@@ -239,7 +237,7 @@ class Material:
                 [1, 0, 0],
                 [-0.5, jnp.sqrt(3)/2, 0]
             ])
-            .add_orbital_species("pz", l=1, atom='C')
+            .add_orbital_species("pz", atom='C')
             .add_orbital(position=(0, 0), tag="sublattice_1", species="pz")
             .add_orbital(position=(-1/3, -2/3), tag="sublattice_2", species="pz")
             .add_interaction(
@@ -364,22 +362,19 @@ class Material:
         self.orbitals[species].append({'position': position, 'tag': tag})
         return self
 
-    def add_orbital_species( self, name, n = 0, l = 0, m = 0, s = 0, atom  = ''):
+    def add_orbital_species( self, name, s = 0, atom  = ''):
         """
         Adds a species definition for orbitals in the material.
 
         Parameters:
             name (str): The name of the orbital species.
-            n (int): Principal quantum number.
-            l (int): Orbital angular momentum quantum number.
-            m (int): Magnetic quantum number.
             s (int): Spin quantum number.
             atom (str, optional): Name of the atom the orbital belongs to.
 
         Returns:
             Material: Returns self to enable method chaining.
         """
-        self.species[name] = (n,l,m,s,atom)
+        self.species[name] = (s,atom)
         return self
 
     def add_interaction(self, interaction_type, participants, parameters = None, expression = zero_coupling):
@@ -503,11 +498,8 @@ class Material:
                         layer_index = layer_index,
                         tag=orb_uc['tag'],
                         group_id = self._species_to_groups[species],                        
-                        energy_level = self.species[species][0],
-                        angular_momentum = self.species[species][1],
-                        angular_momentum_z= self.species[species][2],
-                        spin=self.species[species][3],
-                        atom_name=self.species[species][4]
+                        spin=self.species[species][0],
+                        atom_name=self.species[species][1]
                     )
                     layer_index += 1
                     raw_list.append(orb)
@@ -546,8 +538,8 @@ def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_
                 [1, 0, 0],
                 [-0.5, jnp.sqrt(3)/2, 0],  # Hexagonal lattice
             ])
-            .add_orbital_species("pz_boron", l=1, atom='B')
-            .add_orbital_species("pz_nitrogen", l=1, atom='N')
+            .add_orbital_species("pz_boron", atom='B')
+            .add_orbital_species("pz_nitrogen", atom='N')
             .add_orbital(position=(0, 0), tag="B", species="pz_boron")
             .add_orbital(position=(-1/3, -2/3), tag="N", species="pz_nitrogen")
             .add_interaction(
@@ -614,7 +606,7 @@ def get_graphene(hopping = -2.33):
                 [1, 0, 0],
                 [-0.5, jnp.sqrt(3)/2, 0]
             ])
-            .add_orbital_species("pz", l=1, atom='C')
+            .add_orbital_species("pz",  atom='C')
             .add_orbital(position=(0, 0), tag="sublattice_1", species="pz")
             .add_orbital(position=(-1/3, -2/3), tag="sublattice_2", species="pz")
             .add_interaction(
@@ -652,7 +644,7 @@ def get_ssh(delta = 0.2, displacement = 0.4):
             .lattice_basis([
                 [1, 0, 0],
             ])
-            .add_orbital_species("pz", l=1, atom='C')
+            .add_orbital_species("pz", atom='C')
             .add_orbital(position=(0,), tag="sublattice_1", species="pz")
             .add_orbital(position=(displacement,), tag="sublattice_2", species="pz")
             .add_interaction(
@@ -693,7 +685,7 @@ def get_metal_1d(hopping = -2.66):
             .lattice_basis([
                 [1, 0, 0],
             ])
-            .add_orbital_species("pz", l=1, atom='C')
+            .add_orbital_species("pz", atom='C')
             .add_orbital(position=(0,), tag="", species="pz")
             .add_interaction(
                 "hamiltonian",
