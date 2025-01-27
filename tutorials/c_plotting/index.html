@@ -189,20 +189,12 @@ RHS compiled
 <p><img alt="png" src="../c_plotting_files/c_plotting_21_0.png" /></p>
 <p>Furthermore, there are two special plot modes, given by the <code>mode</code> argument:</p>
 <ol>
-<li><code>mode = 'two-signed'</code>:</li>
-<li>This mode is designed for visualizing data with both positive and negative values, such as real parts of eigenvectors or signed distributions.</li>
-<li>The plot uses a diverging colormap (centered at zero) to clearly distinguish between positive and negative values. </li>
-<li>The color limits are symmetrically set based on the maximum absolute value in the data, ensuring an even visual emphasis on both extremes.</li>
 <li>
-<p>This mode is particularly useful for understanding symmetry or changes in sign within the data.</p>
+<p><code>mode = 'two-signed'</code>: This mode is designed for visualizing data with both positive and negative values, such as real parts of eigenvectors or signed distributions. The plot uses a diverging colormap (centered at zero) to clearly distinguish between positive and negative values.  The color limits are symmetrically set based on the maximum absolute value in the data, ensuring an even visual emphasis on both extremes. This mode is particularly useful for understanding symmetry or changes in sign within the data.</p>
 </li>
 <li>
-<p><code>mode = 'one-signed'</code>:</p>
+<p><code>mode = 'one-signed'</code>: This mode is intended for visualizing non-negative data or cases where only the magnitude of values is meaningful. A sequential colormap is used to highlight variations in the data, with darker shades typically representing larger values. Negative values in the <code>display</code> array are ignored in this mode, as the focus is on positive contributions. This mode works well for showing absolute values of data, such as the magnitude of eigenvectors or probabilities.</p>
 </li>
-<li>This mode is intended for visualizing non-negative data or cases where only the magnitude of values is meaningful.</li>
-<li>A sequential colormap is used to highlight variations in the data, with darker shades typically representing larger values.</li>
-<li>Negative values in the <code>display</code> array are ignored in this mode, as the focus is on positive contributions.</li>
-<li>This mode works well for showing absolute values of data, such as the magnitude of eigenvectors or probabilities.</li>
 </ol>
 <p>These modes provide flexibility in how data is visualized, depending on whether sign information is important or not.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
