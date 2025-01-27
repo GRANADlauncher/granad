@@ -210,6 +210,7 @@ my_first_flake.show_res(result, plot_labels = ["p_x", "p_y", "p_z"])
 
 # +
 import jax
+import matplotlib.pyplot as plt
 time = jnp.linspace(0, 40, 400)
 e_field = jax.vmap(my_first_illumination)(time).real
 plt.plot(time, e_field)
