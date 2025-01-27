@@ -341,6 +341,7 @@ class OrbitalList:
         info = f"List with {len(self)} orbitals, {self.electrons} electrons."
         exc = self.params.excitation
         info += f"\nExcitation: {exc[2]} electrons excited from energy levels {exc[0]} to {exc[1]}."
+        info += f"\nIncluded tags with number of orbitals: {dict(Counter(o.tag for o in self))}"
         return info 
 
     def __iter__(self):
