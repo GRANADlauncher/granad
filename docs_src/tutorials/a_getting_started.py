@@ -76,11 +76,10 @@ MaterialCatalog.describe("graphene")
 graphene = MaterialCatalog.get("graphene")
 # -
 
-# NOTE: Materials offered by the Catalog are populated with default values. They can be changed by defining custom materials. This process is covered in a separate tutorial. For quick modifications, GRANAD offers convenience wrappers, e.g. `get_ssh` as follows:
+# NOTE: The MaterialCatalog provides pre-defined materials with default values for quick access. These materials can be customized at the time of retrieval by passing parameters directly to the `get` method. For example, to create and customize an SSH model with specific hopping parameters and atomic displacement:
 
 # +
-from granad import get_ssh
-my_ssh_model = get_ssh(delta = 0.1, displacement = 0.6)
+my_ssh_model = MaterialCatalog.get("ssh", delta = 0.1, displacement = 0.6)
 my_ssh_chain = my_ssh_model.cut_flake(10)  
 # -
 

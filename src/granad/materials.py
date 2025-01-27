@@ -583,8 +583,31 @@ def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_
             )
 
     
-def get_graphene():
-    """returns the graphene model for parameters taken from [David Tománek and Steven G. Louie](https://doi.org/10.1103/PhysRevB.37.8327)"""
+def get_graphene(hopping = -2.33):
+    """
+    Generates a graphene model based on parameters from 
+    [David Tománek and Steven G. Louie, Phys. Rev. B 37, 8327 (1988)](https://doi.org/10.1103/PhysRevB.37.8327).
+
+    Args:
+        hopping (float, optional): The nearest-neighbor hopping parameter in eV. 
+            - Default is -2.33 eV, as specified in the reference.
+
+    Returns:
+        Material: A `Material` object representing the graphene model, which includes:
+            - **Lattice Structure**:
+                - Lattice constant: 2.46 Å.
+                - Hexagonal lattice basis vectors: [1, 0, 0] and [-0.5, sqrt(3)/2, 0].
+            - **Orbitals**:
+                - Two sublattices, each with a single "pz" orbital, positioned at (0, 0) and (-1/3, -2/3).
+            - **Hamiltonian Interaction**:
+                - Nearest-neighbor hopping: [0.0 (onsite energy), hopping (default -2.33 eV)].
+            - **Coulomb Interaction**:
+                - Parameterized by the Ohno potential with parameters [16.522, 8.64, 5.333].
+
+    Example:
+        >>> graphene_model = get_graphene(hopping=-2.7)
+        >>> print(graphene_model)
+    """
     return (Material("graphene")
             .lattice_constant(2.46)
             .lattice_basis([
@@ -597,7 +620,7 @@ def get_graphene():
             .add_interaction(
                 "hamiltonian",
                 participants=("pz", "pz"),
-                parameters=[0.0, -2.33],
+                parameters=[0.0, hopping],
             )
             .add_interaction(
                 "coulomb",
@@ -608,13 +631,21 @@ def get_graphene():
             )
 
 def get_ssh(delta = 0.2, displacement = 0.8):
-    """Returns an ssh model with hoppings (eV)
-    
-    [onsite, nn, nnn] = [0.0, 1 + delta, 1 - delta]
+    """
+    Generates an SSH (Su-Schrieffer-Heeger) model with specified hopping parameters and a 2-atom unit cell.
 
-    and the 2-atom unit cell (Angström)
+    Args:
+        delta (float, optional): A parameter controlling the alternating hopping amplitudes in the model. 
+            - The nearest-neighbor hopping amplitudes are defined as [1 + delta, 1 - delta]. Default is 0.2.
+        displacement (float, optional): The displacement of the second atom in the unit cell along the x-axis (in Ångström). 
+            - Determines the position of the second atom relative to the first. Default is 0.8.
 
-    pos = [0, 0.8]    
+    Returns:
+        Material: An SSH model represented as a `Material` object, including:
+            - Lattice structure with a lattice constant of 2.46 Å.
+            - Two pz orbitals (one per sublattice) placed at [0] and [displacement].
+            - Nearest-neighbor (NN) hopping amplitudes: [1 + delta, 1 - delta].
+            - Coulomb interactions parameterized by Ohno potential.
     """
     return (Material("ssh")
             .lattice_constant(2.46)
@@ -637,7 +668,26 @@ def get_ssh(delta = 0.2, displacement = 0.8):
             )
             )
 
-def get_metal_1d():
+def get_metal_1d(hopping = -2.66):
+    """
+    Generates a 1D metallic chain model with specified hopping and Coulomb interaction parameters.
+
+    Args:
+        hopping (float, optional): nn hopping, defaults to -2.66 eV.
+
+    Returns:
+        Material: A `Material` object representing the 1D metallic chain, which includes:
+            - **Lattice Structure**: 
+                - Lattice constant: 2.46 Å.
+                - Lattice basis: [1, 0, 0] (1D chain along the x-axis).
+            - **Orbital**:
+                - Single orbital species: "pz" (associated with Carbon atoms).
+                - One orbital per unit cell, positioned at [0].
+
+    Example:
+        >>> metal_chain = get_metal_1d()
+        >>> print(metal_chain)
+    """
     return (Material("metal_1d")
             .lattice_constant(2.46)
             .lattice_basis([
@@ -648,7 +698,7 @@ def get_metal_1d():
             .add_interaction(
                 "hamiltonian",
                 participants=("pz", "pz"),
-                parameters=[0.0, -2.66],
+                parameters=[0.0, hopping],
             )
             .add_interaction(
                 "coulomb",
@@ -677,9 +727,9 @@ class MaterialCatalog:
     _materials = {"graphene" : get_graphene, "ssh" : get_ssh, "metal_1d" : get_metal_1d, "hBN" : get_hbn }
 
     @staticmethod
-    def get(material : str):
+    def get(material : str, **kwargs):
         """
-        Retrieves the material data object for the specified material.
+        Retrieves the material data object for the specified material. Additional keyword arguments are given to the corresponding material function.
 
         Args:
             material (str): The name of the material to retrieve.
@@ -692,7 +742,7 @@ class MaterialCatalog:
             graphene_data = MaterialCatalog.get('graphene')
             ```
         """
-        return MaterialCatalog._materials[material]()
+        return MaterialCatalog._materials[material](**kwargs)
     
     @staticmethod
     def describe(material : str):
