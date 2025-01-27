@@ -206,3 +206,15 @@ print(dipole_moments[10, 0])
 # +
 my_first_flake.show_res(result, plot_labels = ["p_x", "p_y", "p_z"]) 
 # -
+
+# To visualize the field
+
+# +
+import jax
+time = jnp.linspace(0, 40, 400)
+e_field = jax.vmap(my_first_illumination)(time).real
+plt.plot(time, e_field)
+plt.title("Pulse Electric Field")
+plt.xlabel("Time")
+plt.show()
+# -
