@@ -160,7 +160,7 @@ print(occ_x.shape)
 # GRANAD allows to set initially excited states by specifying the single-particle transition in the density matrix as follows
 
 # +
-flake.set_excitation( flake.homo, flake.homo + 1, 1)
+flake.set_excitation( flake.homo, flake.lumo, 1)
 flake.show_energies()
 # -
 

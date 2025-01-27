@@ -795,6 +795,11 @@ class OrbitalList:
     
     @property
     @recomputes
+    def lumo(self):
+        return (self.electrons * self.stationary_density_matrix_e).real.diagonal().round(2).nonzero()[0][-1].item() + 1
+    
+    @property
+    @recomputes
     def eigenvectors(self):
         return self._eigenvectors
 
