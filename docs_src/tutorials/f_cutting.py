@@ -38,7 +38,7 @@ help(cut_flake_1d)
 flake = ssh.cut_flake( unit_cells = 40, plot = False)
 # -
 
-# You may notice this is the configuration with edge states in the band gap
+# You may notice this is the configuration without edge states in the band gap
 
 # +
 flake.show_energies()

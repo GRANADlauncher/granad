@@ -630,7 +630,7 @@ def get_graphene(hopping = -2.33):
             )
             )
 
-def get_ssh(delta = 0.2, displacement = 0.8):
+def get_ssh(delta = 0.2, displacement = 0.4):
     """
     Generates an SSH (Su-Schrieffer-Heeger) model with specified hopping parameters and a 2-atom unit cell.
 
@@ -638,7 +638,7 @@ def get_ssh(delta = 0.2, displacement = 0.8):
         delta (float, optional): A parameter controlling the alternating hopping amplitudes in the model. 
             - The nearest-neighbor hopping amplitudes are defined as [1 + delta, 1 - delta]. Default is 0.2.
         displacement (float, optional): The displacement of the second atom in the unit cell along the x-axis (in Ångström). 
-            - Determines the position of the second atom relative to the first. Default is 0.8.
+            - Determines the position of the second atom relative to the first. Default is 0.4.
 
     Returns:
         Material: An SSH model represented as a `Material` object, including:
