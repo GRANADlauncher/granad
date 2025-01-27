@@ -10498,7 +10498,7 @@ print(metal_chain)</p>
 
 
 <h2 id="granad.materials.get_ssh" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_ssh</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">displacement</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_ssh</span><span class="p">(</span><span class="n">delta</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">displacement</span><span class="o">=</span><span class="mf">0.4</span><span class="p">)</span></code>
 
 </h2>
 
@@ -10532,12 +10532,12 @@ print(metal_chain)</p>
             <li>
               <b><code>displacement</code></b>
                   (<code>float</code>, default:
-                      <code>0.8</code>
+                      <code>0.4</code>
 )
               –
               <div class="doc-md-description">
                 <p>The displacement of the second atom in the unit cell along the x-axis (in Ångström). 
-- Determines the position of the second atom relative to the first. Default is 0.8.</p>
+- Determines the position of the second atom relative to the first. Default is 0.4.</p>
               </div>
             </li>
         </ul>
@@ -10609,7 +10609,7 @@ print(metal_chain)</p>
 <span class="normal"><a href="#__codelineno-0-666">666</a></span>
 <span class="normal"><a href="#__codelineno-0-667">667</a></span>
 <span class="normal"><a href="#__codelineno-0-668">668</a></span>
-<span class="normal"><a href="#__codelineno-0-669">669</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-633"><a id="__codelineno-0-633" name="__codelineno-0-633"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_ssh</span><span class="p">(</span><span class="n">delta</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">displacement</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-669">669</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-633"><a id="__codelineno-0-633" name="__codelineno-0-633"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_ssh</span><span class="p">(</span><span class="n">delta</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">displacement</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">):</span>
 </span><span id="__span-0-634"><a id="__codelineno-0-634" name="__codelineno-0-634"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-0-635"><a id="__codelineno-0-635" name="__codelineno-0-635"></a><span class="sd">    Generates an SSH (Su-Schrieffer-Heeger) model with specified hopping parameters and a 2-atom unit cell.</span>
 </span><span id="__span-0-636"><a id="__codelineno-0-636" name="__codelineno-0-636"></a>
@@ -10617,7 +10617,7 @@ print(metal_chain)</p>
 </span><span id="__span-0-638"><a id="__codelineno-0-638" name="__codelineno-0-638"></a><span class="sd">        delta (float, optional): A parameter controlling the alternating hopping amplitudes in the model. </span>
 </span><span id="__span-0-639"><a id="__codelineno-0-639" name="__codelineno-0-639"></a><span class="sd">            - The nearest-neighbor hopping amplitudes are defined as [1 + delta, 1 - delta]. Default is 0.2.</span>
 </span><span id="__span-0-640"><a id="__codelineno-0-640" name="__codelineno-0-640"></a><span class="sd">        displacement (float, optional): The displacement of the second atom in the unit cell along the x-axis (in Ångström). </span>
-</span><span id="__span-0-641"><a id="__codelineno-0-641" name="__codelineno-0-641"></a><span class="sd">            - Determines the position of the second atom relative to the first. Default is 0.8.</span>
+</span><span id="__span-0-641"><a id="__codelineno-0-641" name="__codelineno-0-641"></a><span class="sd">            - Determines the position of the second atom relative to the first. Default is 0.4.</span>
 </span><span id="__span-0-642"><a id="__codelineno-0-642" name="__codelineno-0-642"></a>
 </span><span id="__span-0-643"><a id="__codelineno-0-643" name="__codelineno-0-643"></a><span class="sd">    Returns:</span>
 </span><span id="__span-0-644"><a id="__codelineno-0-644" name="__codelineno-0-644"></a><span class="sd">        Material: An SSH model represented as a `Material` object, including:</span>
