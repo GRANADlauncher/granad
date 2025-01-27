@@ -20,7 +20,7 @@ def _plot_wrapper(plot_func):
     return wrapper
 
 @_plot_wrapper
-def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None):
+def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None, mode = None):
     """
     Generates a 2D scatter plot representing the positions of orbitals in the xy-plane, with optional filtering, coloring, and sizing.
 
@@ -33,11 +33,16 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
         `cmap` (optional): Colormap used for the scatter plot when `display` is provided. If `None`, a default colormap (`bwr`) is used.
         `circle_scale` (float, optional): A scaling factor for the size of the scatter plot points. Larger values result in larger circles. Default is 1000.
         `title` (str, optional): Custom title for the plot. If `None`, the default title "Orbital positions in the xy-plane" is used.
+        `mode` (str, optional): Determines the plotting style for orbitals when `display` is provided.
+            - `'two-signed'`: Displays orbitals with a diverging colormap centered at zero, highlighting both positive and negative values symmetrically. 
+                              The colormap is scaled such that its limits are set by the maximum absolute value in the `display` array.
+            - `'one-signed'`: Displays orbitals with a sequential colormap, highlighting only positive values. Negative values are ignored in this mode.
+            - `None`: Defaults to a general plotting mode that uses the normalized values from `display` for coloring and sizing.
 
     Notes:
         If `display` is provided, the points are colored and sized according to the values in the `display` array, and a color bar is added to the plot.
         If `show_index` is `True`, the indices of the orbitals are annotated next to their corresponding points.
-        The plot is automatically adjusted to ensure equal scaling of the axes, and grid lines are displayed.
+        The plot is automatically adjusted to ensure equal scaling of the axes, and grid lines are displayed.    
     """
 
     # decider whether to take abs val and normalize 
@@ -59,15 +64,18 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
 
     # Create plot
     fig, ax = plt.subplots()
-
     if display is not None:        
         cmap = plt.cm.bwr if cmap is None else cmap
-        # symmetrize for real, two-signed input
-        if not jnp.iscomplex(display).any() and jnp.sum(display.real <= 0) != display.size:
+        if mode == 'two-signed':
+            display = display.real
             dmin, dmax = jnp.min(display), jnp.max(display)
-            lim = dmax if dmax > jnp.abs(dmin) else -dmin
-            scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c = display, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
+            lim = float(dmax) if float(dmax) > jnp.abs(dmin) else -float(dmin)
+            scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c = display, edgecolor='black', cmap=cmap, s = circle_scale )
             scatter.set_clim(-lim, lim)
+        elif mode == 'one-signed':
+            cmap = plt.cm.Reds
+            display = display.real
+            scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c = display, edgecolor='black', cmap=cmap, s = circle_scale )
         else:
             colors = scale_vals(display)            
             scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
