@@ -584,6 +584,7 @@ def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_
 
     
 def get_graphene():
+    """returns the graphene model for parameters taken from [David Tománek and Steven G. Louie](https://doi.org/10.1103/PhysRevB.37.8327)"""
     return (Material("graphene")
             .lattice_constant(2.46)
             .lattice_basis([
@@ -596,7 +597,7 @@ def get_graphene():
             .add_interaction(
                 "hamiltonian",
                 participants=("pz", "pz"),
-                parameters=[0.0, -2.66],
+                parameters=[0.0, -2.33],
             )
             .add_interaction(
                 "coulomb",
