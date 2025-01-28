@@ -24,7 +24,7 @@
 import jax.numpy as jnp
 from granad import MaterialCatalog
 
-chain  = MaterialCatalog.get("metal_1d")
+chain  = MaterialCatalog.get("chain")
 flake = chain.cut_flake( unit_cells = 10 )
 site_occupations = flake.initial_density_matrix.diagonal() # site basis
 energy_occupations = flake.initial_density_matrix_e.diagonal() # energy basis

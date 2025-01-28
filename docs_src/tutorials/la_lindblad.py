@@ -38,7 +38,7 @@
 # +
 from granad import MaterialCatalog
 
-flake = MaterialCatalog.get("metal_1d").cut_flake( 6 )
+flake = MaterialCatalog.get("chain").cut_flake( 6 )
 flake.set_excitation(flake.homo, flake.homo+2, 1)
 flake.show_energies()
 # -

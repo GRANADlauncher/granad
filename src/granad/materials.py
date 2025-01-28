@@ -691,7 +691,7 @@ def get_ssh(delta = 0.2, displacement = 0.4):
             )
             )
 
-def get_metal_1d(hopping = -2.66):
+def get_chain(hopping = -2.66):
     """
     Generates a 1D metallic chain model with specified hopping and Coulomb interaction parameters.
 
@@ -708,10 +708,10 @@ def get_metal_1d(hopping = -2.66):
                 - One orbital per unit cell, positioned at [0].
 
     Example:
-        >>> metal_chain = get_metal_1d()
+        >>> metal_chain = get_chain()
         >>> print(metal_chain)
     """
-    return (Material("metal_1d")
+    return (Material("chain")
             .lattice_constant(2.46)
             .lattice_basis([
                 [1, 0, 0],
@@ -747,7 +747,7 @@ class MaterialCatalog:
         describe(material): Prints a description or the data object of the specified material.
         available(): Prints a list of all available materials stored in the catalog.
     """
-    _materials = {"graphene" : get_graphene, "ssh" : get_ssh, "metal_1d" : get_metal_1d, "hBN" : get_hbn }
+    _materials = {"graphene" : get_graphene, "ssh" : get_ssh, "chain" : get_chain, "hBN" : get_hbn }
 
     @staticmethod
     def get(material : str, **kwargs):
