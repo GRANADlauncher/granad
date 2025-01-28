@@ -1,7 +1,11 @@
-import jax
-import jax.numpy as jnp
-from matplotlib.path import Path
 
+from matplotlib.path import Path
+import jax.numpy as jnp
+import jax
+from typing import Literal, Callable
+import matplotlib.path as mpltPath
+from scipy.spatial import KDTree
+import matplotlib.pyplot as plt
 def get_polygon(n: Literal[3,6], side_length: float, orientation_angle: float, min_side_length: float, side_length_increment: float, shift_vec_for_edge_alignment: Callable[[int],jax.Array]) -> jax.Array:
     """
     Creates a regular triangle or hexagon of suitable side length (<= given side length) containing maximum number of hexagon (from lattice) per side.
@@ -56,7 +60,7 @@ def get_graphene_sheet(m,n,lattice_const):
 
 def _cut_flake_graphene(polygon_id, edge_type, side_length, lattice_constant):
     # measure everything in units of the lc
-    a = lattice_constant
+    a = lattice_constant/jnp.sqrt(3)
     mapping = {
     "triangle_armchair" : [3, side_length, 0, 6*a, 3*a, lambda k: jnp.array([1,0,0])*a],
     "triangle_zigzag" : [3, side_length, jnp.pi/2, 3*jnp.sqrt(3)*a, jnp.sqrt(3)*a, lambda k: jnp.array([0,0,0])*a],
@@ -64,7 +68,7 @@ def _cut_flake_graphene(polygon_id, edge_type, side_length, lattice_constant):
     "hexagon_zigzag" : [6, side_length, 0, (jnp.sqrt(3)+2/jnp.sqrt(3))*a, jnp.sqrt(3)*a, lambda k: jnp.array([0 ,(1-3*(-1)**k)*a/(4*jnp.sqrt(3)),0])]                
                 }
 
-    n, orientation_angle, min_side_length, side_length_increment, shift_vec_for_edge_alignment = mapping[f"{polygon_id}_{edge_type}"]
+    n, side_length, orientation_angle, min_side_length, side_length_increment, shift_vec_for_edge_alignment = mapping[f"{polygon_id}_{edge_type}"]
     polygon=get_polygon(n, side_length, orientation_angle, min_side_length, side_length_increment, shift_vec_for_edge_alignment)     
     path = Path(polygon[:,:2])
     width=jnp.max(polygon[:,0])-jnp.min(polygon[:,0])
