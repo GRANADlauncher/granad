@@ -84,6 +84,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../k_potentials/">Potentials</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
@@ -160,14 +162,12 @@
 </span><span id="__span-2-13"><a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span> <span class="n">result</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">plot_labels</span><span class="p">,</span> <span class="n">xlabel</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;$t$&#39;</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;$j$&#39;</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
-
-
 RHS compiled
 
 
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../c_plotting_files/c_plotting_11_3.png" /></p>
+<p><img alt="png" src="../c_plotting_files/c_plotting_11_2.png" /></p>
 <p>A detailed description of parameters to the Gaussian pulse is given in the electric fields tutorial.</p>
 <p>We can also Fourier transform the result to obtain the frequency domain result by specifying the omega limits. Note that omitting the variables xlabel and ylabel will result in no axis labels.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span> <span class="n">result</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="n">plot_labels</span> <span class="p">)</span>

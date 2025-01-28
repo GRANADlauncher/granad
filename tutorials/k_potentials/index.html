@@ -76,6 +76,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Potentials</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#background">Background</a>
@@ -146,7 +148,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">hamiltonian_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_hamiltonian</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f493c7c0c20&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f493c7c0cc0&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f40201ac7c0&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f40201ac9a0&gt;}
 </code></pre></div>
 <p>We see that it is a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian, identified by the keys</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -226,7 +228,7 @@ To do so, define a function evaluating the electric field of your dipole at the 
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../i_linear_response/" class="btn btn-neutral float-left" title="Linear response"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../j_defining_materials/" class="btn btn-neutral float-left" title="Defining Materials"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../l_master/" class="btn btn-neutral float-right" title="Custom Time Evolution">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -250,7 +252,7 @@ To do so, define a function evaluating the electric field of your dipole at the 
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../i_linear_response/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../j_defining_materials/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../l_master/" style="color: #fcfcfc">Next &raquo;</a></span>
