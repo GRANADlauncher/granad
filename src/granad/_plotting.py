@@ -195,8 +195,8 @@ def show_energies(orbs, e_max = None, e_min = None):
         A color bar is added to indicate the magnitude of the initial state occupation for each eigenstate.
     """
     from matplotlib.ticker import MaxNLocator
-    e_max = e_max or orbs.energies.max()
-    e_min = e_min or orbs.energies.min()
+    e_max = (e_max or orbs.energies.max()) + 0.1
+    e_min = (e_min or orbs.energies.min()) - 0.1
     energies_filtered_idxs = jnp.argwhere( jnp.logical_and(orbs.energies <= e_max, orbs.energies >= e_min))
     state_numbers = energies_filtered_idxs[:, 0]
     energies_filtered = orbs.energies[energies_filtered_idxs]
