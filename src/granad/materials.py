@@ -523,7 +523,7 @@ def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_
                                   Default is [-2.16].
 
     Default values are derived from the study of the electronic structure of hexagonal boron nitride (hBN).
-    See [Unibertsitatea et al.]https://www.semanticscholar.org/paper/Study-of-the-Electronic-Structure-of-hexagonal-on-Unibertsitatea-Thesis/ff1e000bbad5d8e2df5f85cb724b1a9e42a8b0f0 for more details.
+    See [Giraud et al.](https://www.semanticscholar.org/paper/Study-of-the-Electronic-Structure-of-hexagonal-on-Unibertsitatea-Thesis/ff1e000bbad5d8e2df5f85cb724b1a9e42a8b0f0) for more details.
 
     Returns:
     - A tuple containing the lattice constant and hopping parameters.
