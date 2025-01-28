@@ -161,7 +161,6 @@ import jax.numpy as jnp
 flake_topological = haldane_graphene.cut_flake(Rectangle(20, 20))
 idx = jnp.argwhere(jnp.abs(flake_topological.energies) < 1e-1)[0].item()
 flake_topological.show_2d( display = flake_topological.eigenvectors[:, idx], scale = True  )
-
 # -
 
 
