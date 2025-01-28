@@ -1,5 +1,7 @@
 from functools import wraps
+from dataclasses import dataclass
 
+import jax
 import jax.numpy as jnp
 
 def _rotate_vertices(vertices, angle_degrees):
@@ -32,15 +34,25 @@ def _edge_type(vertex_func):
     @wraps(vertex_func)
     def wrapper(*args, **kwargs):
         shift = jnp.array(kwargs.pop( "shift", [0,0]))
-        vertices = vertex_func(
+        polygon = vertex_func(
             *args, **{key: val for key, val in kwargs.items() if key != "armchair"}
         )
+        polygon.edge_type = 'zigzag'
         if "armchair" in kwargs and kwargs["armchair"] == True:
-            vertices = _rotate_vertices(vertices, 90)
+            polygon.edge_type = 'armchair'
+            polygon.vertices = _rotate_vertices(polygon.vertices, 90)
             shift += jnp.array([10,10])
-        return vertices + shift
+        polygon.vertices = polygon.vertices + shift
+        return polygon
 
     return wrapper
+
+@dataclass
+class Polygon:
+    vertices : jax.Array = None
+    polygon_id : str = None
+    edge_type : str = None
+    side_length : int = None
 
 def Circle(radius, n_vertices = 8):
     """
@@ -72,7 +84,7 @@ def Circle(radius, n_vertices = 8):
         for i in range(n_vertices)
     ])
     
-    return jnp.vstack([circle, circle[0]])
+    return Polygon(vertices = jnp.vstack([circle, circle[0]]), polygon_id = "circle")
 
 @_edge_type
 def Triangle(side_length):
@@ -112,7 +124,7 @@ def Triangle(side_length):
             (0, jnp.sqrt(3) / 3),
         ]
     )
-    return vertices
+    return Polygon(vertices = vertices, polygon_id = "triangle", side_length = side_length)
 
 
 @_edge_type
@@ -146,7 +158,7 @@ def Rectangle(length_x, length_y):
             (-1 * length_x, -0.5 * length_y),
         ]
     )
-    return vertices
+    return Polygon(vertices = vertices, polygon_id = "rectangle")
 
 
 @_edge_type
@@ -179,7 +191,7 @@ def Hexagon(length):
             for i in [x for x in range(n)] + [0]
         ]
     )
-    return vertices
+    return Polygon(vertices = vertices, polygon_id = "hexagon", side_length = length)
 
 
 @_edge_type
@@ -214,4 +226,4 @@ def Rhomboid(base, height):
             (0, 0),
         ]
     )
-    return vertices
+    return Polygon(vertices = vertices, polygon_id = "rhomboid")

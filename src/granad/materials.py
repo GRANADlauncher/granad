@@ -11,6 +11,7 @@ from matplotlib.path import Path
 from granad import _watchdog
 from granad.orbitals import Orbital, OrbitalList
 from granad._plotting import _display_lattice_cut
+from granad._graphene_special import _cut_flake_graphene
 
 def zero_coupling(d):
     """
@@ -129,38 +130,68 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
                 positions[mask], minimum_neighbor_number, remaining
             )
 
-    # to cover the plane, we solve the linear equation P = L C, where P are the polygon vertices, L is the lattice basis and C are the coefficients
-    L = material._lattice_basis[material.periodic,:2] * material.lattice_constant
-    coeffs = jnp.linalg.inv(L.T) @ polygon.T * 1.1
+    if material.name == 'graphene' and polygon.polygon_id in ["hexagon", "triangle"]:
+        n, m, vertices, pruned_atom_positions, initial_atom_positions = _cut_flake_graphene(polygon.polygon_id, polygon.edge_type, polygon.side_length, material.lattice_constant)
+        
+        # get atom positions where every atom has at least minimum_neighbor_number neighbors
+        final_atom_positions = _prune_neighbors(
+            pruned_atom_positions, minimum_neighbor_number
+        )
+        
+        raw_list, layer_index = [], 0
+        for position in final_atom_positions:
+            orb = Orbital(
+                position = position,
+                layer_index = layer_index,
+                tag=None,
+                group_id = material._species_to_groups["pz"],                        
+                spin=material.species["pz"][0],
+                atom_name=material.species["pz"][1]
+                    )
+            layer_index += 1
+            raw_list.append(orb)
 
-    # we just take the largest extent of the shape
-    u1, u2 = jnp.ceil( coeffs ).max( axis = 1)
-    l1, l2 = jnp.floor( coeffs ).min( axis = 1)
-    grid = material._get_grid( [ (int(l1), int(u1)), (int(l2), int(u2)) ]  )
+        orbital_list = OrbitalList(raw_list)
+        material._set_couplings(orbital_list.set_hamiltonian_groups, "hamiltonian")
+        material._set_couplings(orbital_list.set_coulomb_groups, "coulomb")
+        orb_list = orbital_list
 
-    # get atom positions in the unit cell in fractional coordinates
-    orbital_positions =  material._get_positions_in_uc()
-    unit_cell_fractional_atom_positions = jnp.unique(
-        jnp.round(orbital_positions, 6), axis=0
-            )
+    else:
+        # to cover the plane, we solve the linear equation P = L C, where P are the polygon vertices, L is the lattice basis and C are the coefficients
+        vertices = polygon.vertices
+        L = material._lattice_basis[material.periodic,:2] * material.lattice_constant
+        coeffs = jnp.linalg.inv(L.T) @ vertices.T * 1.1
 
-    initial_atom_positions = material._get_positions_in_lattice(
-        unit_cell_fractional_atom_positions, grid
-    ) 
+        # we just take the largest extent of the shape
+        u1, u2 = jnp.ceil( coeffs ).max( axis = 1)
+        l1, l2 = jnp.floor( coeffs ).min( axis = 1)
+        grid = material._get_grid( [ (int(l1), int(u1)), (int(l2), int(u2)) ]  )
 
-    polygon_path = Path(polygon)
-    flags = polygon_path.contains_points(initial_atom_positions[:, :2])
-    
-    # get atom positions where every atom has at least minimum_neighbor_number neighbors
-    final_atom_positions = _prune_neighbors(
-        initial_atom_positions[flags], minimum_neighbor_number
-    )
+        # get atom positions in the unit cell in fractional coordinates
+        orbital_positions =  material._get_positions_in_uc()
+        unit_cell_fractional_atom_positions = jnp.unique(
+            jnp.round(orbital_positions, 6), axis=0
+                )
+
+        initial_atom_positions = material._get_positions_in_lattice(
+            unit_cell_fractional_atom_positions, grid
+        ) 
+
+        polygon_path = Path(vertices)
+        flags = polygon_path.contains_points(initial_atom_positions[:, :2])        
+        pruned_atom_positions = initial_atom_positions[flags]
+
+        # get atom positions where every atom has at least minimum_neighbor_number neighbors
+        final_atom_positions = _prune_neighbors(
+            pruned_atom_positions, minimum_neighbor_number
+        )
+        orb_list = material._get_orbital_list(final_atom_positions, grid)
 
     if plot == True:
         _display_lattice_cut(
-            initial_atom_positions, final_atom_positions, polygon
+            initial_atom_positions, final_atom_positions, vertices
         )
-    return material._get_orbital_list(final_atom_positions, grid)
+    return orb_list
 
 def cut_flake_generic( material, grid_range ):
     """
@@ -198,9 +229,9 @@ def _finalize(method):
         if "grid_range" in kwargs:
             return cut_flake_generic(self, *args, **kwargs)
         if self.dim == 1:
-            return cut_flake_1d(self, *args, **kwargs)        
+            return cut_flake_1d(self, *args, **kwargs)
         elif self.dim == 2:
-            return cut_flake_2d(self, *args, **kwargs)
+            return cut_flake_2d(self, *args, **kwargs)        
         else:
             return cut_flake_generic(self, *args, **kwargs)
     return wrapper
