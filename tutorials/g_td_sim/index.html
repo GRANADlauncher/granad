@@ -68,8 +68,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">Cutting</a>
-                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">Time-Domain simulations</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#observables">Observables</a>
@@ -161,7 +159,7 @@
 RHS compiled
 
 
-49.992928864375614 %
+49.99262428086739 %
 
 
 100.0 %
@@ -171,18 +169,18 @@ RHS compiled
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>1
-(7072, 6)
+(6780, 6)
 </code></pre></div>
 <p>The induced dipole moment at timestep 10 is given by</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,:</span><span class="mi">3</span><span class="p">])</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>[5.85460118e-13+0.j 8.41854435e-14+0.j 0.00000000e+00+0.j]
+<div class="language-text highlight"><pre><span></span><code>[6.62977922e-13+0.j 1.50349733e-13+0.j 0.00000000e+00+0.j]
 </code></pre></div>
 <p>Induced current at timestep 10</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,</span><span class="mi">3</span><span class="p">:])</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>[1.25324282e-11+5.37423907e-15j 7.40795277e-16+4.04715440e-16j
- 0.00000000e+00+0.00000000e+00j]
+<div class="language-text highlight"><pre><span></span><code>[ 1.28393681e-11+8.12875268e-15j -2.04250131e-15+3.10224346e-15j
+  0.00000000e+00+0.00000000e+00j]
 </code></pre></div>
 <p>We can access the Fourier transform as</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span>
@@ -211,7 +209,7 @@ obtain these quantities directly from the time-domain simulations. The (integrat
 <p>The field is also accessible</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">td_illumination</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>(7072, 3)
+<div class="language-text highlight"><pre><span></span><code>(6780, 3)
 </code></pre></div>
 <h2 id="density-matrices">Density matrices</h2>
 <p>If we want to only get density matrices, we can  omit the operator list. The result object then contains a one-element list.</p>
@@ -228,17 +226,17 @@ obtain these quantities directly from the time-domain simulations. The (integrat
 RHS compiled
 
 
-49.992928864375614 %
+49.99262428086739 %
 
 
 100.0 %
-(7072, 94, 94)
+(6780, 96, 96)
 </code></pre></div>
 <p>We can convert them to energy basis</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">density_matrix_e</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">transform_to_energy_basis</span><span class="p">(</span> <span class="n">density_matrix</span> <span class="p">)</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">density_matrix_e</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>(7072, 94, 94)
+<div class="language-text highlight"><pre><span></span><code>(6780, 96, 96)
 </code></pre></div>
 <h2 id="occupations">Occupations</h2>
 <p>To reduce memory consumption, we can extract only the site occupations to avoid storing the entire stack of density matices in memory. </p>
@@ -255,11 +253,11 @@ RHS compiled
 RHS compiled
 
 
-49.992928864375614 %
+49.99262428086739 %
 
 
 100.0 %
-(7072, 94)
+(6780, 96)
 </code></pre></div>
 <p>Further reduction of the memory consumption can be controlled by the grid argument, which describes the density of the time domain sampling grid, explained in the API section on the <code>master_equation</code> method.</p>
 <h2 id="initially-excited-states">Initially excited states</h2>
@@ -283,7 +281,7 @@ RHS compiled
 RHS compiled
 
 
-49.992928864375614 %
+49.99262428086739 %
 
 
 100.0 %
@@ -303,7 +301,7 @@ RHS compiled
 RHS compiled
 
 
-49.992928864375614 %
+49.99262428086739 %
 
 
 100.0 %
@@ -315,9 +313,9 @@ RHS compiled
 </span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># we specified [&quot;full&quot;, &quot;occ_x&quot;] =&gt; site occupations</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>3
-(7072, 3)
-(7072, 94, 94)
-(7072, 94)
+(6780, 3)
+(6780, 96, 96)
+(6780, 96)
 </code></pre></div>
 <h2 id="epi">EPI</h2>
 <p>The energy-based plasmonicity index introduced by <a href="https://pubs.acs.org/doi/10.1021/acs.jpcc.0c07964">Müller et al.</a> is a quantity to characterize the steady-state plasmonicity. We use plane wave illumination to drive the system into a steady state and then compute the EPI.</p>
@@ -340,19 +338,19 @@ RHS compiled
 RHS compiled
 
 
-49.992928864375614 %
+49.99262428086739 %
 
 
 100.0 %
 
 
-0.8569306451286093
+0.8999054004099905
 </code></pre></div>
               
             </div>
           </div><footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="../f_cutting/" class="btn btn-neutral float-left" title="Cutting"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../e_electric_fields/" class="btn btn-neutral float-left" title="Electric Fields"><span class="icon icon-circle-arrow-left"></span> Previous</a>
         <a href="../h_rabi_oscillations/" class="btn btn-neutral float-right" title="Rabi Oscillations">Next <span class="icon icon-circle-arrow-right"></span></a>
     </div>
 
@@ -376,7 +374,7 @@ RHS compiled
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../f_cutting/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../e_electric_fields/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../h_rabi_oscillations/" style="color: #fcfcfc">Next &raquo;</a></span>

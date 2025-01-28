@@ -80,8 +80,6 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
                   </li>
-                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">Cutting</a>
-                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">Time-Domain simulations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">Rabi Oscillations</a>
@@ -235,9 +233,9 @@ For now, we will use a built-in shape: an triangle with a base length of 18 Angs
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_flake</span><span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../a_getting_started_files/a_getting_started_23_0.png" /></p>
-<div class="language-text highlight"><pre><span></span><code>List with 46 orbitals, 46 electrons.
+<div class="language-text highlight"><pre><span></span><code>List with 61 orbitals, 61 electrons.
 Excitation: [0] electrons excited from energy levels [0] to [0].
-Included tags with number of orbitals: {&#39;sublattice_1&#39;: 25, &#39;sublattice_2&#39;: 21}
+Included tags with number of orbitals: {None: 61}
 </code></pre></div>
 <p>Note that the <code>plot=True</code> option displays an "infinite" graphene sheet (blue points), from which only the flake (orange points) will be kept in the final structure. If you want to visualize the flake in isolation, use <code>show_2d</code>, as explained in more detail in the plotting tutorial.</p>
 <p>There is an extra option for dealing with graphene-like lattices we can pass to the built-in shape, which is the armchair boolean. It rotates the shape to get the correct edge type. The optional "shift" argument lets you shift the shape in the plane.</p>
@@ -312,7 +310,7 @@ RHS compiled
 <div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">dipole_moments</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">dipole_moments</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>(1.4568971029582655e-13+0j)
+<div class="language-text highlight"><pre><span></span><code>(2.0148923213094883e-13+0j)
 </code></pre></div>
 <p>Now that we understand how a time domain simulation works, we can visualize the result. GRANAD offers a dedicated function for this</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">my_first_flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;p_x&quot;</span><span class="p">,</span> <span class="s2">&quot;p_y&quot;</span><span class="p">,</span> <span class="s2">&quot;p_z&quot;</span><span class="p">])</span> 
