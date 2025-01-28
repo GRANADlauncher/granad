@@ -20,7 +20,7 @@ def _plot_wrapper(plot_func):
     return wrapper
 
 @_plot_wrapper
-def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None, mode = None):
+def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None, mode = None, indicate_atoms = True):
     """
     Generates a 2D scatter plot representing the positions of orbitals in the xy-plane, with optional filtering, coloring, and sizing.
 
@@ -38,7 +38,9 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
                               The colormap is scaled such that its limits are set by the maximum absolute value in the `display` array.
             - `'one-signed'`: Displays orbitals with a sequential colormap, highlighting only positive values. Negative values are ignored in this mode.
             - `None`: Defaults to a general plotting mode that uses the normalized values from `display` for coloring and sizing.
+        `indicate_atoms` (bool, optional): show atoms as black dots if `display` is given, defaults to False
 
+    
     Notes:
         If `display` is provided, the points are colored and sized according to the values in the `display` array, and a color bar is added to the plot.
         If `show_index` is `True`, the indices of the orbitals are annotated next to their corresponding points.
@@ -79,7 +81,8 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
         else:
             colors = scale_vals(display)            
             scatter = ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], c=colors, edgecolor='black', cmap=cmap, s = circle_scale*jnp.abs(display) )
-        ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], color='black', s=10, marker='o')            
+        if indicate_atoms == True:
+            ax.scatter([orb.position[0] for orb in orbs], [orb.position[1] for orb in orbs], color='black', s=10, marker='o')            
         cbar = fig.colorbar(scatter, ax=ax)
         
     else:
