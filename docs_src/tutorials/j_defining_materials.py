@@ -99,8 +99,8 @@ haldane_graphene =  (
         [1, 0, 0],
         [-0.5, jnp.sqrt(3)/2, 0]
     ])
-    .add_orbital_species("pz1", l=1, atom='C')
-    .add_orbital_species("pz2", l=1, atom='C')
+    .add_orbital_species("pz1", atom='C')
+    .add_orbital_species("pz2", atom='C')
     .add_orbital(position=(0, 0), tag="sublattice_1", species="pz1")
     .add_orbital(position=(-1/3, -2/3), tag="sublattice_2", species="pz2")
     .add_interaction(
@@ -190,7 +190,7 @@ _ssh_modified = (
         [0, 1, 0],
     ],
     periodic = [0]) # THIS IS THE LINE    
-    .add_orbital_species("pz", l=1, atom='C')
+    .add_orbital_species("pz", atom='C')
     .add_orbital(position=(0,0), tag="sublattice_1", species="pz")
     .add_orbital(position=(0.8,0.1), tag="sublattice_2", species="pz")
     .add_interaction(
