@@ -68,6 +68,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../f_cutting/">Cutting</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">Time-Domain simulations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">Rabi Oscillations</a>
@@ -131,7 +133,7 @@ GRANAD's default relaxation functional suppresses population growth if the popul
 <p>In the following, we will consider a metallic chain with a uniform transition rate, such that of <span class="arithmatex">\(\gamma_{ij} = \gamma\)</span> for all <span class="arithmatex">\(i \gt j\)</span>. We consider an initially excited state of one electron in the HOMO-LUMO+1 transition.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaterialCatalog</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metal_1d&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="mi">6</span> <span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;chain&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="mi">6</span> <span class="p">)</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">flake</span><span class="o">.</span><span class="n">set_excitation</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
 </span></code></pre></div>
