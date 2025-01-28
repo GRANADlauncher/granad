@@ -722,10 +722,35 @@ class OrbitalList:
     @mutates
     def set_self_consistent(self, **kwargs):
         """
-        Configures the list for self-consistent field calculations.
+        Configures the parameters for self-consistent field (SCF) calculations.
 
-        Parameters:
-            sc_params (dict): Parameters for self-consistency.
+        This function sets up the self-consistency parameters used in iterative calculations 
+        to update the system's density matrix until convergence is achieved.
+
+        Args:
+            **kwargs: Keyword arguments to override the default self-consistency parameters. 
+                The available parameters are:
+
+                - `accuracy` (float, optional): The convergence criterion for self-consistency. 
+                  Specifies the maximum allowed difference between successive density matrices.
+                  Default is 1e-6.
+
+                - `mix` (float, optional): The mixing factor for the density matrix during updates.
+                  This controls the contribution of the new density matrix to the updated one.
+                  Values closer to 1 favor the new density matrix, while smaller values favor 
+                  smoother convergence. Default is 0.3.
+
+                - `iterations` (int, optional): The maximum number of iterations allowed in the 
+                  self-consistency cycle. Default is 500.
+
+                - `coulomb_strength` (float, optional): A scaling factor for the Coulomb matrix.
+                  This allows tuning of the strength of Coulomb interactions in the system. 
+                  Default is 1.0.
+
+        Example:
+            >>> model.set_self_consistent(accuracy=1e-7, mix=0.5, iterations=1000)
+            >>> print(model.params.self_consistency_params)
+            {'accuracy': 1e-7, 'mix': 0.5, 'iterations': 1000, 'coulomb_strength': 1.0}
         """
         default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0}
         self.params.self_consistency_params = default | kwargs
