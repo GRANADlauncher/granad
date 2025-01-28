@@ -88,7 +88,7 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
 
     Parameters:
         material (Material): The material instance from which to cut the flake.
-        polygon (array-like): An array of coordinates defining the vertices of the polygon within which to cut the flake.
+        polygon (Polygon): A polygon objects with a vertices property holding an array of coordinates defining the vertices of the polygon within which to cut the flake.
         plot (bool, optional): If True, plots the lattice and the positions of atoms before and after pruning.
                                Default is False.
         minimum_neighbor_number (int, optional): The minimum number of neighbors each atom must have to remain in the final positions.

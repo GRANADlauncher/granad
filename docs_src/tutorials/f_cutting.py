@@ -64,17 +64,20 @@ help(cut_flake_2d)
 
 # +
 import jax.numpy as jnp
-potato = 10 * jnp.array( [
-  (3, 1),    # Bottom center (widest point)
-  (2, 2),    # Lower left bulge
-  (1, 3),    # Mid left indent
-  (2, 4),    # Upper left bulge
-  (3, 5),    # Top center
-  (4, 4),    # Upper right bulge
-  (5, 3),    # Mid right indent
-  (4, 2),    # Lower right bulge
-  (3, 1)     # Connect back to the bottom center
-])
+from granad import Polygon
+potato = Polygon(
+    10 * jnp.array( [
+        (3, 1),    # Bottom center (widest point)
+        (2, 2),    # Lower left bulge
+        (1, 3),    # Mid left indent
+        (2, 4),    # Upper left bulge
+        (3, 5),    # Top center
+        (4, 4),    # Upper right bulge
+        (5, 3),    # Mid right indent
+        (4, 2),    # Lower right bulge
+        (3, 1)     # Connect back to the bottom center
+    ])
+)
 # -
 
 # Now, we cut a flake
@@ -87,7 +90,7 @@ flake = graphene.cut_flake( potato, plot = True )
 #
 ### Shapes
 #
-# Built-in shapes cover Triangles, Hexagons, Rectangles, (approximate) Circles and Parallelograms. Specialized to hexagonal lattices, they can be cut with zigzag, armchair or bearded edges. They are implemented as functions returning a set of vertices. All parameters you pass to them are in Angström.
+# Built-in shapes cover Triangles, Hexagons, Rectangles, (approximate) Circles and Parallelograms. Specialized to hexagonal lattices, they can be cut with zigzag, armchair or bearded edges. They are implemented as functions returning a Polygon object holding a set of vertices. All parameters you pass to them are in Angström.
 
 # +
 from granad import Rectangle
