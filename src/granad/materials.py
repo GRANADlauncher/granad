@@ -131,13 +131,8 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
             )
 
     if material.name == 'graphene' and polygon.polygon_id in ["hexagon", "triangle"]:
-        n, m, vertices, pruned_atom_positions, initial_atom_positions, sublattice = _cut_flake_graphene(polygon.polygon_id, polygon.edge_type, polygon.side_length, material.lattice_constant)
-        
-        # get atom positions where every atom has at least minimum_neighbor_number neighbors
-        final_atom_positions = _prune_neighbors(
-            pruned_atom_positions, minimum_neighbor_number
-        )
-        
+        n, m, vertices, final_atom_positions, initial_atom_positions, sublattice = _cut_flake_graphene(polygon.polygon_id, polygon.edge_type, polygon.side_length, material.lattice_constant)
+                
         raw_list, layer_index = [], 0
         for i, position in enumerate(final_atom_positions):
             orb = Orbital(
