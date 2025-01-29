@@ -554,9 +554,9 @@ def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_
     Returns:
     - A tuple containing the lattice constant and hopping parameters.
     """
-    bb_hoppings = [2.46, -0.04] or bb_hoppings
-    bn_hoppings = [-2.16] or bn_hoppings
-    nn_hoppings = [-2.55, -0.04] or nn_hoppings
+    bb_hoppings = [2.46, -0.04] if bb_hoppings is None else bb_hoppings
+    bn_hoppings = [-2.16]  if bn_hoppings is None else bn_hoppings
+    nn_hoppings = [-2.55, -0.04]  if nn_hoppings is None else nn_hoppings
     
     return (Material("hBN")
             .lattice_constant(lattice_constant)  # Approximate lattice constant of hBN
