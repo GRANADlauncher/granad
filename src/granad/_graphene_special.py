@@ -42,19 +42,20 @@ def get_polygon(n: Literal[3,6], side_length: float, orientation_angle: float, m
     return aligned_polygon+shift_vec_for_edge_alignment(k) 
 
 # Define a rectangular graphene sheet
-def get_graphene_sheet(m,n,lattice_const):
+def get_graphene_sheet(m,n,cc_dist):
     def translation_vector(m,n):
-        return jnp.array([3*lattice_const*m,jnp.sqrt(3)*lattice_const*n,0])
+        return jnp.array([3*cc_dist*m,jnp.sqrt(3)*cc_dist*n,0])
     
     unit_cell=jnp.array([[0,0,0],
-          [lattice_const/2,jnp.sqrt(3)/2*lattice_const,0],
-          [3/2*lattice_const,jnp.sqrt(3)/2*lattice_const,0],
-          [2*lattice_const,0,0]])
+          [cc_dist/2,jnp.sqrt(3)/2*cc_dist,0],
+          [3/2*cc_dist,jnp.sqrt(3)/2*cc_dist,0],
+          [2*cc_dist,0,0]])
     m_grid,n_grid=jnp.meshgrid(jnp.arange(1,m+1),jnp.arange(1,n+1))
     flatten_idx_grid= jnp.column_stack((m_grid.ravel(), n_grid.ravel()))
     shift=jnp.array([0,0,0])
     coords=jax.vmap(lambda m,n: shift+unit_cell+translation_vector(m,n),in_axes=(0,0))(flatten_idx_grid[:,0],flatten_idx_grid[:,1]).reshape(m*n*unit_cell.shape[0],3)
     return coords-coords[0] # To make the bottom-left lattice coordinate (0,0,0)
+
 #assign sublattice label to a given flake
 def assign_sublattice(coords,cc_dist):
     sublattice_labels=[None]*len(coords)
@@ -65,7 +66,6 @@ def assign_sublattice(coords,cc_dist):
     kdtree = KDTree(coords)
     
     while nodes_to_find_neighbour:
-        #print(nodes_to_find_neighbour)
         current_node=nodes_to_find_neighbour.pop(0)
         neighbours=kdtree.query_ball_point(coords[current_node], 1.1*cc_dist)
         for neighbour in neighbours:
@@ -74,6 +74,30 @@ def assign_sublattice(coords,cc_dist):
                 nodes_to_find_neighbour.append(neighbour)
             
     return sublattice_labels
+
+def remove_single_neighbor_points(coords, radius=1.0):
+    """
+    Removes points in a set of lattice coordinates that have only one neighbor.
+
+    Args:
+        coords: A NumPy array of coordinates, where each row represents a point.
+        radius: The distance threshold for considering neighbors (default is 1.0).
+
+    Returns:
+        A NumPy array containing the coordinates of points with more than one neighbor.
+    """
+
+    tree = KDTree(coords)
+    points_to_keep = []
+
+    for i, point in enumerate(coords):
+        # Find all neighbors within the given radius
+        neighbors = tree.query_ball_point(point, r=radius)
+        # Count the number of neighbors (excluding the point itself)
+        if len(neighbors) > 2:  # More than one neighbor
+            points_to_keep.append(point)
+
+    return jnp.array(points_to_keep)
 
 def _cut_flake_graphene(polygon_id, edge_type, side_length, lattice_constant):
     # measure everything in units of the lc
@@ -92,8 +116,9 @@ def _cut_flake_graphene(polygon_id, edge_type, side_length, lattice_constant):
     height=jnp.max(polygon[:,1])-jnp.min(polygon[:,1])
     m=jnp.int32(width/(3*a)+2)
     n=jnp.int32(height/(jnp.sqrt(3)*a)+2)
-    sheet=get_graphene_sheet(m, n, lattice_const=a)
+    sheet=get_graphene_sheet(m, n, cc_dist=a)
     inside = path.contains_points(sheet[:,:2],radius=-0.01*a) # Watch the -ve sign here
     polygon = jnp.vstack([polygon[:, :2], polygon[0, :2]])
-    sublattice=assign_sublattice(sheet[inside],cc_dist=a)
-    return m, n,  polygon, sheet[inside],  sheet, sublattice
+    flake=remove_single_neighbor_points(sheet[inside],radius=1.01*a)
+    sublattice=assign_sublattice(flake,cc_dist=a)
+    return m, n,  polygon, flake,  sheet, sublattice
