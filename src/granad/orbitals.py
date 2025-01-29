@@ -395,20 +395,28 @@ class OrbitalList:
 
         def fill_matrix(matrix, coupling_dict):
 
+            # matrix is NxN and hermitian
+            # we fill the upper triangle with a mask and make the matrix hermitian by adding adding its conjugate transpose
             dummy = jnp.arange(len(self))
             triangle_mask = dummy[:, None] >= dummy
-
+            
             # first, we loop over all group_id couplings => interactions between groups
             for key, function in coupling_dict.group_id_items():
                 # if it were the other way around, these would be zeroed by the triangle mask
                 cols = group_ids == key[0].id
-                rows = (group_ids == key[1].id)[:, None]
-                combination_indices = jnp.logical_and(rows, cols)
+                rows = (group_ids == key[1].id)[:, None] 
+                combination_indices = jnp.logical_and(rows, cols)                
                 valid_indices = jnp.logical_and(triangle_mask, combination_indices)
+                
+                # hotfix
+                if valid_indices.sum() == 0:
+                    valid_indices = jnp.logical_and(triangle_mask.T, combination_indices)
+                    
                 function = jax.vmap(function)
                 matrix = matrix.at[valid_indices].set(
                     function(distances[valid_indices])
                 )
+
             matrix += matrix.conj().T - jnp.diag(jnp.diag(matrix))
 
             # we now set single elements
