@@ -606,14 +606,14 @@ def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_
             )
 
     
-def get_graphene(hopping = -2.33):
+def get_graphene(hopping = -2.66):
     """
     Generates a graphene model based on parameters from 
     [David Tománek and Steven G. Louie, Phys. Rev. B 37, 8327 (1988)](https://doi.org/10.1103/PhysRevB.37.8327).
 
     Args:
         hopping (float, optional): The nearest-neighbor hopping parameter in eV. 
-            - Default is -2.33 eV, as specified in the reference.
+            - Default is -2.66 eV, as specified in the reference.
 
     Returns:
         Material: A `Material` object representing the graphene model, which includes:
@@ -623,7 +623,7 @@ def get_graphene(hopping = -2.33):
             - **Orbitals**:
                 - Two sublattices, each with a single "pz" orbital, positioned at (0, 0) and (-1/3, -2/3).
             - **Hamiltonian Interaction**:
-                - Nearest-neighbor hopping: [0.0 (onsite energy), hopping (default -2.33 eV)].
+                - Nearest-neighbor hopping: [0.0 (onsite energy), hopping (default -2.66 eV)].
             - **Coulomb Interaction**:
                 - Parameterized by the Ohno potential with parameters [16.522, 8.64, 5.333].
 
