@@ -614,6 +614,7 @@ class OrbitalList:
         self.params.electrons += 1
 
     def filter_orbs( self, orb_id, t ):
+        """maps a given orb_id (such as an index or tag) to a list of the required type t"""
         def filter_single_orb(orb_id, t):
             if type(orb_id) == t:
                 return [orb_id]
