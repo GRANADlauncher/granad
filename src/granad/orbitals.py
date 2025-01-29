@@ -570,10 +570,13 @@ class OrbitalList:
                 **self.params.self_consistency_params,
             )
 
-        if jnp.any(self._initial_density_matrix.diagonal() < 0) or jnp.any(self._initial_density_matrix.diagonal() > 2.5):
+        eps = 1e-1
+        lower = -eps
+        upper = 2 + eps
+        if jnp.any(self._initial_density_matrix.diagonal() < lower) or jnp.any(self._initial_density_matrix.diagonal() > upper):
             raise Exception("Occupation numbers in initial density matrix are invalid.")
 
-        if jnp.any(self._stationary_density_matrix.diagonal() < 0) or jnp.any(self._stationary_density_matrix.diagonal() > 2.5 ) :
+        if jnp.any(self._stationary_density_matrix.diagonal() < lower) or jnp.any(self._stationary_density_matrix.diagonal() > upper ) :
             raise Exception("Occupation numbers in stationary density matrix are invalid.")
             
         self._initial_density_matrix = self.transform_to_site_basis( self._initial_density_matrix )
