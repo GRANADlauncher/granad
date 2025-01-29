@@ -55,8 +55,25 @@ def get_graphene_sheet(m,n,lattice_const):
     shift=jnp.array([0,0,0])
     coords=jax.vmap(lambda m,n: shift+unit_cell+translation_vector(m,n),in_axes=(0,0))(flatten_idx_grid[:,0],flatten_idx_grid[:,1]).reshape(m*n*unit_cell.shape[0],3)
     return coords-coords[0] # To make the bottom-left lattice coordinate (0,0,0)
-
-
+#assign sublattice label to a given flake
+def assign_sublattice(coords,cc_dist):
+    sublattice_labels=[None]*len(coords)
+    
+    nodes_to_find_neighbour=[0]
+    sublattice_labels[0]='A'
+    
+    kdtree = KDTree(coords)
+    
+    while nodes_to_find_neighbour:
+        #print(nodes_to_find_neighbour)
+        current_node=nodes_to_find_neighbour.pop(0)
+        neighbours=kdtree.query_ball_point(coords[current_node], 1.1*cc_dist)
+        for neighbour in neighbours:
+            if sublattice_labels[neighbour]== None:
+                sublattice_labels[neighbour]= 'B' if sublattice_labels[current_node]=='A' else 'A'
+                nodes_to_find_neighbour.append(neighbour)
+            
+    return sublattice_labels
 
 def _cut_flake_graphene(polygon_id, edge_type, side_length, lattice_constant):
     # measure everything in units of the lc
@@ -78,4 +95,5 @@ def _cut_flake_graphene(polygon_id, edge_type, side_length, lattice_constant):
     sheet=get_graphene_sheet(m, n, lattice_const=a)
     inside = path.contains_points(sheet[:,:2],radius=-0.01*a) # Watch the -ve sign here
     polygon = jnp.vstack([polygon[:, :2], polygon[0, :2]])
-    return m, n,  polygon, sheet[inside],  sheet
+    sublattice=assign_sublattice(sheet[inside],cc_dist=a)
+    return m, n,  polygon, sheet[inside],  sheet, sublattice
