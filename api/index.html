@@ -12851,7 +12851,7 @@ If the dipole is placed at a position occupied by orbitals, its contribution wil
     <div class="doc doc-contents ">
 
         <p>Function for modelling dissipation according to the saturated lindblad equation as detailed in <a href="https://link.aps.org/doi/10.1103/PhysRevA.109.022237">Pelc et al.</a>.
-The argument stands for the saturation functional.</p>
+The argument stands for the saturation functional. If identity is selected as the saturation functional, the model represents the canonical Lindblad relaxation.</p>
 
             <details class="quote">
               <summary>Source code in <code>src/granad/dissipators.py</code></summary>
@@ -12880,7 +12880,7 @@ The argument stands for the saturation functional.</p>
 <span class="normal"><a href="#__codelineno-0-31">31</a></span>
 <span class="normal"><a href="#__codelineno-0-32">32</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9"></a><span class="k">def</span><span class="w"> </span><span class="nf">SaturationLindblad</span><span class="p">(</span><span class="n">saturation</span><span class="p">):</span>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Function for modelling dissipation according to the saturated lindblad equation as detailed in [Pelc et al.](https://link.aps.org/doi/10.1103/PhysRevA.109.022237).</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    The argument stands for the saturation functional.</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11"></a><span class="sd">    The argument stands for the saturation functional. If identity is selected as the saturation functional, the model represents the canonical Lindblad relaxation.</span>
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13"></a>    <span class="n">saturation</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">saturation</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
 </span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14"></a>
