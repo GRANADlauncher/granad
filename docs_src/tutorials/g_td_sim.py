@@ -155,17 +155,6 @@ print(occ_x.shape)
 
 # Further reduction of the memory consumption can be controlled by the grid argument, which describes the density of the time domain sampling grid, explained in the API section on the `master_equation` method.
 
-### Initially excited states
-
-# GRANAD allows to set initially excited states by specifying the single-particle transition in the density matrix as follows
-
-# +
-flake.set_excitation( flake.homo, flake.lumo, 1)
-flake.show_energies()
-# -
-
-# In case of degeneracies, GRANAD distributes electrons equally among all degenerate energy levels, as demonstrated in the figure above.
-
 ### Energy occupations
 
 # Similarly to site occupations, only energy occupations can also be obtained from the time-domain simulations.
@@ -180,6 +169,17 @@ result = flake.master_equation(
      )
 flake.show_res(result, plot_only = [flake.homo, flake.homo+1], plot_labels = ["homo", "lumo"], show_illumination = False )
 # -
+
+### Initially excited states
+
+# GRANAD allows to set initially excited states by specifying the single-particle transition in the density matrix as follows
+
+# +
+flake.set_excitation( flake.homo, flake.lumo, 1)
+flake.show_energies()
+# -
+
+# In case of degeneracies, GRANAD distributes electrons equally among all degenerate energy levels, as demonstrated in the figure above.
 
 ### Combinations
 
