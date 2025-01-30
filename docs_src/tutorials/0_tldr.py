@@ -14,7 +14,7 @@
 
 # # GRANAD at a glance
 
-A quick summary of the most essential features.
+# A quick summary of the most essential features.
 
 ### Static quantities
 
