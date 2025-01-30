@@ -1,6 +1,22 @@
-# GRANAD at a glance
+# ---
+# jupyter:
+#   jupytext:
+#     text_representation:
+#       extension: .py
+#       format_name: light
+#       format_version: '1.5'
+#       jupytext_version: 1.16.1
+#   kernelspec:
+#     display_name: base
+#     language: python
+#     name: base
+# ---
 
-## Static quantities
+# # GRANAD at a glance
+
+A quick summary of the most essential features.
+
+### Static quantities
 
 # +
 from granad import *
@@ -25,7 +41,7 @@ flake = custom_graphene.cut_flake(Triangle(30))
 flake.show_energies() # energies
 # -
 
-## Dynamic Quantities
+### Dynamic Quantities
 
 # +
 # TD sims
