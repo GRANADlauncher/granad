@@ -601,14 +601,13 @@ def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_
             )
 
     
-def get_graphene(hopping = -2.66):
+def get_graphene(hoppings = None):
     """
     Generates a graphene model based on parameters from 
     [David Tománek and Steven G. Louie, Phys. Rev. B 37, 8327 (1988)](https://doi.org/10.1103/PhysRevB.37.8327).
 
     Args:
-        hopping (float, optional): The nearest-neighbor hopping parameter in eV. 
-            - Default is -2.66 eV, as specified in the reference.
+        hoppings (list, optional): Hopping parameters for pz-pz interactions.  Default is [onsite, nn] = [0, -2.66], as specified in the reference.
 
     Returns:
         Material: A `Material` object representing the graphene model, which includes:
@@ -626,6 +625,7 @@ def get_graphene(hopping = -2.66):
         >>> graphene_model = get_graphene(hopping=-2.7)
         >>> print(graphene_model)
     """
+    hoppings = hoppings or [0, -2.66]
     return (Material("graphene")
             .lattice_constant(2.46)
             .lattice_basis([
@@ -638,7 +638,7 @@ def get_graphene(hopping = -2.66):
             .add_interaction(
                 "hamiltonian",
                 participants=("pz", "pz"),
-                parameters=[0.0, hopping],
+                parameters=hoppings,
             )
             .add_interaction(
                 "coulomb",
