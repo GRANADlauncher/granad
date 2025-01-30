@@ -14,9 +14,11 @@ def Wave(
     Returns:
        Function that computes the electric field as a functon of time
     """
+    def _field(t, real = True):
+        val = (jnp.exp(1j * frequency * t) * static_part)
+        return val.real if real else val
     static_part = jnp.array(amplitudes)
-    return lambda t: (jnp.exp(1j * frequency * t) * static_part)
-
+    return _field
 
 def Ramp(
     amplitudes: list[float],
@@ -35,14 +37,17 @@ def Ramp(
     Returns:
        Function that computes the electric field as a functon of time
     """
+    def _field(t, real = True):        
+        val =  (
+            static_part
+            * jnp.exp(1j * frequency * t)
+            / (1 + 1.0 * jnp.exp(-ramp_constant * (t - time_ramp)))
+        )
+        return val.real if real else val
     static_part = jnp.array(amplitudes)
     p = 0.99
     ramp_constant = 2 * jnp.log(p / (1 - p)) / ramp_duration
-    return lambda t: (
-        static_part
-        * jnp.exp(1j * frequency * t)
-        / (1 + 1.0 * jnp.exp(-ramp_constant * (t - time_ramp)))
-    )
+    return _field
 
 
 def Pulse(
@@ -62,11 +67,13 @@ def Pulse(
     Returns:
        Function that computes the electric field
     """
-
+    def _field(t, real = True):
+        val = (
+            static_part
+            * jnp.exp(-1j * jnp.pi / 2 + 1j * frequency * (t - peak))
+            * jnp.exp(-((t - peak) ** 2) / sigma**2)
+        )
+        return val.real if real else val
     static_part = jnp.array(amplitudes)
     sigma = fwhm / (2.0 * jnp.sqrt(jnp.log(2)))
-    return lambda t: (
-        static_part
-        * jnp.exp(-1j * jnp.pi / 2 + 1j * frequency * (t - peak))
-        * jnp.exp(-((t - peak) ** 2) / sigma**2)
-    )
+    return _field

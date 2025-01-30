@@ -77,7 +77,7 @@ def DipoleGauge(illumination, use_rwa = False, intra_only = False):
 
     def electric_potential_rwa(t, r, args):
         # the missing real part is crucial here! the RWA (for real dipole moments) makes the fields complex and divides by 2
-        total_field_potential = jnp.einsum(einsum_string, args.dipole_operator, illumination(t))
+        total_field_potential = jnp.einsum(einsum_string, args.dipole_operator, illumination(t, real = False))
 
         # Get the indices for the lower triangle, excluding the diagonal
         lower_indices = jnp.tril_indices(total_field_potential.shape[0], -1)

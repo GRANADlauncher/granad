@@ -36,7 +36,7 @@ wave = Wave( amplitudes = [1, 0, 0], frequency = 1  )
 print(wave(0))
 # -
 
-# A quick way to visualize them is to plot their real and imaginary part. To apply the electric field for many points, we need to vectorize it to obtain an array of results. JAX offers the vmap function that vectorizes the application.
+# A quick way to visualize them is to plot them (by default, granad considers real fields). To apply the electric field for many points, we need to vectorize it to obtain an array of results. JAX offers the vmap function that vectorizes the application.
 
 # +
 time = jnp.linspace(0, 2 * 2 * jnp.pi, 100)
@@ -45,8 +45,7 @@ print(e_field.shape)
 # -
 
 # +
-plt.plot(time, e_field.real, label="Real Part")
-plt.plot(time, e_field.imag, '--', label="Imaginary Part")
+plt.plot(time, e_field)
 plt.title("Electric Field")
 plt.xlabel("Time")
 plt.ylabel("Field Amplitude")
@@ -64,12 +63,10 @@ time = jnp.linspace(0, 20, 500)
 e_field_ramp = jax.vmap(ramp)(time)
 
 plt.figure()
-plt.plot(time, e_field_ramp.real, label="Real Part")
-plt.plot(time, e_field_ramp.imag, '--', label="Imaginary Part")
+plt.plot(time, e_field_ramp)
 plt.title("Ramp Electric Field")
 plt.xlabel("Time")
 plt.ylabel("Field Amplitude")
-plt.legend()
 plt.show()
 # -
 
@@ -84,12 +81,10 @@ time = jnp.linspace(0, 20, 500)
 e_field_pulse = jax.vmap(pulse)(time)
 
 plt.figure()
-plt.plot(time, e_field_pulse.real, label="Real Part")
-plt.plot(time, e_field_pulse.imag, '--', label="Imaginary Part")
+plt.plot(time, e_field_pulse)
 plt.title("Pulse Electric Field")
 plt.xlabel("Time")
 plt.ylabel("Field Amplitude")
-plt.legend()
 plt.show()
 # -
 
