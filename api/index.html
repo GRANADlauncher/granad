@@ -260,6 +260,8 @@
               </ul>
               <p class="caption"><span class="caption-text">Tutorials</span></p>
               <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../tutorials/0_tldr/">0 tldr</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tutorials/a_getting_started/">Getting started</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../tutorials/ab_cutting/">Cutting</a>
@@ -10407,7 +10409,7 @@ print(metal_chain)</p>
 
 
 <h2 id="granad.materials.get_graphene" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">get_graphene</span><span class="p">(</span><span class="n">hopping</span><span class="o">=-</span><span class="mf">2.66</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">get_graphene</span><span class="p">(</span><span class="n">hoppings</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 </h2>
 
@@ -10429,14 +10431,13 @@ print(metal_chain)</p>
       <td class="field-body">
         <ul class="first simple">
             <li>
-              <b><code>hopping</code></b>
-                  (<code>float</code>, default:
-                      <code>-2.66</code>
+              <b><code>hoppings</code></b>
+                  (<code>list</code>, default:
+                      <code>None</code>
 )
               –
               <div class="doc-md-description">
-                <p>The nearest-neighbor hopping parameter in eV. 
-- Default is -2.66 eV, as specified in the reference.</p>
+                <p>Hopping parameters for pz-pz interactions.  Default is [onsite, nn] = [0, -2.66], as specified in the reference.</p>
               </div>
             </li>
         </ul>
@@ -10534,31 +10535,31 @@ print(graphene_model)</p>
 <span class="normal"><a href="#__codelineno-0-646">646</a></span>
 <span class="normal"><a href="#__codelineno-0-647">647</a></span>
 <span class="normal"><a href="#__codelineno-0-648">648</a></span>
-<span class="normal"><a href="#__codelineno-0-649">649</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-604"><a id="__codelineno-0-604" name="__codelineno-0-604"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_graphene</span><span class="p">(</span><span class="n">hopping</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.66</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-649">649</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-604"><a id="__codelineno-0-604" name="__codelineno-0-604"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_graphene</span><span class="p">(</span><span class="n">hoppings</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 </span><span id="__span-0-605"><a id="__codelineno-0-605" name="__codelineno-0-605"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-0-606"><a id="__codelineno-0-606" name="__codelineno-0-606"></a><span class="sd">    Generates a graphene model based on parameters from </span>
 </span><span id="__span-0-607"><a id="__codelineno-0-607" name="__codelineno-0-607"></a><span class="sd">    [David Tománek and Steven G. Louie, Phys. Rev. B 37, 8327 (1988)](https://doi.org/10.1103/PhysRevB.37.8327).</span>
 </span><span id="__span-0-608"><a id="__codelineno-0-608" name="__codelineno-0-608"></a>
 </span><span id="__span-0-609"><a id="__codelineno-0-609" name="__codelineno-0-609"></a><span class="sd">    Args:</span>
-</span><span id="__span-0-610"><a id="__codelineno-0-610" name="__codelineno-0-610"></a><span class="sd">        hopping (float, optional): The nearest-neighbor hopping parameter in eV. </span>
-</span><span id="__span-0-611"><a id="__codelineno-0-611" name="__codelineno-0-611"></a><span class="sd">            - Default is -2.66 eV, as specified in the reference.</span>
-</span><span id="__span-0-612"><a id="__codelineno-0-612" name="__codelineno-0-612"></a>
-</span><span id="__span-0-613"><a id="__codelineno-0-613" name="__codelineno-0-613"></a><span class="sd">    Returns:</span>
-</span><span id="__span-0-614"><a id="__codelineno-0-614" name="__codelineno-0-614"></a><span class="sd">        Material: A `Material` object representing the graphene model, which includes:</span>
-</span><span id="__span-0-615"><a id="__codelineno-0-615" name="__codelineno-0-615"></a><span class="sd">            - **Lattice Structure**:</span>
-</span><span id="__span-0-616"><a id="__codelineno-0-616" name="__codelineno-0-616"></a><span class="sd">                - Lattice constant: 2.46 Å.</span>
-</span><span id="__span-0-617"><a id="__codelineno-0-617" name="__codelineno-0-617"></a><span class="sd">                - Hexagonal lattice basis vectors: [1, 0, 0] and [-0.5, sqrt(3)/2, 0].</span>
-</span><span id="__span-0-618"><a id="__codelineno-0-618" name="__codelineno-0-618"></a><span class="sd">            - **Orbitals**:</span>
-</span><span id="__span-0-619"><a id="__codelineno-0-619" name="__codelineno-0-619"></a><span class="sd">                - Two sublattices, each with a single &quot;pz&quot; orbital, positioned at (0, 0) and (-1/3, -2/3).</span>
-</span><span id="__span-0-620"><a id="__codelineno-0-620" name="__codelineno-0-620"></a><span class="sd">            - **Hamiltonian Interaction**:</span>
-</span><span id="__span-0-621"><a id="__codelineno-0-621" name="__codelineno-0-621"></a><span class="sd">                - Nearest-neighbor hopping: [0.0 (onsite energy), hopping (default -2.66 eV)].</span>
-</span><span id="__span-0-622"><a id="__codelineno-0-622" name="__codelineno-0-622"></a><span class="sd">            - **Coulomb Interaction**:</span>
-</span><span id="__span-0-623"><a id="__codelineno-0-623" name="__codelineno-0-623"></a><span class="sd">                - Parameterized by the Ohno potential with parameters [16.522, 8.64, 5.333].</span>
-</span><span id="__span-0-624"><a id="__codelineno-0-624" name="__codelineno-0-624"></a>
-</span><span id="__span-0-625"><a id="__codelineno-0-625" name="__codelineno-0-625"></a><span class="sd">    Example:</span>
-</span><span id="__span-0-626"><a id="__codelineno-0-626" name="__codelineno-0-626"></a><span class="sd">        &gt;&gt;&gt; graphene_model = get_graphene(hopping=-2.7)</span>
-</span><span id="__span-0-627"><a id="__codelineno-0-627" name="__codelineno-0-627"></a><span class="sd">        &gt;&gt;&gt; print(graphene_model)</span>
-</span><span id="__span-0-628"><a id="__codelineno-0-628" name="__codelineno-0-628"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-610"><a id="__codelineno-0-610" name="__codelineno-0-610"></a><span class="sd">        hoppings (list, optional): Hopping parameters for pz-pz interactions.  Default is [onsite, nn] = [0, -2.66], as specified in the reference.</span>
+</span><span id="__span-0-611"><a id="__codelineno-0-611" name="__codelineno-0-611"></a>
+</span><span id="__span-0-612"><a id="__codelineno-0-612" name="__codelineno-0-612"></a><span class="sd">    Returns:</span>
+</span><span id="__span-0-613"><a id="__codelineno-0-613" name="__codelineno-0-613"></a><span class="sd">        Material: A `Material` object representing the graphene model, which includes:</span>
+</span><span id="__span-0-614"><a id="__codelineno-0-614" name="__codelineno-0-614"></a><span class="sd">            - **Lattice Structure**:</span>
+</span><span id="__span-0-615"><a id="__codelineno-0-615" name="__codelineno-0-615"></a><span class="sd">                - Lattice constant: 2.46 Å.</span>
+</span><span id="__span-0-616"><a id="__codelineno-0-616" name="__codelineno-0-616"></a><span class="sd">                - Hexagonal lattice basis vectors: [1, 0, 0] and [-0.5, sqrt(3)/2, 0].</span>
+</span><span id="__span-0-617"><a id="__codelineno-0-617" name="__codelineno-0-617"></a><span class="sd">            - **Orbitals**:</span>
+</span><span id="__span-0-618"><a id="__codelineno-0-618" name="__codelineno-0-618"></a><span class="sd">                - Two sublattices, each with a single &quot;pz&quot; orbital, positioned at (0, 0) and (-1/3, -2/3).</span>
+</span><span id="__span-0-619"><a id="__codelineno-0-619" name="__codelineno-0-619"></a><span class="sd">            - **Hamiltonian Interaction**:</span>
+</span><span id="__span-0-620"><a id="__codelineno-0-620" name="__codelineno-0-620"></a><span class="sd">                - Nearest-neighbor hopping: [0.0 (onsite energy), hopping (default -2.66 eV)].</span>
+</span><span id="__span-0-621"><a id="__codelineno-0-621" name="__codelineno-0-621"></a><span class="sd">            - **Coulomb Interaction**:</span>
+</span><span id="__span-0-622"><a id="__codelineno-0-622" name="__codelineno-0-622"></a><span class="sd">                - Parameterized by the Ohno potential with parameters [16.522, 8.64, 5.333].</span>
+</span><span id="__span-0-623"><a id="__codelineno-0-623" name="__codelineno-0-623"></a>
+</span><span id="__span-0-624"><a id="__codelineno-0-624" name="__codelineno-0-624"></a><span class="sd">    Example:</span>
+</span><span id="__span-0-625"><a id="__codelineno-0-625" name="__codelineno-0-625"></a><span class="sd">        &gt;&gt;&gt; graphene_model = get_graphene(hopping=-2.7)</span>
+</span><span id="__span-0-626"><a id="__codelineno-0-626" name="__codelineno-0-626"></a><span class="sd">        &gt;&gt;&gt; print(graphene_model)</span>
+</span><span id="__span-0-627"><a id="__codelineno-0-627" name="__codelineno-0-627"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-628"><a id="__codelineno-0-628" name="__codelineno-0-628"></a>    <span class="n">hoppings</span> <span class="o">=</span> <span class="n">hoppings</span> <span class="ow">or</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.66</span><span class="p">]</span>
 </span><span id="__span-0-629"><a id="__codelineno-0-629" name="__codelineno-0-629"></a>    <span class="k">return</span> <span class="p">(</span><span class="n">Material</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
 </span><span id="__span-0-630"><a id="__codelineno-0-630" name="__codelineno-0-630"></a>            <span class="o">.</span><span class="n">lattice_constant</span><span class="p">(</span><span class="mf">2.46</span><span class="p">)</span>
 </span><span id="__span-0-631"><a id="__codelineno-0-631" name="__codelineno-0-631"></a>            <span class="o">.</span><span class="n">lattice_basis</span><span class="p">([</span>
@@ -10571,7 +10572,7 @@ print(graphene_model)</p>
 </span><span id="__span-0-638"><a id="__codelineno-0-638" name="__codelineno-0-638"></a>            <span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span>
 </span><span id="__span-0-639"><a id="__codelineno-0-639" name="__codelineno-0-639"></a>                <span class="s2">&quot;hamiltonian&quot;</span><span class="p">,</span>
 </span><span id="__span-0-640"><a id="__codelineno-0-640" name="__codelineno-0-640"></a>                <span class="n">participants</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;pz&quot;</span><span class="p">,</span> <span class="s2">&quot;pz&quot;</span><span class="p">),</span>
-</span><span id="__span-0-641"><a id="__codelineno-0-641" name="__codelineno-0-641"></a>                <span class="n">parameters</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">hopping</span><span class="p">],</span>
+</span><span id="__span-0-641"><a id="__codelineno-0-641" name="__codelineno-0-641"></a>                <span class="n">parameters</span><span class="o">=</span><span class="n">hoppings</span><span class="p">,</span>
 </span><span id="__span-0-642"><a id="__codelineno-0-642" name="__codelineno-0-642"></a>            <span class="p">)</span>
 </span><span id="__span-0-643"><a id="__codelineno-0-643" name="__codelineno-0-643"></a>            <span class="o">.</span><span class="n">add_interaction</span><span class="p">(</span>
 </span><span id="__span-0-644"><a id="__codelineno-0-644" name="__codelineno-0-644"></a>                <span class="s2">&quot;coulomb&quot;</span><span class="p">,</span>
