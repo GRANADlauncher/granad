@@ -37,7 +37,7 @@ print("HOMO-LUMO x-dipole", flake.dipole_operator_e[0, flake.homo, flake.lumo])
 onsite, nn, nnn = [0, -2., 0.1]
 new_hoppings = [onsite, nn, nnn]
 custom_graphene = MaterialCatalog.get("graphene", hoppings = new_hoppings) # pass your own hoppings
-flake = custom_graphene.cut_flake(Triangle(30))
+flake = custom_graphene.cut_flake(Triangle(10))
 flake.show_energies() # energies
 # -
 
