@@ -8,7 +8,7 @@ def DecoherenceTime():
 
 def SaturationLindblad(saturation):
     """Function for modelling dissipation according to the saturated lindblad equation as detailed in [Pelc et al.](https://link.aps.org/doi/10.1103/PhysRevA.109.022237).
-    The argument stands for the saturation functional.
+    The argument stands for the saturation functional. If identity is selected as the saturation functional, the model represents the canonical Lindblad relaxation.
     """
     saturation = jax.vmap(saturation, 0, 0)
 
