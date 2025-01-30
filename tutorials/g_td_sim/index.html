@@ -78,9 +78,9 @@
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#occupations">Occupations</a>
     </li>
-    <li class="toctree-l2"><a class="reference internal" href="#initially-excited-states">Initially excited states</a>
-    </li>
     <li class="toctree-l2"><a class="reference internal" href="#energy-occupations">Energy occupations</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#initially-excited-states">Initially excited states</a>
     </li>
     <li class="toctree-l2"><a class="reference internal" href="#combinations">Combinations</a>
     </li>
@@ -262,22 +262,15 @@ RHS compiled
 (6780, 96)
 </code></pre></div>
 <p>Further reduction of the memory consumption can be controlled by the grid argument, which describes the density of the time domain sampling grid, explained in the API section on the <code>master_equation</code> method.</p>
-<h2 id="initially-excited-states">Initially excited states</h2>
-<p>GRANAD allows to set initially excited states by specifying the single-particle transition in the density matrix as follows</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">set_excitation</span><span class="p">(</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">lumo</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
-</span></code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_40_0.png" /></p>
-<p>In case of degeneracies, GRANAD distributes electrons equally among all degenerate energy levels, as demonstrated in the figure above.</p>
 <h2 id="energy-occupations">Energy occupations</h2>
 <p>Similarly to site occupations, only energy occupations can also be obtained from the time-domain simulations.</p>
 <p><em>Warning</em>: this introduces additional cubic complexity </p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
-</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;occ_e&quot;</span><span class="p">],</span>
-</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
-</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>     <span class="p">)</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">plot_only</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">],</span> <span class="n">show_illumination</span> <span class="o">=</span> <span class="kc">False</span> <span class="p">)</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;occ_e&quot;</span><span class="p">],</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>     <span class="p">)</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">plot_only</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">],</span> <span class="n">show_illumination</span> <span class="o">=</span> <span class="kc">False</span> <span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 RHS compiled
@@ -288,7 +281,14 @@ RHS compiled
 
 100.0 %
 </code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_45_3.png" /></p>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_41_3.png" /></p>
+<h2 id="initially-excited-states">Initially excited states</h2>
+<p>GRANAD allows to set initially excited states by specifying the single-particle transition in the density matrix as follows</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">set_excitation</span><span class="p">(</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">lumo</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_44_0.png" /></p>
+<p>In case of degeneracies, GRANAD distributes electrons equally among all degenerate energy levels, as demonstrated in the figure above.</p>
 <h2 id="combinations">Combinations</h2>
 <p>We can also extract multiple quantities at the same time</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
