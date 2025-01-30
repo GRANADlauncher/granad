@@ -954,24 +954,27 @@ class OrbitalList:
 
     @property
     @recomputes
+
     def wigner_weisskopf_transition_rates(self):
         """
         Calculates Wigner-Weisskopf transition rates based on transition energies and dipole moments transformed to the energy basis.
-        
+
         Returns:
            jax.Array: The element `arr[i,j]` contains the transition rate from `i` to `j`.
         """
-        charge = 1.602e-19
-        eps_0 = 8.85 * 1e-12
-        hbar = 1.0545718 * 1e-34
-        c = 3e8  # 137 (a.u.)
-        factor = 1.6e-29 * charge / (3 * jnp.pi * eps_0 * hbar**2 * c**3)
+        charge = 1.602e-19   # C
+        eps_0 = 8.85 * 1e-12 # F/m
+        hbar = 1.0545718 * 1e-34 # Js
+        c = 3e8  # 137 (a.u.) # m/s
+        angstroem = 1e-10 # m
+        factor = (charge/hbar)**3 * (charge*angstroem)**2  / (3 * jnp.pi * eps_0 * hbar * c**3)
         te = self.transition_energies
-        transition_dipole_moments = jnp.sum(self.dipole_operator_e**2, axis = 0)
+        transition_dipole_moments_squared = jnp.sum(self.dipole_operator_e**2, axis = 0)
+        factor2 = hbar/charge # transfer Gamma back to code units
         return (
             (te * (te > self.eps)) ** 3
-            * transition_dipole_moments
-            * factor
+            * transition_dipole_moments_squared
+            * factor * factor2
         ).real
 
     @staticmethod
