@@ -237,7 +237,7 @@ class TDResult:
                                             axis is returned. Otherwise, only the Fourier transformed data is returned.
 
         """
-        return _numerics.get_fourier_transform(self.time_axis, self.td_illumination, omega_max, omega_min, return_omega_axis)
+        return _numerics.get_fourier_transform(self.time_axis, self.td_illumination.real, omega_max, omega_min, return_omega_axis)
 
     def save( self, name ):
         jnp.savez(f"{name}.npz", **asdict(self) )
