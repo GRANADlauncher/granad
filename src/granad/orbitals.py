@@ -1323,7 +1323,9 @@ class OrbitalList:
     def get_ip_green_function(self, A, B, omegas, occupations = None, energies = None, mask = None, relaxation_rate = 1e-1):
         """independent-particle greens function at the specified frequency according to 
 
-        $G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i\epsilon} A_{nm} B_{mn}$
+        $$
+        G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i\epsilon} A_{nm} B_{mn}
+        $$
 
         Parameters: 
           A, B : operators *in energy basis*, square jax.Array
