@@ -1324,7 +1324,7 @@ class OrbitalList:
         """independent-particle greens function at the specified frequency according to 
 
         $$
-        G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i\epsilon} A_{nm} B_{mn}
+        G_{AB}(\omega) = \sum_{nm} \frac{P_m - P_n}{\omega + E_m - E_n + i e} A_{nm} B_{mn}
         $$
 
         Parameters: 
