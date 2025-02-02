@@ -14,11 +14,11 @@
 
 # # Getting started
 #
-# We introduce the basics of GRANAD and perform an example simulation.
+# Below we introduce the basics of GRANAD and perform an example simulation.
 
 ### Introduction
 
-# GRANAD lets you simulate structures from a few orbitals up to finite bulks. The process of specifying a structure is designed to be easy and interactive: You can add, shift, combine and manipulate parts of your structure at varying levels of detail involving large groups of orbitals or  single orbitals. To this end, GRANAD offers three fundamental datatypes:
+# GRANAD lets you simulate structures from a few orbitals up to extended nanostructures. The process of specifying a structure is designed to be easy and interactive: You can add, shift, combine and manipulate parts of your structure at varying levels of detail involving large groups of orbitals or single orbitals. To this end, GRANAD offers three fundamental datatypes:
 
 # 1. *Orbitals* are the fundamental building block of a structure.
 # 2. *Materials* are a stand-in for infinite bulks. You can cut finite pieces from these bulks, which correspond to lists of orbitals with specified positions and properties.
@@ -151,7 +151,7 @@ from granad import Pulse
 my_first_illumination = Pulse(
     amplitudes=[1e-5, 0, 0], frequency=2.3, peak=5, fwhm=2
 )
-print( my_first_illumination( 0.0) ) # initial value of the field
+print( my_first_illumination( 0.0) ) # initial field
 # -
 
 # The pulse corresponds to a plane wave with a Gaussian temporal profile. To visualize it, please consult the electric fields tutorial.
@@ -160,7 +160,7 @@ print( my_first_illumination( 0.0) ) # initial value of the field
 #
 # 1. Simulation duration: here, we set the duration from 0 to 40 units.
 # 2. Relaxation rate: here, we pick a single number characterizing the rate of energy dissipation across all channels.
-# 3. The operators whose expectation values we want to compute. They are given as a simple list.
+# 3. The operators whose expectation values we want to compute. They are given as a list.
 
 # We want to calculate the induced polarization from the dipole operator. This operator can be represented as a 3xNxN matrix, where N is the number of orbitals and 3 corresponds to Cartesian components x,y,z and we can compute it directly
 
@@ -179,7 +179,7 @@ result = my_first_flake.master_equation(
     )
 # -
 
-# If you want to compute expecation values of more operators, you can add them to the list.
+# If you want to compute expectaion values of more operators, you can add them to the list.
 
 # The result variable is a container for 
 
