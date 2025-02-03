@@ -3,6 +3,11 @@ __pycache__
 *html
 *pdf
 
+.ipynb_checkpoints/
+.virtual_documents/
+anaconda_projects/
+
+
 # distribution
 granad.egg-info/
 dist
