@@ -215,6 +215,6 @@ time = jnp.linspace(0, 40, 400)
 e_field = jax.vmap(my_first_illumination)(time)
 plt.plot(time, e_field)
 plt.title("Pulse Electric Field")
-plt.xlabel("Time")
+plt.xlabel(r"time [$\hbar$/eV]")
 plt.show()
 # -
