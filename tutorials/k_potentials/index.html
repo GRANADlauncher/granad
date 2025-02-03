@@ -150,7 +150,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">hamiltonian_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_hamiltonian</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f9c98310fe0&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f9c98311300&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff60cb0cfe0&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff60cb0d300&gt;}
 </code></pre></div>
 <p>We see that it is a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian, identified by the keys</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -181,8 +181,9 @@
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>                                           <span class="mi">0</span><span class="p">,</span> <span class="c1"># this argument will be explained in another tutorial, you can always pass in 0</span>
 </span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>                                           <span class="n">flake</span><span class="o">.</span><span class="n">get_args</span><span class="p">()</span> <span class="c1"># this argument will be explained in another tutorial, you can always copy this</span>
 </span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>                                           <span class="p">)</span><span class="o">.</span><span class="n">diagonal</span><span class="p">()),</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>               <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Dipole potential in real space&quot;</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>              <span class="p">)</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>               <span class="n">title</span> <span class="o">=</span> <span class="s2">&quot;Dipole potential in real space&quot;</span><span class="p">,</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>               <span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;two-signed&quot;</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>              <span class="p">)</span>
 </span></code></pre></div>
 <p><img alt="png" src="../k_potentials_files/k_potentials_26_0.png" /></p>
 <p>We can now include it in the Hamiltonian</p>
