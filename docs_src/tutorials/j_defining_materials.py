@@ -25,7 +25,7 @@ from granad import MaterialCatalog, Material, Rectangle
 print(Material.__doc__)
 # -
 
-# So, the Material class essentially defines a small language we can use to specify a material. A preliminary, work-in-progress version of the Hubbard model would look like this
+# The Material class offers all specialized functions to specify a material from a TB model. A preliminary, work-in-progress version of the Hubbard model would look like this
 
 # +
 t = 1. # nearest-neighbor hopping
