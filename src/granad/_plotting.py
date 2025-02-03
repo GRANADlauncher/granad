@@ -292,7 +292,7 @@ def show_res(
 
 
 @_plot_wrapper
-def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None, scale = "linear", levels = 100):
+def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None, scale = "log", levels = 100):
     """
     Displays a 2D plot of the normalized logarithm of the absolute value of the induced field, for a given field component.
 
@@ -303,7 +303,7 @@ def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None, scale 
         `z` (float): z-coordinate slice at which the field is evaluated in the xy-plane.
         `component` (int, optional): The field component to display (default is 0). Represents the direction (e.g., x, y, or z) of the field.
         `density_matrix` (optional): The density matrix used to calculate the induced field. If not provided, the initial density matrix will be used.
-        `scale` (optional): Linear or signed log scale.
+        `scale` (optional): (linear or log) Linear or signed log scale. log is default.
         `levels` (optional): A list of level values, that should be labeled.
 
     Note:
