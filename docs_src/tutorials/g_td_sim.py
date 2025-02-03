@@ -100,10 +100,9 @@ print(result.td_illumination.shape)
 
 # Its integrated form is given by
 
-# $$\int d\vec{r} \dot{\vec{p}}(\vec{r},t) = \dot{\vec{p}}(t) = \int d\vec{r} \vec{j}(\vec{r},t) =  \vec{j}(t)$$ 
+# $$\sum_i \dot{\vec{p}}(\vec{r}_i,t) = \dot{\vec{p}}(t) = \sum_i d\vec{r} \vec{j}(\vec{r}_i,t) =  \vec{j}(t)$$ 
 
-# $\vec{j}(t)$ and $\vec{p}(t)$ are the total current and dipole moment respectively. We can
-# obtain their expectation values directly from the time-domain simulations. The continuity equation above can be verified as follows
+# $\vec{j}(t)$ and $\vec{p}(t)$ are the total current and dipole moment respectively and we have taken the spatially discrete basis into account. We can obtain operator expectation values directly from the time-domain simulations. The continuity equation above can be verified as follows
 
 # +
 import matplotlib.pyplot as plt
