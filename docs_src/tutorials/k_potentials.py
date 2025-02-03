@@ -96,7 +96,8 @@ flake.show_2d( display = jnp.abs(dip_pulse(time,
                                            0, # this argument will be explained in another tutorial, you can always pass in 0
                                            flake.get_args() # this argument will be explained in another tutorial, you can always copy this
                                            ).diagonal()),
-               title = "Dipole potential in real space"
+               title = "Dipole potential in real space",
+               mode = "two-signed"
               )
 # -
 
