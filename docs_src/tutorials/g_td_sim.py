@@ -164,11 +164,13 @@ print(occ_x.shape)
 
 # +
 result = flake.master_equation(
+    illumination = pulse,
     relaxation_rate = 1/10,
     density_matrix = ["occ_e"],
     end_time = 40,
      )
-flake.show_res(result, plot_only = [flake.homo, flake.homo+1], plot_labels = ["homo", "lumo"], show_illumination = False )
+occ_e = result.output[0]
+print(occ_e.shape)
 # -
 
 ### Initially excited states
@@ -226,8 +228,16 @@ epsilon = 0.05
 print(flake.get_epi(res.final_density_matrix, omega = omega, epsilon = epsilon))
 # -
 
-
-### Important note
-# The diffrax solver adjusts the simulation parameters automatically depending on the initial values of physical parameters.
-# Running stable calculations might require some fine tuning.
-# Example scripts providing working setups are provided here.
+# %% [markdown]
+# <div style="
+#     padding: 10px;
+#     background-color: #fff3cd;
+#     color: #856404;
+#     border-left: 5px solid #ffcc00;
+#     border-radius: 5px;
+#     padding: 10px;
+# ">
+# <b>Important Note:</b> The <code>diffrax</code> solver adjusts the simulation parameters automatically 
+# depending on the initial values of physical parameters. Running stable calculations might require 
+# some fine-tuning. Example scripts providing working setups are provided here.
+# </div>
