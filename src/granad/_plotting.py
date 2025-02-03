@@ -346,6 +346,7 @@ def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None, scale 
         label = label
     )
     ax.scatter(*zip(*orbs.positions[:, :2]), color = 'black', s=20, zorder = 10)
+    ax.axis('equal')
 
 
 def _display_lattice_cut(positions, selected_positions, polygon = None):
