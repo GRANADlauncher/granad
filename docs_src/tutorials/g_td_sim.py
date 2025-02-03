@@ -228,7 +228,6 @@ epsilon = 0.05
 print(flake.get_epi(res.final_density_matrix, omega = omega, epsilon = epsilon))
 # -
 
-# %% [markdown]
 # <div style="
 #     padding: 10px;
 #     background-color: #fff3cd;
