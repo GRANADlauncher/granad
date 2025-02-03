@@ -9,7 +9,7 @@ def Wave(
 
     Args:
         amplitudes: electric field amplitudes in xyz-components
-        frequency: frequency
+        frequency: angular frequency
 
     Returns:
        Function that computes the electric field as a functon of time
@@ -30,7 +30,7 @@ def Ramp(
 
     Args:
         amplitudes: electric field amplitudes in xyz-components
-        frequency: frequency
+        frequency: angular frequency
         ramp_duration: specifies how long does the electric field ramps up
         time_ramp: specifies time at which the field starts to ramp up
 
@@ -60,7 +60,7 @@ def Pulse(
 
     Args:
         amplitudes: electric field amplitudes in xyz-components
-        frequency: frequency of the electric field
+        frequency: angular frequency of the electric field
         peak: time where the pulse reaches its peak
         fwhm: full width at half maximum
 
