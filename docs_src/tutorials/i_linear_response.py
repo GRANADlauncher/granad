@@ -38,7 +38,7 @@ omegas_rpa = jnp.linspace( 0, 6, 40 )
 
 # We obtain the polarizability for a uniform external field according to 
 
-# $$\alpha_{ij}(\omega) = x_j \chi_0(\omega)/ (1- C \chi_0(\omega)) x_i$$,
+# $$\\alpha_{ij}(\omega) = x_j \chi_0(\omega)/ (1- C \chi_0(\omega)) x_i$$,
 
 # where $\chi_0(\omega)$ is the bare density-density correlator and $C$ is the Coulomb matrix, as in [Thongrattanasiri et al.](https://pubs.acs.org/doi/10.1021/nn204780e)
 
