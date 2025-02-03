@@ -260,11 +260,13 @@ RHS compiled
 <p>Similarly to site occupations, energy occupations can also be obtained from the time-domain simulations.</p>
 <p><em>Warning</em>: this introduces additional cubic complexity </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
-</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
-</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;occ_e&quot;</span><span class="p">],</span>
-</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
-</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>     <span class="p">)</span>
-</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">plot_only</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="o">+</span><span class="mi">1</span><span class="p">],</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;homo&quot;</span><span class="p">,</span> <span class="s2">&quot;lumo&quot;</span><span class="p">],</span> <span class="n">show_illumination</span> <span class="o">=</span> <span class="kc">False</span> <span class="p">)</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;occ_e&quot;</span><span class="p">],</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>     <span class="p">)</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">occ_e</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">occ_e</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>RHS compiled
 RHS compiled
@@ -274,8 +276,8 @@ RHS compiled
 
 
 100.0 %
+(6780, 96)
 </code></pre></div>
-<p><img alt="png" src="../g_td_sim_files/g_td_sim_42_3.png" /></p>
 <h2 id="initially-excited-states">Initially excited states</h2>
 <p>GRANAD allows to set initially excited states by specifying the single-particle transition in the density matrix as follows</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">set_excitation</span><span class="p">(</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">lumo</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
@@ -342,10 +344,19 @@ RHS compiled
 
 0.8492060922782898
 </code></pre></div>
-<h2 id="important-note">Important note</h2>
-<p>The diffrax solver adjusts the simulation parameters automatically depending on the initial values of physical parameters.
-Running stable calculations might require some fine tuning.
-Example scripts providing working setups are provided here.</p>
+<p>%% [markdown]</p>
+<div style="
+    padding: 10px;
+    background-color: #fff3cd;
+    color: #856404;
+    border-left: 5px solid #ffcc00;
+    border-radius: 5px;
+    padding: 10px;
+">
+<b>Important Note:</b> The <code>diffrax</code> solver adjusts the simulation parameters automatically 
+depending on the initial values of physical parameters. Running stable calculations might require 
+some fine-tuning. Example scripts providing working setups are provided here.
+</div>
               
             </div>
           </div><footer>
