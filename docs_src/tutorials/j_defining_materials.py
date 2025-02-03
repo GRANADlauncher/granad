@@ -166,7 +166,7 @@ flake_topological.show_2d( display = flake_topological.eigenvectors[:, idx], sca
 
 ### Modifying existing materials
 
-# You can copy the material you want to modify and change/override its attributes.
+# You can copy the material you want to modify and change/overwrite its attributes.
 # As an example, we will turn our ordinary graphene model into a direction-independent variant of the Haldane model by introducing complex nnn hoppings and without the staggered onsite potential
 
 # +

@@ -19,15 +19,15 @@
 
 # $$\dot{\rho}(t) = -i [H[t,\rho(t)], \rho] + \mathcal{D}[t, \rho]$$
 
-# The non-linear Hamiltonian is given by
+# The Hamiltonian is non-linear in the sense that the Coulomb term depends on the charge electronic distribution given by the time-dependent density matrix:
 
 # $$H[t,\rho(t)] = h^{0} + \vec{E} \vec{P} + C(\rho(t) - \rho^{0})$$
 
 # where 
 
-# 1. $h^{0}$ is the unperturbed or bare Hamiltonian constructed from localized orbitals.
-# 2. $\vec{P}$ is the polarization operator depending on lattice site positions $\vec{r}$. Additonal dipole moment elements $\vec{d}_{ij}$ between orbitals $i$, $j$ of the same site can additionally be taken into account. This leads to an interatomic potential with unit charge $e$, given by $e \vec{E} \vec{r}$, and an intra-atomic potential $\vec{E} \vec{d}$.
-# 3. $\rho^{0}$ is the stationary density matrix of the system's ground state, and $C$ is the Coulomb matrix.
+# 1. $h^{0}$ is the single-particle tight-binding Hamiltonian constructed from localized orbitals.
+# 2. $\vec{P}$ is the dipole moment operator depending on lattice site positions $\vec{r}$. Additonal dipole moment elements $\vec{d}_{ij}$ between orbitals $i$, $j$ of the same site can be taken into account. This leads to an interatomic potential with unit charge $e$, given by $e \vec{E} \vec{r}$, and an intra-atomic potential $\vec{E} \vec{d}$.
+# 3. $\rho^{0}$ is the stationary density matrix representing the system's ground state, and $C$ is the Coulomb matrix.
 
 # This expression is the dipole-gauge expression for the Hamiltonian including an external electric field $\vec{E}$.
 
@@ -54,7 +54,7 @@ result = flake.master_equation(
      )
 # -
 
-# The result object stores this info. Operators are concatenated in the order you passed them in.
+# The result object stores this information. Operators are concatenated in the order you passed them in.
 
 # +
 print(len(result.output))
@@ -82,6 +82,14 @@ omegas, pulse_omega = result.ft_illumination( omega_min = omega_min, omega_max =
 output_omega = result.ft_output( omega_min = omega_min, omega_max = omega_max )[0]
 # -
 
+# The incident field is accessible via result.td_illumination, e.g.,
+
+# +
+print(result.td_illumination.shape)
+# -
+
+## Continuity equation example
+
 # From the classical continuity equation for the charge and current density $\rho(\vec{r},t), \vec{j}(\vec{r},t)$ and dipole moment density $\vec{p}(\vec{r},t)$, we have
 
 # $$\dot{\rho}(\vec{r}, t) = -\nabla \vec{j}(\vec{r}, t) = \nabla \dot{\vec{p}}(\vec{r}, t) \implies \dot{\vec{p}}(\vec{r},t) = \vec{j}(\vec{r},t)$$
@@ -94,8 +102,8 @@ output_omega = result.ft_output( omega_min = omega_min, omega_max = omega_max )[
 
 # $$\int d\vec{r} \dot{\vec{p}}(\vec{r},t) = \dot{\vec{p}}(t) = \int d\vec{r} \vec{j}(\vec{r},t) =  \vec{j}(t)$$ 
 
-# $\vec{j}(t)$ and $\vec{p}(t)$ are the total current and dipole moment respectively. As classical quantities are given by ensemble averages of quantum operators, we can
-# obtain these quantities directly from the time-domain simulations. The (integrated) continuity equation above can be verified as follows
+# $\vec{j}(t)$ and $\vec{p}(t)$ are the total current and dipole moment respectively. We can
+# obtain their expectation values directly from the time-domain simulations. The continuity equation above can be verified as follows
 
 # +
 import matplotlib.pyplot as plt
@@ -110,15 +118,9 @@ plt.show()
 # -
 
 
-# The field is also accessible
-
-# +
-print(result.td_illumination.shape)
-# -
-
 ### Density matrices
 
-# If we want to only get density matrices, we can  omit the operator list. The result object then contains a one-element list.
+# If we want to find the time-dependent density matrices, we can omit the operator list. The result object then contains a one-element list.
 
 # +
 result = flake.master_equation(
@@ -140,7 +142,7 @@ print(density_matrix_e.shape)
 
 ### Occupations
 
-# To reduce memory consumption, we can extract only the site occupations to avoid storing the entire stack of density matices in memory. 
+# To reduce memory consumption, we can extract only the site occupations to avoid storing the entire stack of density matices in memory.
 
 # +
 result = flake.master_equation(
@@ -157,7 +159,7 @@ print(occ_x.shape)
 
 ### Energy occupations
 
-# Similarly to site occupations, only energy occupations can also be obtained from the time-domain simulations.
+# Similarly to site occupations, energy occupations can also be obtained from the time-domain simulations.
 
 # *Warning*: this introduces additional cubic complexity 
 
@@ -215,7 +217,7 @@ from granad import Wave
 omega = 2.5 # we pick the approximate resonance at 2.5 
 res = flake.master_equation(
     relaxation_rate = 1/10,
-    illumination = Wave(frequency = omega / 2 * jnp.pi, amplitudes = [1e-5, 0, 0]),
+    illumination = Wave(frequency = omega, amplitudes = [1e-5, 0, 0]),
     end_time = 40)
 
 # numerical broadening parameter of 0.05 eV

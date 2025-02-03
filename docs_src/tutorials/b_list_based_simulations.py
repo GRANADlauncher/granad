@@ -103,7 +103,7 @@ print(atom.hamiltonian)
 
 # Setting Coulomb matrix elements proceeds analogously by calling `atom.set_coulomb_element`.
 
-# We see that the matrix entry corresponding to the inter-level coupling is now modified accordingly, with hermiticity of the hamiltonian taken into account properly.
+# We see that the matrix entry corresponding to the inter-level coupling is now modified accordingly, with hermiticity of the Hamiltonian taken into account properly.
 
 # Introducing dipole transitions works similarly: We  have to remember to pass in a vector for the transition
 
@@ -129,7 +129,7 @@ print(atom.positions)
 
 # Consider a slightly more involved geometric example, i.e. stacking two graphene flakes.
 
-# We chose simple rectangles
+# We choose rectangles
 
 # +
 from granad import MaterialCatalog, Rectangle

@@ -36,8 +36,8 @@ print(hamiltonian_model.keys())
 
 # As discussed, the default Hamiltonian  has three terms:
 
-# 1. a bare hamiltonian.
-# 2. an induced coulomb interaction.
+# 1. a bare Hamiltonian.
+# 2. an induced Coulomb interaction.
 # 3. an external potential.
 
 # Each of these terms is represented by a function. Every function accepts the following three arguments:
@@ -151,9 +151,9 @@ print( dissipator_model )
 
 # NOTE: To pass the dissipator above to the `master_equation` method, you have to specify the relaxation rate again. 
 
-### Postprocesses
+### Postprocessing
 
-# You can define custom postprocesses. These are functions with the signature `postprocess : density_matrix_batch, args -> array`. The `density_matrix_batch` is an array of shape `TxNxN`, where `T` encodes time.
+# You can define custom postprocessing. These are functions with the signature `postprocess : density_matrix_batch, args -> array`. The `density_matrix_batch` is an array of shape `TxNxN`, where `T` encodes time.
 
 # For example, if you are only interested in the occupation of the 0-th state
 

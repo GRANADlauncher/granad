@@ -113,7 +113,7 @@ result = flake.master_equation(relaxation_rate = gamma_matrix,
 flake.show_res(result, show_illumination=False, plot_labels = labels)
 # -
 
-# We observe an almost complete collapse into the single-particle ground state, which can be revealed to be an Coulomb interaction effect.
+# We observe an almost complete collapse into the single-particle ground state. The nonzero stationary occupation of excited states can be revealed to be an Coulomb interaction effect.
 
 # +
 result = flake.master_equation(relaxation_rate = gamma_matrix,
@@ -127,7 +127,7 @@ flake.show_res(result, show_illumination=False, plot_labels = labels)
 
 ### Wigner-Weisskopf transition rates
 
-# GRANAD offers the single-particle Wigner-Weisskopf transition rates directly in a matrix form 
+# GRANAD offers the single-particle Wigner-Weisskopf transition rates that can be represented directly in a matrix form. The "ij" matrix element corresponds to the relaxation rate from the state i to j.
 
 # +
 import matplotlib.pyplot as plt

@@ -17,7 +17,7 @@
 # We present how to handle electric fields
 
 #
-# The built-in electric fields are callables dependent on time. GRANAD offers pre-defined options for plane waves, useable via `Wave`, Gaussian pulses with a plane-wave profile, useable via `Pulse` and ramped-up fields, useable via `Ramp`. They are all documented in the API.
+# The built-in electric fields are callables dependent on time. GRANAD offers pre-defined options for monochromatic waves, useable via `Wave`, Gaussian pulses with a plane-wave profile, useable via `Pulse` and ramped-up fields, useable via `Ramp`. They are all documented in the API.
 #
 
 # +
@@ -36,7 +36,7 @@ wave = Wave( amplitudes = [1, 0, 0], frequency = 1  )
 print(wave(0))
 # -
 
-# A quick way to visualize them is to plot them (by default, granad considers real fields). To apply the electric field for many points, we need to vectorize it to obtain an array of results. JAX offers the vmap function that vectorizes the application.
+# A quick way to visualize them is to plot them (by default, GRANAD considers real fields). To evaluate the electric field in many points, we need to vectorize it to obtain an array of results. JAX offers the vmap function that vectorizes the application.
 
 # +
 time = jnp.linspace(0, 2 * 2 * jnp.pi, 100)
@@ -53,7 +53,7 @@ plt.show()
 # -
 
 # The `Ramp` electric field introduces a ramping effect to the field amplitude. 
-# The field starts ramping up at a specified time (`time_ramp`) and the duration of this ramping effect is controlled by `ramp_duration`.
+# The field ramping can be shifted in time via the parameter `time_ramp` and the duration of this ramping effect is controlled by `ramp_duration`.
 # The `amplitudes` parameter defines the field components in the x, y, and z directions, while `frequency` specifies the time-harmonic oscillation of the field.
 
 # +

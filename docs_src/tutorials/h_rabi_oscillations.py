@@ -34,7 +34,7 @@ adatom.set_dipole_element( lower_level, upper_level, [0, 7.5/2, 0] )
 adatom.set_electrons( 1 )
 # -
 
-# We study undamped time evolution under harmonic illumination
+# We study undamped time evolution under harmonic illumination. Here, we use the rotating wave approximation (RWA) in the field -- two-level-system coupling:
 
 # +
 from granad import Wave

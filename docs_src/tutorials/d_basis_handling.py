@@ -14,7 +14,7 @@
 
 # # Basis Handling
 #
-# We introduce the site and energy basis. 
+# We introduce the site and energy bases.
 
 ### Default basis
 #
@@ -45,7 +45,7 @@ print(jnp.all(flake.transform_to_energy_basis(flake.hamiltonian) == flake.hamilt
 # This is useful when transforming arrays of density matrices, because appending _e only works on attributes of the orbital list. Density matrices are a simulation output and as such not an attribute of the orbital list. Appending _e to the variable name will thus not work and a separate method is needed.
 
 
-# Transition dipole moments can be displayed in energy basis
+# Dipole moment elements can be displayed in energy basis
 
 # +
 import matplotlib.pyplot as plt

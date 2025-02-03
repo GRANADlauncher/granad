@@ -31,7 +31,7 @@ graphene = MaterialCatalog.get("graphene") # MaterialCatalog.available() lists a
 
 flake = graphene.cut_flake(Triangle(10, armchair = True)) # more shapes available or define arbitrary polygons
 flake.show_2d( display = flake.eigenvectors[:, flake.homo] ) # electron amplitudes in the single-particle HOMO state
-flake.set_excitation(from_state = flake.homo, to_state = flake.lumo + 1, excited_electrons = 1) # N-electron initial state is set with a single electron excited from the homo to the lumo+1 level; by default, GRANAD sets the number of p_z electrons in graphene to be equal to the number of atomic sites. In case of degeneracy, GRANAD distributes electrons equally in states of the same energy.
+flake.set_excitation(from_state = flake.homo, to_state = flake.lumo + 1, excited_electrons = 1) # N-electron initial state is set with a single electron excited from the homo to the lumo+1 level; by default, GRANAD sets the number of p_z electrons in graphene to be equal to the number of atomic sites. In case of degeneracy, GRANAD distributes electrons equally among states of the same energy.
 flake.show_energies() # energies
 
 # examples of physical quantities
@@ -73,7 +73,7 @@ omegas_td, pulse_omega = result.ft_illumination( omega_max, omega_min ) # illumi
 absorption_td = jnp.abs( -omegas_td * jnp.imag( p_omega[:,0] / pulse_omega[:,0] ) ) # absorption cross section evaluated based on the time-domain simulation
 
 # RPA
-# GRANAD provides another method to evaluate the absorption cross section , based on the random phase approximation, as detailed in [REFERENCE]
+# GRANAD provides another method to evaluate the absorption cross section , based on the random phase approximation, as detailed in  [Thongrattanasiri et al.](https://pubs.acs.org/doi/10.1021/nn204780e)
 omegas_rpa = omegas_td
 polarizability = flake.get_polarizability_rpa(
     omegas_rpa,

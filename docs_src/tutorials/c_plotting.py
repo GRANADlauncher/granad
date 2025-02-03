@@ -19,7 +19,7 @@
 # A typical simulation requires visualizing:
 
 # 1. geometry
-# 2. simulation results
+# 2. simulation results in time or frequency domain
 # 3. space-dependent arrays (such as eigenstates, charges, ...)
 
 # All public plotting functions are associated with a list of orbitals.
@@ -46,11 +46,11 @@ stack.show_3d()
 
 ### Simulation output
 
-# There is a dedicated function for showing time-domain simulation results. Let's illustrate this by tracking the current considering the previously defined flake under x-polarized Gaussian pulsed illumination, which in GRANAD's units is equivalent to the velocity operator given by the commutator of the system hamiltonian $H$ and the polarization operator $\bf{P}$
+# There is a dedicated function for showing time-domain simulation results. Let's illustrate this by tracking the current density considering the previously defined flake under x-polarized Gaussian pulsed illumination. The current density is related to the velocity operator given by the commutator of the system hamiltonian $H$ and the polarization operator $\bf{P}$
 
 # $$\bf{v} = \frac{-i}{\hbar} [H, \bf{P}]$$
 
-# The time-dependent induced current (density) is given by the expectation value of the current density operator $\bf{j}$, which is related to the velocity operator as $\bf{j} = e\bf{v}$. In GRANAD's units, setting the elementary charge $e = 1$, the velocity operator is thus identical to the current density operator, with which we can immediately evalute the induced currents due to the external field.
+# The time-dependent induced current density is given by the expectation value of the operator $\bf{j} = e\bf{v}$. In GRANAD's units, setting the elementary charge $e = 1$, the velocity operator is thus identical to the current density operator, with which we can immediately evalute the induced currents due to the external field.
 
 # +
 from granad import Pulse
@@ -68,12 +68,12 @@ plot_labels = ['j_x', 'j_y', 'j_z']
 flake.show_res( result, plot_labels = plot_labels, xlabel = r'$t$', ylabel = r'$j$')
 # -
 
-# A detailed description of parameters to the Gaussian pulse is given in the electric fields tutorial.
+# A detailed description of parameters of the Gaussian pulse is given in the electric fields tutorial.
 
 # We can also Fourier transform the result to obtain the frequency domain result by specifying the omega limits. Note that omitting the variables xlabel and ylabel will result in no axis labels.
 
 # +
-flake.show_res( result, omega_max = 5, omega_min = 0, plot_labels = plot_labels )
+flake.show_res( result, omega_min = 0, omega_max = 5, plot_labels = plot_labels )
 # -
 
 # Note that the sparsity of the spectral grid ows to the sparse sampling in time domain which we have chosen for demonstrational purposes. A real simulation requires more careful refinement of the temporal grid. A finer temporal grid or longer integration time generally results in higher quality spectra.
@@ -110,6 +110,8 @@ flake.show_2d( display = jnp.abs(flake.eigenvectors[:, 0]), mode = 'one-signed' 
 # -
 
 # Additionally, if you supply the keyword argument name = "MY-PLOT-NAME.pdf" to any plotting function, the plot will not be displayed, but instead saved to disk in the directory you invoked Python.
+
+## Induced field visualization
 
 # There exists a convenience function to compute and visualize the induced field at an arbitrary time step. 
 # To achieve this, we first run a full simulation of the system using the `flake.master_equation` function

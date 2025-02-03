@@ -44,7 +44,7 @@ flake = ssh.cut_flake( unit_cells = 40, plot = False)
 flake.show_energies()
 # -
 
-# If you don't want this, delete the edges by removing the first and the last orbital in the list
+# You can create a topologically nontrivial configuration sustaining edge states by removing the first and the last orbital in the list
 
 # +
 del flake[0]
@@ -97,7 +97,7 @@ from granad import Rectangle
 help(Rectangle)
 # -
 
-# Note: The "extent" of the shape refers to its minimum dimensions. For instance, when working with graphene, which has a bond length of approximately 1.42 Å, you should specify dimensions that avoid cutting into very small fragments, such as a single benzene ring (~2.46 Å in diameter). For meaningful simulations, ensure that the shape dimensions exceeds this scale.
+# Note: The "extent" of the shape refers to its minimum dimensions. For instance, when working with graphene, which has a bond length of approximately 1.42 Å, you should specify dimensions that avoid cutting into very small fragments, such as a single benzene ring (~2.46 Å in diameter). For meaningful simulations, ensure that the shape dimensions exceed this scale.
 
 ### Bearded configurations
 
