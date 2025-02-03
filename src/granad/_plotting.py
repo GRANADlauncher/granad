@@ -106,7 +106,8 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
             ax.annotate(str(idx), (pos[0], pos[1]), textcoords="offset points", xytext=(0,10), ha='center')
 
     # Finalize plot settings
-    plt.title('Orbital positions in the xy-plane' if title is None else title)
+    if title is not None:
+        plt.title(title)
     plt.xlabel('X')
     plt.ylabel('Y')
     ax.grid(True)
