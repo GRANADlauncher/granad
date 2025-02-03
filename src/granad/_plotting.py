@@ -292,7 +292,7 @@ def show_res(
 
 
 @_plot_wrapper
-def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None):
+def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None, scale = "linear", levels = 100):
     """
     Displays a 2D plot of the normalized logarithm of the absolute value of the induced field, for a given field component.
 
@@ -303,6 +303,8 @@ def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None):
         `z` (float): z-coordinate slice at which the field is evaluated in the xy-plane.
         `component` (int, optional): The field component to display (default is 0). Represents the direction (e.g., x, y, or z) of the field.
         `density_matrix` (optional): The density matrix used to calculate the induced field. If not provided, the initial density matrix will be used.
+        `scale` (optional): Linear or signed log scale.
+        `levels` (optional): A list of level values, that should be labeled.
 
     Note:
         The plot visualizes the induced field's magnitude using a logarithmic scale for better representation of variations in field strength.
@@ -319,18 +321,32 @@ def show_induced_field(orbs, x, y, z, component = 0, density_matrix=None):
 
     induced_field = jnp.einsum('jir,i->jr', get_coulomb_field_to_from(orbs.positions, positions, jnp.arange(len(positions))), charge)
     
-    E_induced_abs_rescaled = jnp.log(jnp.abs(induced_field) / jnp.abs(induced_field).max() )
+    induced_field = induced_field[:, component].reshape(X[:, :, 0].shape)
+    label = r"$\dfrac{E}{E_{max}}$"
+    plot_field = jnp.abs(induced_field) / jnp.abs(induced_field).max()
+
+    if scale == "log":
+        E_sign = jnp.sign(induced_field)
+        induced_field = jnp.log(jnp.abs(induced_field) / jnp.abs(induced_field).max() )
+        label = r"$sign(E) \cdot \log\left(\dfrac{|E|}{|E|_{max}}\right)$"
+        plot_field = E_sign * induced_field
+
 
     fig, ax = plt.subplots(1, 1)
+    import matplotlib
+    from matplotlib.colors import LinearSegmentedColormap
+    CMAP=LinearSegmentedColormap.from_list('custom_cmap', ['White','Blue','Red','White'])
     fig.colorbar(
-        ax.contourf(
-            X[:, :, 0], Y[:, :, 0], E_induced_abs_rescaled[:, component].reshape(X[:, :, 0].shape),
-            cmap = plt.cm.bwr
+        ax.contour(
+            X[:, :, 0], Y[:, :, 0], plot_field,
+            cmap =CMAP,
+            levels = levels,
+            linewidths = .5
         ),
-        label=r"$\log(|E|/|E_0|)$",
+        label = label
     )
+    ax.scatter(*zip(*orbs.positions[:, :2]), color = 'black', s=20, zorder = 10)
 
-    ax.scatter(*zip(*orbs.positions[:, :2]), color = 'black', s=8)
 
 def _display_lattice_cut(positions, selected_positions, polygon = None):
     fig, ax = plt.subplots(1, 1)
