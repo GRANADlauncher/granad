@@ -177,7 +177,7 @@ cut_flake_1d(material, unit_cells, plot=False)
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
 </span></code></pre></div>
 <p><img alt="png" src="../ab_cutting_files/ab_cutting_8_0.png" /></p>
-<p>If you don't want this, delete the edges by removing the first and the last orbital in the list</p>
+<p>You can create a topologically nontrivial configuration sustaining edge states by removing the first and the last orbital in the list</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">del</span> <span class="n">flake</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">del</span> <span class="n">flake</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_2d</span><span class="p">()</span>
@@ -259,7 +259,7 @@ Rectangle(length_x, length_y)
         rectangle = Rectangle(2.0, 1.0)
         ```
 </code></pre></div>
-<p>Note: The "extent" of the shape refers to its minimum dimensions. For instance, when working with graphene, which has a bond length of approximately 1.42 Å, you should specify dimensions that avoid cutting into very small fragments, such as a single benzene ring (~2.46 Å in diameter). For meaningful simulations, ensure that the shape dimensions exceeds this scale.</p>
+<p>Note: The "extent" of the shape refers to its minimum dimensions. For instance, when working with graphene, which has a bond length of approximately 1.42 Å, you should specify dimensions that avoid cutting into very small fragments, such as a single benzene ring (~2.46 Å in diameter). For meaningful simulations, ensure that the shape dimensions exceed this scale.</p>
 <h2 id="bearded-configurations">Bearded configurations</h2>
 <p>Cutting removes "dangling" atoms by default. Dangling atoms are defined by their neighbor number: if they have only one neighbor, they are removed. If you want to deactivate this to keep "bearded" configurations, do</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">graphene</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">12</span><span class="p">),</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">minimum_neighbor_number</span> <span class="o">=</span> <span class="mi">0</span> <span class="p">)</span>

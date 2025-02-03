@@ -192,7 +192,7 @@ Included tags with number of orbitals: {&#39;atom&#39;: 2}
  [ 0. -0.1j  0.5-0.j ]]
 </code></pre></div>
 <p>Setting Coulomb matrix elements proceeds analogously by calling <code>atom.set_coulomb_element</code>.</p>
-<p>We see that the matrix entry corresponding to the inter-level coupling is now modified accordingly, with hermiticity of the hamiltonian taken into account properly.</p>
+<p>We see that the matrix entry corresponding to the inter-level coupling is now modified accordingly, with hermiticity of the Hamiltonian taken into account properly.</p>
 <p>Introducing dipole transitions works similarly: We  have to remember to pass in a vector for the transition</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">atom</span><span class="o">.</span><span class="n">set_dipole_element</span><span class="p">(</span> <span class="n">upper_level</span><span class="p">,</span> <span class="n">lower_level</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span> <span class="c1"># transition dipole oriented in z-direction</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
@@ -215,7 +215,7 @@ Included tags with number of orbitals: {&#39;atom&#39;: 2}
 </code></pre></div>
 <p>Every orbital we have annotated by this tag will be shifted. </p>
 <p>Consider a slightly more involved geometric example, i.e. stacking two graphene flakes.</p>
-<p>We chose simple rectangles</p>
+<p>We choose rectangles</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Rectangle</span>
 </span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Rectangle</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span> <span class="p">)</span>
 </span></code></pre></div>

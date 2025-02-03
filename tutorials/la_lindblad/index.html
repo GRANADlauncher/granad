@@ -211,7 +211,7 @@ RHS compiled
 100.0 %
 </code></pre></div>
 <p><img alt="png" src="../la_lindblad_files/la_lindblad_29_2.png" /></p>
-<p>We observe an almost complete collapse into the single-particle ground state, which can be revealed to be an Coulomb interaction effect.</p>
+<p>We observe an almost complete collapse into the single-particle ground state. The nonzero stationary occupation of excited states can be revealed to be an Coulomb interaction effect.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span><span class="n">relaxation_rate</span> <span class="o">=</span> <span class="n">gamma_matrix</span><span class="p">,</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>                               <span class="n">dissipator</span> <span class="o">=</span> <span class="n">dissipator</span><span class="p">,</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>                               <span class="n">end_time</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
@@ -228,7 +228,7 @@ RHS compiled
 </code></pre></div>
 <p><img alt="png" src="../la_lindblad_files/la_lindblad_31_2.png" /></p>
 <h2 id="wigner-weisskopf-transition-rates">Wigner-Weisskopf transition rates</h2>
-<p>GRANAD offers the single-particle Wigner-Weisskopf transition rates directly in a matrix form </p>
+<p>GRANAD offers the single-particle Wigner-Weisskopf transition rates that can be represented directly in a matrix form. The "ij" matrix element corresponds to the relaxation rate from the state i to j.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">gamma_matrix</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">wigner_weisskopf_transition_rates</span>
 </span><span id="__span-8-3"><a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">plt</span><span class="o">.</span><span class="n">matshow</span><span class="p">(</span><span class="n">gamma_matrix</span><span class="p">)</span>

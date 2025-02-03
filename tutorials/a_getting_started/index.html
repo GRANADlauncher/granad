@@ -126,9 +126,9 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="getting-started">Getting started</h1>
-<p>We introduce the basics of GRANAD and perform an example simulation.</p>
+<p>Below we introduce the basics of GRANAD and perform an example simulation.</p>
 <h2 id="introduction">Introduction</h2>
-<p>GRANAD lets you simulate structures from a few orbitals up to finite bulks. The process of specifying a structure is designed to be easy and interactive: You can add, shift, combine and manipulate parts of your structure at varying levels of detail involving large groups of orbitals or  single orbitals. To this end, GRANAD offers three fundamental datatypes:</p>
+<p>GRANAD lets you simulate structures from a few orbitals up to extended nanostructures. The process of specifying a structure is designed to be easy and interactive: You can add, shift, combine and manipulate parts of your structure at varying levels of detail involving large groups of orbitals or single orbitals. To this end, GRANAD offers three fundamental datatypes:</p>
 <ol>
 <li><em>Orbitals</em> are the fundamental building block of a structure.</li>
 <li><em>Materials</em> are a stand-in for infinite bulks. You can cut finite pieces from these bulks, which correspond to lists of orbitals with specified positions and properties.</li>
@@ -267,7 +267,7 @@ Included tags with number of orbitals: {&#39;sublattice_1&#39;: 28, &#39;sublatt
 </span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">my_first_illumination</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
 </span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">2.3</span><span class="p">,</span> <span class="n">peak</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mi">2</span>
 </span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">)</span>
-</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nb">print</span><span class="p">(</span> <span class="n">my_first_illumination</span><span class="p">(</span> <span class="mf">0.0</span><span class="p">)</span> <span class="p">)</span> <span class="c1"># initial value of the field</span>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nb">print</span><span class="p">(</span> <span class="n">my_first_illumination</span><span class="p">(</span> <span class="mf">0.0</span><span class="p">)</span> <span class="p">)</span> <span class="c1"># initial field</span>
 </span></code></pre></div>
 <div class="language-text highlight"><pre><span></span><code>[2.60905079e-13 0.00000000e+00 0.00000000e+00]
 </code></pre></div>
@@ -276,7 +276,7 @@ Included tags with number of orbitals: {&#39;sublattice_1&#39;: 28, &#39;sublatt
 <ol>
 <li>Simulation duration: here, we set the duration from 0 to 40 units.</li>
 <li>Relaxation rate: here, we pick a single number characterizing the rate of energy dissipation across all channels.</li>
-<li>The operators whose expectation values we want to compute. They are given as a simple list.</li>
+<li>The operators whose expectation values we want to compute. They are given as a list.</li>
 </ol>
 <p>We want to calculate the induced polarization from the dipole operator. This operator can be represented as a 3xNxN matrix, where N is the number of orbitals and 3 corresponds to Cartesian components x,y,z and we can compute it directly</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
@@ -297,7 +297,7 @@ RHS compiled
 
 100.0 %
 </code></pre></div>
-<p>If you want to compute expecation values of more operators, you can add them to the list.</p>
+<p>If you want to compute expectaion values of more operators, you can add them to the list.</p>
 <p>The result variable is a container for </p>
 <ol>
 <li>the last density matrix in the simulation, which is important if you want to continue the time evolution.</li>
