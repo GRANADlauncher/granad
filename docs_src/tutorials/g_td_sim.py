@@ -127,7 +127,7 @@ result = flake.master_equation(
     relaxation_rate = 1/10,
     illumination = pulse,
     end_time = 40,
-    density_matrix = ["full"], # this argument may be removed
+    density_matrix = ["full"],
      )
 density_matrix = result.output[0]
 print(density_matrix.shape)
@@ -226,3 +226,9 @@ epsilon = 0.05
 # print and compute the EPI
 print(flake.get_epi(res.final_density_matrix, omega = omega, epsilon = epsilon))
 # -
+
+
+### Important note
+# The diffrax solver adjusts the simulation parameters automatically depending on the initial values of physical parameters.
+# Running stable calculations might require some fine tuning.
+# Example scripts providing working setups are provided here.

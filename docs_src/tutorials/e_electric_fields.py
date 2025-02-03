@@ -54,7 +54,7 @@ plt.show()
 
 # The `Ramp` electric field introduces a ramping effect to the field amplitude. 
 # The field ramping can be shifted in time via the parameter `time_ramp` and the duration of this ramping effect is controlled by `ramp_duration`.
-# The `amplitudes` parameter defines the field components in the x, y, and z directions, while `frequency` specifies the time-harmonic oscillation of the field.
+# The `amplitudes` parameter defines the field components in the x, y, and z directions, while `frequency` specifies the angular frequency of the field.
 
 # +
 from granad import Ramp

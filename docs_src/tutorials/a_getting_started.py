@@ -175,7 +175,7 @@ result = my_first_flake.master_equation(
     end_time=40, # the start is set to 0 by default 
     relaxation_rate=1 / 10,
     illumination=my_first_illumination,
-    expectation_values = [my_first_flake.dipole_operator] # you can also omit the list for a single operator, but this is bad practice
+    expectation_values = [my_first_flake.dipole_operator] # you can also omit the brackets for a single operator, but this is bad practice
     )
 # -
 
@@ -212,7 +212,7 @@ my_first_flake.show_res(result, plot_labels = ["p_x", "p_y", "p_z"])
 import jax
 import matplotlib.pyplot as plt
 time = jnp.linspace(0, 40, 400)
-e_field = jax.vmap(my_first_illumination)(time).real
+e_field = jax.vmap(my_first_illumination)(time)
 plt.plot(time, e_field)
 plt.title("Pulse Electric Field")
 plt.xlabel("Time")

@@ -95,6 +95,7 @@ flake.show_2d( display = flake.eigenvectors[:, 0] )
 flake.show_2d( display = flake.eigenvectors[:, 0], scale = True )
 # -
 
+# By default, GRANAD automtically adjusts the colorbar range.
 # Furthermore, there are two special plot modes, given by the `mode` argument:
 # 
 # 1. `mode = 'two-signed'`: This mode is designed for visualizing data with both positive and negative values, such as real parts of eigenvectors or signed distributions. The plot uses a diverging colormap (centered at zero) to clearly distinguish between positive and negative values.  The color limits are symmetrically set based on the maximum absolute value in the data, ensuring an even visual emphasis on both extremes. This mode is particularly useful for understanding symmetry or changes in sign within the data.
@@ -122,7 +123,7 @@ result = flake.master_equation(
     relaxation_rate = 1/10,
     illumination = pulse,
     end_time = 40,
-    density_matrix = ["full"], # this argument may be removed
+    density_matrix = ["full"],
      )
 density_matrix = result.output[-1]
 # -
