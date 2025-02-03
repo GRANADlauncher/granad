@@ -16,6 +16,6 @@ For specific methodologies and theoretical background, please cite the relevant 
 
 3. **Müller, M. M., Kosik, M., Pelc, M., Bryant, G. W., Ayuela, A., Rockstuhl, C., & Słowik, K.** (2021). *From single-particle-like to interaction-mediated plasmonic resonances in graphene nanoantennas*. *Journal of Applied Physics*, **129**(9), 093103. [https://doi.org/10.1063/5.0044450](https://doi.org/10.1063/5.0044450)
 
-4. **Bryant, G. W., Kosik, M., Müller, M., Słowik, K., Ayuela, A., Rockstuhl, C., & Pelc, M.** (2022). *Revising quantum optical phenomena in adatoms coupled to graphene nanoantennas*. *Nanophotonics*, **11**(14), 3317–3326. [https://doi.org/10.1515/nanoph-2022-0154](https://doi.org/10.1515/nanoph-2022-0154)
+4. **Miriam Kosik, Marvin M. Müller , Karolina Słowik, Garnett Bryant, Andrés Ayuela, Carsten Rockstuhl & Marta Pelc** (2022). *Revising quantum optical phenomena in adatoms coupled to graphene nanoantennas*. *Nanophotonics*, **11**(14), 3317–3326. [https://doi.org/10.1515/nanoph-2022-0154](https://doi.org/10.1515/nanoph-2022-0154)
 
-5. **Pelc, M., Słowik, K., & Bryant, G. W.** (2020). *Energy-based plasmonicity index to characterize optical resonances in nanostructures*. *The Journal of Physical Chemistry C*, **124**(44), 24254–24263. [https://doi.org/10.1021/acs.jpcc.0c07964](https://doi.org/10.1021/acs.jpcc.0c07964)
+5. **Marvin M. Müller, Miriam Kosik, Marta Pelc, Garnett W. Bryant, Andrés Ayuela, Carsten Rockstuhl & Karolina Słowik** (2020). *Energy-based plasmonicity index to characterize optical resonances in nanostructures*. *The Journal of Physical Chemistry C*, **124**(44), 24254–24263. [https://doi.org/10.1021/acs.jpcc.0c07964](https://doi.org/10.1021/acs.jpcc.0c07964)
