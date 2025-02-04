@@ -243,7 +243,10 @@ dimensions, extended slightly to include a buffer region.</p>
 </span></code></pre></div>
 <p>Finally, we use the <code>show_induced_field</code> function to compute and visualize the induced field on the 
 defined 2D grid. This function calculates the field based on the density matrix, evaluates it on the grid, 
-and plots the normalized logarithmic magnitude of the induced field.</p>
+and plots the normalized logarithmic magnitude of the induced field. The plot below shows the distribution
+of the <span class="arithmatex">\(x\)</span>-component of the scattered electric field around the flake subject to a resonant illumination.
+The electric field values are transformed using a logarithmic scale normalized to maximum field amplitude.
+The two square brakets on the colour bar represent the phase and the scaled amplitude of the field respectively. </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_induced_field</span><span class="p">(</span>
 </span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">x</span> <span class="o">=</span> <span class="n">x_grid</span><span class="p">,</span>              <span class="c1"># The x-coordinates of the grid points where the field will be evaluated.</span>
 </span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">y</span> <span class="o">=</span> <span class="n">y_grid</span><span class="p">,</span>              <span class="c1"># The y-coordinates of the grid points where the field will be evaluated.</span>
