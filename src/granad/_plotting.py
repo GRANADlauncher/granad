@@ -20,7 +20,7 @@ def _plot_wrapper(plot_func):
     return wrapper
 
 @_plot_wrapper
-def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None, mode = None, indicate_atoms = False):
+def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = False, cmap = None, circle_scale : float = 1e3, title = None, mode = None, indicate_atoms = False, grid = False):
     """
     Generates a 2D scatter plot representing the positions of orbitals in the xy-plane, with optional filtering, coloring, and sizing.
 
@@ -38,7 +38,8 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
                               The colormap is scaled such that its limits are set by the maximum absolute value in the `display` array.
             - `'one-signed'`: Displays orbitals with a sequential colormap, highlighting only positive values. Negative values are ignored in this mode.
             - `None`: Defaults to a general plotting mode that uses the normalized values from `display` for coloring and sizing.
-        `indicate_atoms` (bool, optional): show atoms as black dots if `display` is given, defaults to False
+        `indicate_atoms` (bool, optional): Show atoms as black dots if `display` is given, defaults to False.
+        `grid`(bool, optional): Shows grid, `False` by default.
 
     
     Notes:
@@ -110,7 +111,7 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
         plt.title(title)
     plt.xlabel('X')
     plt.ylabel('Y')
-    ax.grid(True)
+    ax.grid(grid)
     ax.axis('equal')
 
 @_plot_wrapper
