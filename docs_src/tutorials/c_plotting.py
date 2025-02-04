@@ -160,7 +160,8 @@ flake.show_induced_field(
                              # Here, the x-component (0) is selected.
     z = jnp.array([0]),      # The z-coordinate of the plane in which the field is evaluated. 
                              # Here, it is set to 0 to visualize the field in the xy-plane.
-    density_matrix = density_matrix[-1]  # The final density matrix from the simulation is passed as an argument, 
+    density_matrix = density_matrix[-1],  # The final density matrix from the simulation is passed as an argument,
                                          # ensuring that the field reflects the system's state at the final time step.
+    levels = 48              # for one line to represent half an order of magnitude
 )
 # -
