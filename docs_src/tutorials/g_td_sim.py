@@ -238,5 +238,5 @@ print(flake.get_epi(res.final_density_matrix, omega = omega, epsilon = epsilon))
 # ">
 # <b>Important Note:</b> The <code>diffrax</code> solver adjusts the simulation parameters automatically 
 # depending on the initial values of physical parameters. Running stable calculations might require 
-# some fine-tuning. Example scripts providing working setups are provided [here](https://github.com/GRANADlauncher/granad/tree/main/docs_src/Time_Domain_Simulations).
+# some fine-tuning. Example scripts providing working setups are provided <a href="https://github.com/GRANADlauncher/granad/tree/main/docs_src/Time_Domain_Simulations">here</a>.
 # </div>
