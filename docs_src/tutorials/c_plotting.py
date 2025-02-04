@@ -147,7 +147,10 @@ y_grid = jnp.linspace(ymin - 1, ymax + 1, 40)  # Create a 1D array of 40 evenly 
 
 # Finally, we use the `show_induced_field` function to compute and visualize the induced field on the 
 # defined 2D grid. This function calculates the field based on the density matrix, evaluates it on the grid, 
-# and plots the normalized logarithmic magnitude of the induced field.
+# and plots the normalized logarithmic magnitude of the induced field. The plot below shows the distribution
+# of the $x$-component of the scattered electric field around the flake subject to a resonant illumination.
+# The electric field values are transformed using a logarithmic scale normalized to maximum field amplitude.
+# The two square brakets on the colour bar represent the phase and the scaled amplitude of the field respectively. 
 
 # +
 flake.show_induced_field(
