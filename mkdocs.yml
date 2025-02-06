@@ -4,6 +4,8 @@ theme:
   name: "readthedocs"
   features:
     - content.code.copy
+  custom_dir: docs/overrides  # <- This enables custom templates
+
 
 plugins:
 - search
