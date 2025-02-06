@@ -1,22 +1,23 @@
-name: Build documentation
+name: Build and Deploy Documentation
 
 on:
   push:
     branches:
-      - main  
+      - main
+      - dev
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.12'  
-          
+          python-version: '3.12'
+
       - name: Check for Build Flag
         id: check-flag
         run: |
@@ -25,7 +26,7 @@ jobs:
           if [[ "${{ github.event.head_commit.message }}" =~ \[build-docs\] ]]; then
             echo "TRIGGER_BUILD=true" >> $GITHUB_ENV
           fi
-          
+
       - name: Install dependencies
         if: env.TRIGGER_BUILD == 'true'
         run: |
@@ -39,25 +40,37 @@ jobs:
           pip install ipykernel
           pip install -e .
 
-      - name: Setup kernel
+      - name: Setup Kernel
         if: env.TRIGGER_BUILD == 'true'
         run: python -m ipykernel install --user --name base --display-name "base"
-          
-      - name: Execute notebook processing script
+
+      - name: Execute Notebook Processing Script
         if: env.TRIGGER_BUILD == 'true'
         run: |
           chmod +x ./build_docs.sh
           ./build_docs.sh
         shell: bash
-        
-      - name: Build MkDocs site
+
+      - name: Set Version and Commit Information
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "DOCS_VERSION=stable" >> $GITHUB_ENV
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "DOCS_VERSION=development" >> $GITHUB_ENV
+          else
+            echo "DOCS_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+          fi
+          echo "GITHUB_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Build MkDocs Site
         if: env.TRIGGER_BUILD == 'true'
         run: mkdocs build
-        
-      - name: Build and deploy to GitHub Pages
+
+      - name: Deploy to GitHub Pages
         if: env.TRIGGER_BUILD == 'true'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          deploy_branch: gh-pages  
-          publish_dir: ./site  
+          deploy_branch: gh-pages
+          publish_dir: ./site
+          destination_dir: ${{ github.ref_name }}
