@@ -105,7 +105,7 @@ def _cut_flake_graphene(polygon_id, edge_type, side_length, lattice_constant):
     mapping = {
     "triangle_armchair" : [3, side_length, 0, 6*a, 3*a, lambda k: jnp.array([1,0,0])*a],
     "triangle_zigzag" : [3, side_length, jnp.pi/2, 3*jnp.sqrt(3)*a, jnp.sqrt(3)*a, lambda k: jnp.array([0,0,0])*a],
-    "hexagon_armchair" : [6, side_length, jnp.pi/2, 4*a, 3*a, lambda k: jnp.array([0,jnp.sqrt(3)/4*(1-(-1)**k),0])],
+    "hexagon_armchair" : [6, side_length, jnp.pi/2, 4*a, 3*a, lambda k: jnp.array([0,jnp.sqrt(3)/4*(1-(-1)**k)*a,0])],
     "hexagon_zigzag" : [6, side_length, 0, (jnp.sqrt(3)+2/jnp.sqrt(3))*a, jnp.sqrt(3)*a, lambda k: jnp.array([0 ,(1-3*(-1)**k)*a/(4*jnp.sqrt(3)),0])]                
                 }
 
