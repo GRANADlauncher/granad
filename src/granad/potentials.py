@@ -27,8 +27,9 @@ def DipolePulse( dipole_moment, source_location, omega = None, sigma = None, t0 
         f = lambda t : jnp.abs(t - t0) < 1e-10
     
     def pot( t, r, args ):
-        distances = args.dipole_operator.diagonal(axis1=-1, axis2=-2) - loc
-        r_term = (dip @ distances) / jnp.linalg.norm( distances, axis = 0 )
+        distances =args.dipole_operator.diagonal(axis1=-1, axis2=-2) - loc
+        r_term = 14.39*(dip @ distances) / jnp.linalg.norm( distances, axis = 0 )**3
+        #import pdb; pdb.set_trace()
         return jnp.diag( jnp.nan_to_num(r_term) * f(t) )
 
     return pot
