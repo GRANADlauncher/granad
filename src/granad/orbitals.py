@@ -1,7 +1,7 @@
 import os
 import traceback
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field, replace, asdict, fields
+from dataclasses import dataclass, field, replace, asdict
 from functools import wraps
 from pprint import pformat
 from typing import Callable, NamedTuple, Optional, Union, Dict, Any
@@ -292,7 +292,7 @@ class TDResult:
     
     def save(self, name, save_only=None):
         """
-        Saves the Result into a .npz file
+        Saves the TDResult into a .npz file
 
         Args:
             name (str): The filename prefix for saving.
