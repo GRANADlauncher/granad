@@ -1,10 +1,10 @@
 import os
 import traceback
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field, replace, asdict
+from dataclasses import dataclass, field, replace, asdict, fields
 from functools import wraps
 from pprint import pformat
-from typing import Callable, NamedTuple, Optional, Union
+from typing import Callable, NamedTuple, Optional, Union, Dict, Any
 
 import diffrax
 import jax
@@ -193,14 +193,16 @@ class TDResult:
                                           state of the system.
         output (list[jax.Array]): A list of arrays containing various output data from the simulation, such as observables
                                   over time.
+        extra_attributes (Dict[str, Any]): A dictionary saving any other quantity of interest (e.g. absorption spectra), by default empty.
 
     """
 
-    td_illumination : jax.Array
-    time_axis : jax.Array
-    final_density_matrix : jax.Array
-    output : list[jax.Array]
-
+    td_illumination : jax.Array = field(default_factory=lambda: jnp.array([]))
+    time_axis : jax.Array = field(default_factory=lambda: jnp.array([]))
+    final_density_matrix : jax.Array = field(default_factory=lambda: jnp.array([[]]))
+    output : list[jax.Array] = field(default_factory=list)
+    extra_attributes: Dict[str, Any] = field(default_factory=dict)  # Stores dynamic attributes
+    
     def ft_output( self, omega_max, omega_min ):
         """
         Computes the Fourier transform of each element in the output data across a specified frequency range.
@@ -239,13 +241,105 @@ class TDResult:
         """
         return _numerics.get_fourier_transform(self.time_axis, self.td_illumination, omega_max, omega_min, return_omega_axis)
 
-    def save( self, name ):
-        jnp.savez(f"{name}.npz", **asdict(self) )
+    def add_extra_attribute(self,name: str,value: Any):
+        """
+        Dynamically adds an attribute to the 'extra_attributes' field.
+
+        Args:
+            name (str): Name of the new attribute to be added.
+            value (Any): Value of the attribute.
+        """
+        self.extra_attributes[name]=value
+        print(f"Extra attribute '{name}' is added.")
+
+    def remove_extra_attribute(self,name: str):
+        """
+        Dynamically deletes an attribute from 'extra_attributes'.
+
+        Args:
+            name (str): Name of the attribute to be removed.
+        """
+        if name not in self.extra_attributes:
+            raise KeyError(f"The attribute '{name}' does not exist in 'extra_attributes'. ")
+        else: 
+            del self.extra_attributes[name]
+            print(f"Extra attribute '{name}' is removed.")
+
+    def show_extra_attribute_list(self):
+        """
+        Displays all available extra attributes. 
+        """
+        print(list(self.extra_attributes.keys()))
+
+    def get_attribute(self, name: str):
+        """
+        Returns the value of any specified attribute, no matter the original class attributes or the extra ones.
+
+        Args:
+            name (str): Name of the attribute.
+            
+        Return:
+            Value of the attribute.
+        """
+        if name in self.__dict__.keys():
+            return self.__dict__[name]
+            
+        elif name in self.extra_attributes.keys():
+            return self.extra_attributes[name]
+            
+        else:
+            raise KeyError(f"The attribute '{name}' does not exist ")
+    
+    def save(self, name, save_only=None):
+        """
+        Saves the Result into a .npz file
+
+        Args:
+            name (str): The filename prefix for saving.
+            save_only (list, optional): List of attribute names to save selectively.
+        """
+        data = asdict(self) 
+        
+        if save_only:
+            data.update(self.extra_attributes) # flatted dict with key from both orginal data and extra_attributes dictionary
+            data={k:v for k,v in data.items() if k in save_only } # filtered data
+            
+        jnp.savez(f"{name}.npz", **data)
 
     @classmethod
     def load( cls, name ):
-        with jnp.load(f'{name}.npz') as data:
-            return cls( **data )
+        """
+        Constructs a TDResult object from saved data.
+    
+        Args:
+            name (str): The filename (without extension) from which to load the data.
+    
+        Returns:
+            TDResult: A TDResult object constructed from the saved data.
+    
+        Note:
+            If the 'save_only' option was used earlier, the TDResult object will be created 
+            with only the available data, and missing fields will be filled with empty values 
+            of their corresponding types.
+        """
+        with jnp.load(f'{name}.npz',allow_pickle=True) as data:
+            data=dict(**data)
+            primary_attribute_list=['td_illumination','time_axis','final_density_matrix','output','extra_attributes']
+            dynamic_attributes={k:v for k,v in data.items() if k not in primary_attribute_list}
+            
+            return cls(
+                
+                td_illumination = jnp.asarray(data.get('td_illumination',[])),
+                
+                time_axis = jnp.asarray(data.get('time_axis',[])),
+                
+                final_density_matrix = jnp.asarray(data.get('final_density_matrix',[[]])),
+                
+                output=[jnp.asarray(arr) for arr in data.get('output', [])],
+                
+                extra_attributes=data.get('extra_attributes',dynamic_attributes).item()
+                  
+            )
 
     
 def mutates(func):
