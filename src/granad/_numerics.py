@@ -1,5 +1,7 @@
 import jax
 import jax.numpy as jnp
+import itertools
+import functools
 
 jax.config.update("jax_enable_x64", True)
 import diffrax
@@ -480,3 +482,66 @@ def bare_susceptibility_function(args, hungry):
     comparison_matrix = omega_grid[:, None] == jnp.unique(omega_up)[None, :]
     mask2 = (jnp.argmax(comparison_matrix, axis=1) + 1) * comparison_matrix.any(axis=1)
     return _susceptibility
+
+def nest_result(result_list, shape):
+    """
+    Recursively reshapes a flat list into a nested list structure matching the Cartesian product shape.
+    
+    Parameters:
+        result_list (list): The flat list of computed results.
+        shape (list): A list representing the shape of the Cartesian product.
+    
+    Returns:
+        list: A nested list following the Cartesian product shape.
+    """
+    if len(shape) == 1:
+        return result_list  # Base case: last dimension
+
+    chunk_size = int(len(result_list) / shape[0])  # Compute chunk size dynamically
+    return [
+        nest_result(result_list[i * chunk_size:(i + 1) * chunk_size], shape[1:]) 
+        for i in range(shape[0])
+    ]
+
+def iterate(func):
+    """
+    A decorator that allows a function to iterate over list inputs.
+    
+    Functionality:
+    1. If one or more of the function’s input arguments is a list, the function is executed for every combination of elements.
+    2. If multiple list inputs are present, the computation follows a Cartesian product pattern:
+       - For the 1st element of list A, iterate over all elements of list B.
+       - For the 2nd element of list A, iterate over all elements of list B.
+       - And so on.
+    3. The results are reshaped into a nested structure matching the input lists.
+    4. If the function returns multiple values (a tuple), each return value is separately structured into its own nested list.
+    
+    Parameters:
+        func (callable): The function to be decorated.
+    
+    Returns:
+        callable: The decorated function that processes list inputs correctly.
+    """
+    @functools.wraps(func)
+    def inner(*args, **kwargs):
+        result = []
+        
+        # Extract parameters that are lists
+        dict_params = {key: values for key, values in kwargs.items() if isinstance(values, list)}
+        shape = [len(values) for values in dict_params.values()]
+        
+        if dict_params:  # If any parameter is a list, perform Cartesian product iteration
+            for combination in itertools.product(*dict_params.values()):
+                new_kwargs = kwargs | dict(zip(dict_params.keys(), combination))
+                result.append(func(*args, **new_kwargs))  # Call the original function
+            
+            # If function returns a tuple, separate results for each return value
+            if isinstance(result[0], tuple):
+                transposed_results = list(zip(*result))  # Split values across multiple lists
+                return tuple(nest_result(list(r), shape) for r in transposed_results)
+            else:
+                return nest_result(result, shape)  # Single return value case
+        
+        return func(*args, **kwargs)  # Direct function call if no list parameters
+    
+    return inner
