@@ -984,7 +984,7 @@ class OrbitalList:
         dipole_operator = jnp.zeros((3, N, N)).astype(complex)
         for i in range(3):
             dipole_operator = dipole_operator.at[i, :, :].set(
-                jnp.diag((self.positions[:, i]-jnp.average(self.positions[:,i]) / 2) #
+                jnp.diag((self.positions[:, i]-jnp.average(self.positions[:,i])) / 2) #
             )
         for orbital_combination, value in self.couplings.dipole_transitions.items():
             i, j = self._list.index(orbital_combination[0]), self._list.index(
