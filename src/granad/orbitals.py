@@ -984,7 +984,7 @@ class OrbitalList:
         dipole_operator = jnp.zeros((3, N, N)).astype(complex)
         for i in range(3):
             dipole_operator = dipole_operator.at[i, :, :].set(
-                jnp.diag(self.positions[:, i] / 2)
+                jnp.diag((self.positions[:, i]-jnp.average(self.positions[:,i]) / 2) #
             )
         for orbital_combination, value in self.couplings.dipole_transitions.items():
             i, j = self._list.index(orbital_combination[0]), self._list.index(
@@ -1391,9 +1391,9 @@ class OrbitalList:
 
         try:        
             return self._integrate_master_equation( list(hamiltonian.values()), list(dissipator.values()), list(postprocesses.values()), rhs_args, illumination, solver, stepsize_controller, initial_density_matrix, start_time, end_time, grid, max_mem_gb, dt )
-        except Exception as e:
-            print(f"Simulation crashed with exception {e}. Try increasing the time mesh and make your sure your illumination is differentiable. The full diffrax traceback follows below.")
-            traceback.print_stack()
+       except Exception as e:
+           print(f"Simulation crashed with exception {e}. Try increasing the time mesh and make your sure your illumination is differentiable. The full diffrax traceback follows below.")
+           traceback.print_stack()
 
     @staticmethod
     def _integrate_master_equation( hamiltonian, dissipator, postprocesses, rhs_args, illumination, solver, stepsize_controller, initial_density_matrix, start_time, end_time, grid, max_mem_gb, dt ):
