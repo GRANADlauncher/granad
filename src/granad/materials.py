@@ -644,6 +644,10 @@ def get_mos2():
     u2_Xe_5 = -0.174
 
     onsite_x = jnp.array([epsilon_X_e_0, epsilon_X_e_0, epsilon_X_e_1])
+    
+    # poor man's back transformation since odd orbitals are discarded
+    onsite_x /= 2
+    
     onsite_m = jnp.array([epsilon_M_e_0, epsilon_M_e_1, epsilon_M_e_1])
 
     nn = jnp.array([
@@ -652,7 +656,7 @@ def get_mos2():
         [u1_e_3, u1_e_4, 0]
     ])
 
-    # poor man's back transformation since even orbitals are discarded
+    # poor man's back transformation since odd orbitals are discarded
     nn /= jnp.sqrt(2)
 
     nnn_M = jnp.array([
@@ -712,13 +716,13 @@ def get_mos2():
             # Compute angle between ref and vec
             angle = jnp.arctan2(vec[1], vec[0]) - jnp.arctan2(ref[1], ref[0])
             angle = jnp.mod(angle + jnp.pi, 2 * jnp.pi) - jnp.pi  # Map to [-π, π]
-
-            # branch = 0 * (angle <= jnp.pi / 3) + 1 * jnp.logical_and(angle > -jnp.pi / 3) + 2 * (angle <= jnp.pi)
-            # idx = jax.lax.switch(
-            #     branch,
-            #     [lambda : 0, lambda : 1, lambda : 2],
-            # )
-            idx = 0
+            branch = 0 * jnp.logical_and(angle >= -jnp.pi / 3, angle <= jnp.pi / 3) + 1 * (angle < -jnp.pi / 3) + 2 * (angle >= jnp.pi/3)
+            idx = jax.lax.switch(
+                branch,
+                [lambda : 0, lambda : 1, lambda : 2],
+            )
+            
+            # idx = 0
              
             return arr[idx][orb1_idx, orb2_idx]
 
