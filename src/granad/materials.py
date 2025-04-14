@@ -670,7 +670,7 @@ def get_mos2():
         [-u2_Xe_1,        u2_Xe_3,         u2_Xe_4],
         [-u2_Xe_2,        u2_Xe_4,         u2_Xe_5] ]
     )
-    # poor man's back transformation since even orbitals are discarded
+    # poor man's back transformation since odd orbitals are discarded
     nnn_X /= 2
 
     gamma = 2 * jnp.pi / 3  # 120 degrees in radians
@@ -722,8 +722,6 @@ def get_mos2():
                 [lambda : 0, lambda : 1, lambda : 2],
             )
             
-            # idx = 0
-             
             return arr[idx][orb1_idx, orb2_idx]
 
         def coupling(vec):
