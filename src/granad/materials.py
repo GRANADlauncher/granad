@@ -600,6 +600,180 @@ def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_
             )
             )
 
+def get_mos2():
+    """
+    Generates a MoS2 model based on parameters from [Bert Jorissen, Lucian Covaci, and Bart Partoens, SciPost Phys. Core 7, 004 (2024)](https://scipost.org/SciPostPhysCore.7.1.004), taking into account even-parity eigenstates.
+
+    Returns:
+        Material: A `Material` object representing the MoS2 model.
+
+    Example:
+        >>> mos2 = get_mos2()
+        >>> print(mos2)
+    """
+    reference_vector = jnp.array([1,1,0])
+    ref = reference_vector[:2] / jnp.linalg.norm(reference_vector[:2])            
+
+    # Onsite energies
+    epsilon_M_e_0 = -6.475
+    epsilon_M_e_1 = -4.891
+    epsilon_X_e_0 = -7.907
+    epsilon_X_e_1 = -9.470
+
+    # First nearest neighbor hopping parameters (u1)
+    u1_e_0 = 0.999
+    u1_e_1 = -1.289
+    u1_e_2 = 0.795
+    u1_e_3 = -0.688
+    u1_e_4 = -0.795
+
+    # Second nearest neighbor hopping parameters for metal (u2,Me)
+    u2_Me_0 = -0.048
+    u2_Me_1 = 0.580
+    u2_Me_2 = -0.074
+    u2_Me_3 = -0.414
+    u2_Me_4 = -0.299
+    u2_Me_5 = 0.045
+
+    # Second nearest neighbor hopping parameters for chalcogen (u2,Xe)
+    u2_Xe_0 = 0.795
+    u2_Xe_1 = -0.248
+    u2_Xe_2 = 0.164
+    u2_Xe_3 = -0.002
+    u2_Xe_4 = -0.283
+    u2_Xe_5 = -0.174
+
+    onsite_x = jnp.array([epsilon_X_e_0, epsilon_X_e_0, epsilon_X_e_1])
+    onsite_m = jnp.array([epsilon_M_e_0, epsilon_M_e_1, epsilon_M_e_1])
+
+    nn = jnp.array([
+        [0, 0, u1_e_0],
+        [u1_e_1, u1_e_2, 0],
+        [u1_e_3, u1_e_4, 0]
+    ])
+
+    # poor man's back transformation since even orbitals are discarded
+    nn /= jnp.sqrt(2)
+
+    nnn_M = jnp.array([
+        [u2_Me_0,         u2_Me_1,         u2_Me_2],
+        [u2_Me_1,         u2_Me_3,         u2_Me_4],
+        [-u2_Me_2,       -u2_Me_4,         u2_Me_5]
+    ])
+
+    nnn_X = jnp.array([
+        [u2_Xe_0,         u2_Xe_1,         u2_Xe_2],
+        [-u2_Xe_1,        u2_Xe_3,         u2_Xe_4],
+        [-u2_Xe_2,        u2_Xe_4,         u2_Xe_5] ]
+    )
+    # poor man's back transformation since even orbitals are discarded
+    nnn_X /= 2
+
+    gamma = 2 * jnp.pi / 3  # 120 degrees in radians
+
+    R_X_e = jnp.array([
+        [jnp.cos(gamma), -jnp.sin(gamma), 0],
+        [jnp.sin(gamma),  jnp.cos(gamma), 0],
+        [0,              0,             1]
+    ])
+
+    theta = 2 * gamma      # 240 degrees for d_x2-y2 and d_xy rotation
+
+    R_M_e = jnp.array([
+        [1.0,           0.0,           0.0],
+        [0.0,  jnp.cos(theta), -jnp.sin(theta)],
+        [0.0,  jnp.sin(theta),  jnp.cos(theta)]
+    ])
+
+    nn_list = jnp.stack([nn, R_X_e @ nn @ R_M_e.T, R_X_e.T @ nn @ R_M_e])
+    nnn_M_list = jnp.stack([nnn_M, R_M_e @ nnn_M @ R_M_e.T, R_M_e.T @ nnn_M @ R_M_e])
+    nnn_X_list = jnp.stack([nnn_X, R_X_e @ nnn_X @ R_X_e.T, R_X_e.T @ nnn_X @ R_X_e])
+    
+    d_orbs =  ["dz2", "dx2-y2", "dxy"]
+    p_orbs = ["px", "py", "pz"]
+    orbs = d_orbs + p_orbs
+    
+    def generate_coupling(orb1, orb2):
+        orb1_idx = orbs.index(orb1) % 3
+        orb2_idx = orbs.index(orb2) % 3
+
+        # Select the correct matrix stack
+        arr = nn_list
+        onsite = onsite_m
+        if orb1[0] == "p" and orb2[0] == "p":
+            arr = nnn_X_list
+            onsite = onsite_x
+        elif orb1[0] == "d" and orb2[0] == "d":
+            arr = nnn_M_list
+
+        def nn_coupling(vec):
+            vec /= jnp.linalg.norm(vec)
+            
+            # Compute angle between ref and vec
+            angle = jnp.arctan2(vec[1], vec[0]) - jnp.arctan2(ref[1], ref[0])
+            angle = jnp.mod(angle + jnp.pi, 2 * jnp.pi) - jnp.pi  # Map to [-π, π]
+
+            # branch = 0 * (angle <= jnp.pi / 3) + 1 * jnp.logical_and(angle > -jnp.pi / 3) + 2 * (angle <= jnp.pi)
+            # idx = jax.lax.switch(
+            #     branch,
+            #     [lambda : 0, lambda : 1, lambda : 2],
+            # )
+            idx = 0
+             
+            return arr[idx][orb1_idx, orb2_idx]
+
+        def coupling(vec):
+            length = jnp.linalg.norm(vec[:2])
+            thresh = 3.4
+            branch = 0 * (length == 0) + 1 * jnp.logical_and(0 < length, length < thresh) + 2 * (length >= thresh)
+            
+            return jax.lax.switch(branch,
+                                  [lambda x : onsite[orb1_idx],
+                                   lambda x : nn_coupling(x),
+                                   lambda x : 0. 
+                                   ],
+                                  vec[:2]
+                                  )
+
+        return coupling
+
+    mat = (Material("MoS2")
+    .lattice_constant(3.16)  # Approximate lattice constant of monolayer MoS2
+    .lattice_basis([
+        [1, 0, 0],
+        [-0.5, jnp.sqrt(3)/2, 0],  # Hexagonal lattice
+        [0, 0, 1],
+    ], periodic = [0,1])
+    .add_orbital_species("dz2", atom='Mo')
+    .add_orbital_species("dx2-y2", atom='Mo')
+    .add_orbital_species("dxy", atom='Mo')
+    .add_orbital_species("px", atom='S')
+    .add_orbital_species("py", atom='S')
+    .add_orbital_species("pz", atom='S')
+    .add_orbital(position=(0, 0, 0), tag="dz2", species="dz2")
+    .add_orbital(position=(0, 0, 0), tag="dx2-y2", species="dx2-y2")
+    .add_orbital(position=(0, 0, 0), tag="dxy", species="dxy")
+    .add_orbital(position=(1/3, 2/3, 1.5), tag="px_top", species="px")
+    .add_orbital(position=(1/3, 2/3, 1.5), tag="py_top", species="py")
+    .add_orbital(position=(1/3, 2/3, 1.5), tag="pz_top", species="pz")
+    .add_orbital(position=(1/3, 2/3, -1.5), tag="px_bottom", species="px")
+    .add_orbital(position=(1/3, 2/3, -1.5), tag="py_bottom", species="py")
+    .add_orbital(position=(1/3, 2/3, -1.5), tag="pz_bottom", species="pz")
+           )
+
+    for orb1 in orbs:
+        for orb2 in orbs:
+            mat = (mat.add_interaction("hamiltonian",
+                                       participants = (orb1, orb2),
+                                       expression = generate_coupling(orb1, orb2)
+                                       )
+                   .add_interaction("coulomb",
+                                    participants = (orb1, orb2),
+                                    expression = ohno_potential(1)
+                                    )
+                   )            
+    return mat
+
     
 def get_graphene(hoppings = None):
     """
