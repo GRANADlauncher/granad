@@ -984,7 +984,7 @@ class OrbitalList:
         dipole_operator = jnp.zeros((3, N, N)).astype(complex)
         for i in range(3):
             dipole_operator = dipole_operator.at[i, :, :].set(
-                jnp.diag((self.positions[:, i]-jnp.average(self.positions[:,i])) / 2) #
+                jnp.diag(self.positions[:, i] / 2) #-jnp.average(self.positions[:,i]))
             )
         for orbital_combination, value in self.couplings.dipole_transitions.items():
             i, j = self._list.index(orbital_combination[0]), self._list.index(
@@ -1295,6 +1295,11 @@ class OrbitalList:
                 postprocesses[option] = lambda rho, args: args.electrons * jnp.diagonal( args.eigenvectors.conj().T @ rho @ args.eigenvectors, axis1=-1, axis2=-2) 
             elif option == "full":
                 postprocesses[option] = lambda rho, args: rho
+            elif option == "diag_x":
+                postprocesses[option] = lambda rho, args: jnp.diagonal(rho, axis1=-1, axis2=-2)
+            elif option == "diag_e":
+                postprocesses[option] = lambda rho, args: jnp.diagonal( args.eigenvectors.conj().T @ rho @ args.eigenvectors, axis1=-1, axis2=-2) 
+            
 
         return postprocesses
 
@@ -1353,7 +1358,7 @@ class OrbitalList:
                                                                  rates.
             compute_at (Optional[jax.Array]): The orbitals indexed by this array will experience induced fields.
             expectation_values (Optional[list[jax.Array]]): Expectation values to compute during the simulation.
-            density_matrix (Optional[list[str]]): Tags for additional density matrix computations. "full", "occ_x", "occ_e". May be deprecated.
+            density_matrix (Optional[list[str]]): Tags for additional density matrix computations. "full", "occ_x", "occ_e", "diag_x", "diag_e". May be deprecated.
             computation (Optional[Callable]): Additional computation to be performed at each step.
             use_rwa (bool): Whether to use the rotating wave approximation. Defaults to False.
             solver: The numerical solver instance to use for integrating the differential equations.
