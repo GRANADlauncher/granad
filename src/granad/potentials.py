@@ -1,7 +1,7 @@
 import jax
 import jax.numpy as jnp
 
-def DipolePulse( dipole_moment, source_location, omega = None, sigma = None, t0 = 0.0, kick = False ):
+def DipolePulse( dipole_moment, source_location, omega = None, sigma = None, t0 = 0.0, kick = False, dt = None ):
     """Function to compute the potential due to a pulsed dipole. The potential can optionally include a 'kick' which is an instantaneous spike at a specific time.
     If the dipole is placed at a position occupied by orbitals, its contribution will be set to zero.
 
@@ -12,6 +12,7 @@ def DipolePulse( dipole_moment, source_location, omega = None, sigma = None, t0 
         sigma: Standard deviation of the pulse's temporal Gaussian profile (default is None).
         t0: Time at which the pulse is centered (default is 0.0).
         kick: If True, lets the spatial profile of the dipole kick only at time t0 (default is False) and discards omega, sigma.
+        dt: The lifetime of the kick. Provide the minimum time step of your simulation.  
 
     Returns:
         Function that computes the dipole potential at a given time and location, with adjustments for distance and orientation relative to the dipole.
@@ -19,17 +20,26 @@ def DipolePulse( dipole_moment, source_location, omega = None, sigma = None, t0 
     Note:
        Recommended only with solver=diffrax.Dopri8.
     """
+    from scipy.integrate import quad
+    if kick and dt is None:
+        raise ValueError("When kick=True, you must specify dt.")
     
     loc = jnp.array( source_location )[:,None]
     dip = jnp.array( dipole_moment )
-    f = lambda t : jnp.cos(omega * t) * jnp.exp( -(t-t0)**2 / sigma**2 ) 
+    
+    f_unscaled = lambda t : jnp.cos(omega * t) * jnp.exp( -(t-t0)**2 / sigma**2 )
+    area, _ = quad(f_unscaled, 0, jnp.inf)
+    f = lambda t : jnp.cos(omega * t) * jnp.exp( -(t-t0)**2 / sigma**2 )/area
+    
     if kick == True:
-        f = lambda t : jnp.abs(t - t0) < 1e-10
+        f = lambda t: jnp.where(jnp.abs(t - t0) < 1e-10, 1.0 / dt, 0.0)
+        #f = lambda t: jnp.abs(t - t0) < 1e-10#In discrete time axis kick is a rectangular pulse.
+        #The power delivered to a system depends on the width of the kick dt i.e. time-axis discretization.
+        #To keep the results consistent with different dt we dynamically modify the intensity of the kick such that total power delivered by the kick is constant.
     
     def pot( t, r, args ):
         distances =args.dipole_operator.diagonal(axis1=-1, axis2=-2) - loc
         r_term = 14.39*(dip @ distances) / jnp.linalg.norm( distances, axis = 0 )**3
-        #import pdb; pdb.set_trace()
         return jnp.diag( jnp.nan_to_num(r_term) * f(t) )
 
     return pot
