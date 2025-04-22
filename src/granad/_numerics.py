@@ -343,20 +343,38 @@ def get_integrator( hamiltonian, dissipator, postprocesses, solver, stepsize_con
     rhs = setup_rhs( hamiltonian, dissipator )
     term = diffrax.ODETerm(rhs)
 
-    @jax.jit
-    def integrator( d_ini, ts, args ):
-        dms = diffrax.diffeqsolve(term,
-                                  solver,
-                                  t0=ts.min(),
-                                  t1=ts.max(),
-                                  dt0=dt,
-                                  y0=d_ini,
-                                  saveat=diffrax.SaveAt(ts=ts),
-                                  stepsize_controller=stepsize_controller,
-                                  args = args,
-                                ).ys
+    if not isinstance(solver, str):
+        @jax.jit
+        def integrator( d_ini, ts, args ):
+            dms = diffrax.diffeqsolve(term,
+                                      solver,
+                                      t0=ts.min(),
+                                      t1=ts.max(),
+                                      dt0=dt,
+                                      y0=d_ini,
+                                      saveat=diffrax.SaveAt(ts=ts),
+                                      stepsize_controller=stepsize_controller,
+                                      args = args,
+                                    ).ys
+            
+            return dms[-1], [ p(dms, args) for p in postprocesses ]
+    
+    elif solver == "Euler" :
+        def integrator( d_ini, ts, args ):
+            return  Euler_solver(rhs, ts, d_ini, args, postprocesses)
         
-        return dms[-1], [ p(dms, args) for p in postprocesses ]
+    elif solver == "RK45" :
+        def integrator( d_ini, ts, args ):
+            return RK45_solver(rhs, ts, d_ini, args, postprocesses)
+        
+    elif solver == "DP54" :
+        def integrator( d_ini, ts, args ):
+            return DP54_solver(rhs, ts, d_ini, args, postprocesses)
+    elif solver == "adaptive_DP54":
+        def integrator ( d_ini, ts, args ):
+            return DP54_adaptive_solver2(rhs, ts, d_ini, args, postprocesses)
+
+    else : raise ValueError(f"Invalid Solver {solver}. Available solvers are homemade 'RK45', 'DP54', 'Euler' and all diffrax solvers. Default solver diffrax.Dopri5() ")
     
     return integrator
 
@@ -545,3 +563,136 @@ def iterate(func):
         return func(*args, **kwargs)  # Direct function call if no list parameters
     
     return inner
+
+#================================= HOMEMADE SOLVERS ========================================================#
+
+def Euler_solver(rhs_func, ts, d_ini, args, postprocesses):
+    """Solves an ODE using the explicit Euler method with JAX acceleration.
+
+    Args:
+        rhs_func (callable): Function defining the ODE's right-hand side (dy/dt = rhs_func(t, y, args)).
+        ts (array): Array of time points for the solution.
+        d_ini (array): Initial condition(s) of the dependent variable(s).
+        args (tuple): Additional arguments to pass to rhs_func.
+        postprocesses (list): List of callable post-processing functions to apply to each step's solution.
+
+    Returns:
+        tuple: Solution array and list of post-processed results from jax.lax.scan.
+
+    Notes:
+        Implements the explicit Euler method: y[n+1] = y[n] + dt * rhs_func(t[n], y[n], args).
+        Uses JAX's JIT compilation and scan for efficient computation.
+    """
+    dt = ts[1] - ts[0]
+    #import pdb; pdb.set_trace()
+    def rho_nxt_Euler(rho, t, rhs_func, args):
+        rho_nxt = rho + rhs_func(t, rho, args) * dt
+        return rho_nxt, [p(rho_nxt, args) for p in postprocesses]
+    
+    jitted_rho_nxt_Euler = jax.jit(rho_nxt_Euler, static_argnums=(2,))
+
+    @jax.jit
+    def jax_scan_compatible_rho_nxt_Euler(rho, t):
+        return rho_nxt_Euler(rho, t, rhs_func=rhs_func, args=args)
+        
+    return jax.lax.scan(jax_scan_compatible_rho_nxt_Euler, d_ini, ts)
+
+def RK45_solver(rhs_func, ts, d_ini, args, postprocesses):
+    """Solves an ODE using the 4th-order Runge-Kutta (RK4) method with JAX acceleration.
+
+    Args:
+        rhs_func (callable): Function defining the ODE's right-hand side (dy/dt = rhs_func(t, y, args)).
+        ts (array): Array of time points for the solution.
+        d_ini (array): Initial condition(s) of the dependent variable(s).
+        args (tuple): Additional arguments to pass to rhs_func.
+        postprocesses (list): List of callable post-processing functions to apply to each step's solution.
+
+    Returns:
+        tuple: Solution array and list of post-processed results from jax.lax.scan.
+
+    Notes:
+        Implements the classical RK4 method with four stages (k1, k2, k3, k4).
+        Next state: y[n+1] = y[n] + (dt/6) * (k1 + 2*k2 + 2*k3 + k4).
+        Optimized with JAX's JIT compilation and scan functionality.
+    """
+    dt = ts[1] - ts[0]
+    print(dt)
+
+    def rho_nxt_RK45(state, t, rhs_func, args):
+        rho, k1 = state
+        k1 = rhs_func(t, rho, args)
+        k2 = rhs_func(t + dt/2, rho + (dt/2) * k1, args)
+        k3 = rhs_func(t + dt/2, rho + (dt/2) * k2, args)
+        k4 = rhs_func(t + dt, rho + dt * k3, args)
+        rho_nxt = rho + dt/6 * (k1 + 2*k2 + 2*k3 + k4)
+
+        state=(rho_nxt, k4)
+        return state, [p(rho_nxt, args) for p in postprocesses]
+        
+    jitted_rho_nxt_RK45 = jax.jit(rho_nxt_RK45, static_argnums=(2,))
+
+    @jax.jit
+    def jax_scan_compatible_rho_nxt_RK45(state, t):
+        return rho_nxt_RK45(state, t, rhs_func=rhs_func, args=args)
+
+    k1 = rhs_func(ts[0], d_ini, args)
+    initial_state=(d_ini, k1 )
+    
+    final_state, postprocessed_rhos=jax.lax.scan(jax_scan_compatible_rho_nxt_RK45, initial_state, ts)
+    return final_state[0], postprocessed_rhos
+
+def DP54_solver(rhs_func, ts, d_ini, args, postprocesses):
+    """Solves an ODE using the Dormand-Prince 5(4) method with JAX acceleration.
+
+    Args:
+        rhs_func (callable): Function defining the ODE's right-hand side (dy/dt = rhs_func(t, y, args)).
+        ts (array): Array of time points for the solution.
+        d_ini (array): Initial condition(s) of the dependent variable(s).
+        args (tuple): Additional arguments to pass to rhs_func.
+        postprocesses (list): List of callable post-processing functions to apply to each step's solution.
+
+    Returns:
+        tuple: Solution array and list of post-processed results from jax.lax.scan.
+
+    Notes:
+        Implements the Dormand-Prince 5(4) method with seven stages and 5th-order accuracy.
+        Uses coefficients from the Dormand-Prince tableau for high precision.
+        Optimized with JAX's JIT compilation and scan functionality.
+    """
+    dt = ts[1] - ts[0]
+    print(dt)
+    def rho_nxt_DP54(state, t, rhs_func, args):
+        # Coefficients from Dormand-Prince 5(4) tableau
+        #Copied from: https://numerary.readthedocs.io/en/latest/dormand-prince-method.html
+        a21 = 1/5
+        a31, a32 = 3/40, 9/40
+        a41, a42, a43 = 44/45, -56/15, 32/9
+        a51, a52, a53, a54 = 19372/6561, -25360/2187, 64448/6561, -212/729
+        a61, a62, a63, a64, a65 = 9017/3168, -355/33, 46732/5247, 49/176, -5103/18656
+        a71, a72, a73, a74, a75, a76 = 35/384, 0, 500/1113, 125/192, -2187/6784, 11/84
+        b1, b2, b3, b4, b5, b6, b7 = 35/384, 0, 500/1113, 125/192, -2187/6784, 11/84, 0
+        
+        
+        rho, k1 = state
+        #k1 = rhs_func(t, rho, args)
+        k2 = rhs_func(t + dt * a21, rho + dt * a21 * k1, args)
+        k3 = rhs_func(t + dt * 3/10, rho + dt * (a31 * k1 + a32 * k2), args)
+        k4 = rhs_func(t + dt * 4/5, rho + dt * (a41 * k1 + a42 * k2 + a43 * k3), args)
+        k5 = rhs_func(t + dt * 1.0, rho + dt * (a51 * k1 + a52 * k2 + a53 * k3 + a54 * k4), args)
+        k6 = rhs_func(t + dt * 1.0, rho + dt * (a61 * k1 + a62 * k2 + a63 * k3 + a64 * k4 + a65 * k5), args)
+        k7 = rhs_func(t + dt * 1.0, rho + dt * (a71 * k1 + a72 * k2 + a73 * k3 + a74 * k4 + a75 * k5 + a76 * k6), args)
+        
+        rho_nxt = rho + dt * (b1 * k1 + b2 * k2 + b3 * k3 + b4 * k4 + b5 * k5 + b6 * k6 + b7 * k7)
+        state=(rho_nxt, k7)
+        
+        return state, [p(rho_nxt, args) for p in postprocesses]
+
+    jitted_rho_nxt_DP54 = jax.jit(rho_nxt_DP54, static_argnums=(2,))
+
+    @jax.jit
+    def jax_scan_compatible_rho_nxt_DP54(state, t):
+        return rho_nxt_DP54(state, t, rhs_func=rhs_func, args=args)
+    k1 = rhs_func(ts[0], d_ini, args)
+    initial_state=(d_ini, k1 )
+    final_state, postprocessed_rhos = jax.lax.scan(jax_scan_compatible_rho_nxt_DP54, initial_state, ts)    
+    return final_state[0], postprocessed_rhos
