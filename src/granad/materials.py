@@ -824,7 +824,7 @@ def get_graphene(hoppings = None):
             )
             )
 
-def get_ssh(delta = 0.2, displacement = 0.4):
+def get_ssh(delta = 0.2, displacement = 0.4, base_hopping = -2.66, lattice_const = 2.84):
     """
     Generates an SSH (Su-Schrieffer-Heeger) model with specified hopping parameters and a 2-atom unit cell.
 
@@ -833,16 +833,18 @@ def get_ssh(delta = 0.2, displacement = 0.4):
             - The nearest-neighbor hopping amplitudes are defined as [1 + delta, 1 - delta]. Default is 0.2.
         displacement (float, optional): The displacement of the second atom in the unit cell along the x-axis (in Ångström). 
             - Determines the position of the second atom relative to the first. Default is 0.4. Takes values between 0 and 1.
+        base_hopping (float, optional): base hopping value on which symmetrically intra and inter unit-cell hopping rates are applied, defaults to -2.66 eV.
+        lattice constant (float, optional):  distance between two unict cells, defaults to 2*1.42 = 2.84 Ångström (since each unit cell contains two sites).
 
     Returns:
         Material: An SSH model represented as a `Material` object, including:
             - Lattice structure with a lattice constant of 2.46 Å.
             - Two pz orbitals (one per sublattice) placed at [0] and [displacement].
-            - Nearest-neighbor (NN) hopping amplitudes: [1 + delta, 1 - delta].
+            - Nearest-neighbor (NN) hopping amplitudes: [base_hopping*(1 + delta), base_hopping*(1 - delta)].
             - Coulomb interactions parameterized by Ohno potential.
     """
     return (Material("ssh")
-            .lattice_constant(2.46)
+            .lattice_constant(lattice_const) #Changed to  2*a_cc
             .lattice_basis([
                 [1, 0, 0],
             ])
@@ -852,7 +854,7 @@ def get_ssh(delta = 0.2, displacement = 0.4):
             .add_interaction(
                 "hamiltonian",
                 participants=("pz", "pz"),
-                parameters=[0.0, 1 + delta, 1 - delta],
+                parameters=[0.0, -2.66 + delta*(-2.66), -2.66 - delta*(-2.66)],
             )
             .add_interaction(
                 "coulomb",
@@ -862,12 +864,13 @@ def get_ssh(delta = 0.2, displacement = 0.4):
             )
             )
 
-def get_chain(hopping = -2.66):
+def get_chain(hopping = -2.66, lattice_const = 1.42):
     """
     Generates a 1D metallic chain model with specified hopping and Coulomb interaction parameters.
 
     Args:
         hopping (float, optional): nn hopping, defaults to -2.66 eV.
+        lattice constant (float, optional): nn distance, defaults to 1.42 Ångström
 
     Returns:
         Material: A `Material` object representing the 1D metallic chain, which includes:
@@ -883,7 +886,7 @@ def get_chain(hopping = -2.66):
         >>> print(metal_chain)
     """
     return (Material("chain")
-            .lattice_constant(2.46)
+            .lattice_constant(lattice_const)
             .lattice_basis([
                 [1, 0, 0],
             ])
