@@ -130,6 +130,7 @@ class Params:
     eps : float = 1e-5
     beta : float = jnp.inf
     self_consistency_params : dict =  field(default_factory=dict)
+    mean_field_params : dict =  field(default_factory=dict)
     spin_degeneracy : float = 2.0
 
     def __add__( self, other ):
@@ -672,6 +673,23 @@ class OrbitalList:
                 **self.params.self_consistency_params,
             )
 
+        if len(self.params.mean_field_params) != 0:
+            (
+                self._hamiltonian,
+                self._initial_density_matrix,
+                self._stationary_density_matrix,
+                self._energies,
+                self._eigenvectors,
+            ) = _numerics._mf_loop(
+                self._hamiltonian,
+                self._coulomb,
+                self.params.excitation,
+                self.params.spin_degeneracy,
+                self.params.electrons,
+                self.params.eps,
+                **self.params.mean_field_params,
+            )
+
         eps = 1e-1
         lower = -eps
         upper = 2 + eps
@@ -866,6 +884,45 @@ class OrbitalList:
         """
         default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0}
         self.params.self_consistency_params = default | kwargs
+
+    @mutates
+    def set_mean_field(self, **kwargs):
+        """
+        Configures the parameters for mean field calculations.
+        If no other parameters are passed, a standard direct channel Hartree-Fock calculation is performed.
+        Note that this procedure differs slightly from the self-consistent field procedure.
+
+        This function sets up the mean field parameters used in iterative calculations 
+        to update the system's density matrix until convergence is achieved.
+
+        Args:
+            **kwargs: Keyword arguments to override the default self-consistency parameters. 
+                The available parameters are:
+
+                - `accuracy` (float, optional): The convergence criterion for self-consistency. 
+                  Specifies the maximum allowed difference between successive density matrices.
+                  Default is 1e-6.
+
+                - `mix` (float, optional): The mixing factor for the density matrix during updates.
+                  This controls the contribution of the new density matrix to the updated one.
+                  Values closer to 1 favor the new density matrix, while smaller values favor 
+                  smoother convergence. Default is 0.3.
+
+                - `iterations` (int, optional): The maximum number of iterations allowed in the 
+                  self-consistency cycle. Default is 500.
+
+                - `coulomb_strength` (float, optional): A scaling factor for the Coulomb matrix.
+                  This allows tuning of the strength of Coulomb interactions in the system. 
+                  Default is 1.0.
+
+        Example:
+            >>> model.set_mean_field(accuracy=1e-7, mix=0.5, iterations=1000)
+            >>> print(model.params.mean_field_params)
+            {'accuracy': 1e-7, 'mix': 0.5, 'iterations': 1000, 'coulomb_strength': 1.0}
+        """
+        default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0, "f_mean_field" : None}
+        self.params.mean_field_params = default | kwargs
+
 
     @mutates
     def set_excitation(self, from_state, to_state, excited_electrons):
