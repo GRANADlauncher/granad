@@ -914,11 +914,16 @@ class OrbitalList:
                 - `coulomb_strength` (float, optional): A scaling factor for the Coulomb matrix.
                   This allows tuning of the strength of Coulomb interactions in the system. 
                   Default is 1.0.
+        
+                - `f_mean_field` (Callable, optional): A function for computing the mean field term.
+                  First argument is density matrix, second argument is single particle hamiltonian.
+                  Can be used, e.g., for full HF by passing a closure containing ERIs.
+                  Default is None.
 
         Example:
             >>> model.set_mean_field(accuracy=1e-7, mix=0.5, iterations=1000)
             >>> print(model.params.mean_field_params)
-            {'accuracy': 1e-7, 'mix': 0.5, 'iterations': 1000, 'coulomb_strength': 1.0}
+            {'accuracy': 1e-7, 'mix': 0.5, 'iterations': 1000, 'coulomb_strength': 1.0, 'f_mean_field': None}
         """
         default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0, "f_mean_field" : None}
         self.params.mean_field_params = default | kwargs
@@ -1567,16 +1572,6 @@ class OrbitalList:
             args = self.get_args(relaxation_rate = relaxation_rate, coulomb_strength = coulomb_strength, propagator = None)
         sus = _numerics.rpa_polarizability_function( args, hungry )
         return jax.lax.map(sus, omegas)    
-
-    def get_mean_field_hamiltonian( self, overlap = None ):
-        """convert an orbital list to a set of parameters usable for the rhf procedure. 
-        currently, only an empirical direct channel interaction specified specified in a 
-        the list's coulomb dict is taken into account.
-        """
-        # Since we consider <1i|U|i1> => U_{11ii}
-        eri = self.coulomb[None, None]
-        overlap = overlap if overlap is not None else jnp.eye(self.hamiltonian.shape[0])
-        return _rhf( self.hamiltonian, eri, overlap, self.electrons )
     
     @property
     def atoms( self ):

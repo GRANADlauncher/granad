@@ -230,7 +230,7 @@ def _mf_loop(hamiltonian,
         return jax.lax.cond(res[-1] <= accuracy, lambda x: res, update, res)
 
     if f_mean_field is None:
-        f_mean_field = lambda r, hamiltonian : jnp.diag(coulomb @ r.diagonal()) + hamiltonian
+        f_mean_field = lambda r, hamiltonian : jnp.diag(coulomb_strength * coulomb @ r.diagonal()) + hamiltonian
         
     # initial guess for the density matrix
     rho_old = jnp.zeros_like(hamiltonian)
@@ -250,6 +250,8 @@ def _mf_loop(hamiltonian,
         eps,
         excitation
     )
+
+    print(f"Mean field finished with accuracy {accuracy}, iterations {iterations}, yielding final error {error}")
     
     return (
         ham_eff,
