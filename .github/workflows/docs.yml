@@ -55,10 +55,13 @@ jobs:
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "DOCS_VERSION=stable" >> $GITHUB_ENV
+            echo "DEST_DIR=" >> $GITHUB_ENV
           elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
             echo "DOCS_VERSION=development" >> $GITHUB_ENV
+            echo "DEST_DIR=dev" >> $GITHUB_ENV
           else
             echo "DOCS_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+            echo "DEST_DIR=${{ github.ref_name }}" >> $GITHUB_ENV
           fi
           echo "GITHUB_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
 
@@ -73,4 +76,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
           publish_dir: ./site
-          destination_dir: ${{ github.ref_name }}
+          destination_dir: ${{ env.DEST_DIR }}
