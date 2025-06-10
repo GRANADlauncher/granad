@@ -32,7 +32,10 @@
     <div class="wy-side-scroll">
       <div class="wy-side-nav-search">
           <a href="." class="icon icon-home"> GRANAD
-        </a><div role="search">
+        </a>
+        <div class="version">
+          stable
+        </div><div role="search">
   <form id ="rtd-search-form" class="wy-form" action="./search.html" method="get">
       <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
   </form>
@@ -95,6 +98,8 @@
                   <li class="toctree-l1"><a class="reference internal" href="tutorials/l_master/">Custom Time Evolution</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="tutorials/la_lindblad/">Dissipation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="tutorials/m_mean_field/">Mean Field Calculations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="tutorials/xyz/">Exporting and Importing</a>
                   </li>
@@ -171,6 +176,8 @@
 </span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="c1"># from the imaginary part of polarizability, obtain the absorption spectrum</span>
 </span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="n">absorption</span> <span class="o">=</span> <span class="n">polarizability</span><span class="o">.</span><span class="n">imag</span> <span class="o">*</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">omegas</span>
 </span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>Matplotlib is building the font cache; this may take a moment.
+</code></pre></div>
 <p>Plot the results</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">plt</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s1">&#39;ggplot&#39;</span><span class="p">)</span>
@@ -184,19 +191,10 @@
 <p><img alt="png" src="index_files/index_13_0.png" /></p>
               
             </div>
-          </div><footer>
-    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
-        <a href="api/" class="btn btn-neutral float-right" title="API">Next <span class="icon icon-circle-arrow-right"></span></a>
-    </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <!-- Copyright etc -->
-  </div>
-
-  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
-</footer>
+          </div><div style="text-align: center; font-size: 14px; padding: 10px;">
+    <strong>Documentation Version:</strong> stable |
+    <strong>Commit:</strong> a045e609134954001f8487b1c0904df2bb39f39e
+</div>
           
         </div>
       </div>
@@ -233,5 +231,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-02-04 12:33:33.058757+00:00
+Build Date UTC : 2025-06-10 09:15:11.037793+00:00
 -->
