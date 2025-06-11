@@ -185,12 +185,16 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     ax.grid(True)
 
 @_plot_wrapper
-def show_energies(orbs, e_max = None, e_min = None):
+def show_energies(orbs, display = None, label = None, e_max = None, e_min = None):
     """
     Depicts the energy and occupation landscape of a stack, with energies plotted on the y-axis and eigenstates ordered by size on the x-axis.
 
     Parameters:
         `orbs`: An object containing the orbital data, including energies, electron counts, and initial density matrix.
+        `display` (jnp.Array, optional): Array to annotate the energy states.
+            - If `None`, electronic occupation is used.
+        `label` (jnp.Array, optional): Label for the colorbar.
+            - If `None`, "initial state occupation" is used.
         `e_max` (float, optional): The upper limit of the energy range to display on the y-axis. 
             - If `None`, the maximum energy is used by default.
             - This parameter allows you to zoom into a specific range of energies for a more focused view.
@@ -212,8 +216,12 @@ def show_energies(orbs, e_max = None, e_min = None):
     energies_filtered_idxs = jnp.argwhere( jnp.logical_and(orbs.energies <= e_max, orbs.energies >= e_min))
     state_numbers = energies_filtered_idxs[:, 0]
     energies_filtered = orbs.energies[energies_filtered_idxs]
-  
-    colors =  (jnp.diag(orbs.electrons * orbs.initial_density_matrix_e))[energies_filtered_idxs]
+
+    if display is None:
+        display = jnp.diag(orbs.electrons * orbs.initial_density_matrix_e)
+    label = label or "initial state occupation"
+    
+    colors =  display[energies_filtered_idxs]
 
     fig, ax = plt.subplots(1, 1)
     plt.colorbar(
@@ -222,7 +230,7 @@ def show_energies(orbs, e_max = None, e_min = None):
             energies_filtered,
             c=colors,
         ),
-        label="initial state occupation",
+        label=label,
     )
     ax.set_xlabel("eigenstate number")
     ax.set_ylabel("energy (eV)")
