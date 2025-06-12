@@ -251,7 +251,7 @@ def _mf_loop(hamiltonian,
         excitation
     )
 
-    print(f"Mean field finished with accuracy {accuracy}, iterations {iterations}, yielding final error {error}")
+    print(f"Mean field finished with accuracy {accuracy}, iterations {steps}, yielding final error {error}")
     
     return (
         ham_eff,
