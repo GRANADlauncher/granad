@@ -202,7 +202,9 @@ def _mf_loop(hamiltonian,
              accuracy,
              coulomb_strength,
              iterations,
-             f_mean_field):
+             f_mean_field,
+             rho_0
+             ):
     
     def update(arg):
         """scf update"""
@@ -213,8 +215,8 @@ def _mf_loop(hamiltonian,
         ham_eff = f_mean_field(rho_old, hamiltonian)
         
         # diagonalize
-        vals, vecs = jnp.linalg.eigh(ham_eff)    
-
+        vals, vecs = jnp.linalg.eigh(ham_eff)
+        
         # build new density matrix (EXTREMELY INEFFICIENTLY)
         rho = spin_degeneracy * (1 - mix) * vecs[:, :electrons] @ vecs[:, :electrons].T + mix * rho_old
 
@@ -233,7 +235,9 @@ def _mf_loop(hamiltonian,
         f_mean_field = lambda r, hamiltonian : jnp.diag(coulomb_strength * coulomb @ r.diagonal()) + hamiltonian
         
     # initial guess for the density matrix
-    rho_old = jnp.zeros_like(hamiltonian)
+    if rho_0 is None:
+        rho_0 = jnp.zeros_like(hamiltonian)
+    rho_old = rho_0
 
     # scf loop
     rho, steps, error = jax.lax.fori_loop(0, iterations, step, (rho_old, 0, jnp.inf))
@@ -253,10 +257,11 @@ def _mf_loop(hamiltonian,
 
     print(f"Mean field finished with accuracy {accuracy}, iterations {steps}, yielding final error {error}")
     
+    # orbital list builder expects density matrices in energy basis
     return (
         ham_eff,
-        rho_0,
-        (eigenvectors.conj().T @ rho @ eigenvectors) / electrons,
+        rho_0, # already in energy basis
+        (eigenvectors.conj().T @ rho @ eigenvectors) / electrons, # convert
         energies,
         eigenvectors,
     )

@@ -917,7 +917,10 @@ class OrbitalList:
         
                 - `f_mean_field` (Callable, optional): A function for computing the mean field term.
                   First argument is density matrix, second argument is single particle hamiltonian.
-                  Can be used, e.g., for full HF by passing a closure containing ERIs.
+                  Can be used, e.g., for full HF by passing a closure containing ERIs.       
+                  Default is None.
+        
+                - `rho_0` (Callable, optional): Initial guess for the density matrix. If None, zeros are used.
                   Default is None.
 
         Example:
@@ -925,7 +928,7 @@ class OrbitalList:
             >>> print(model.params.mean_field_params)
             {'accuracy': 1e-7, 'mix': 0.5, 'iterations': 1000, 'coulomb_strength': 1.0, 'f_mean_field': None}
         """
-        default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0, "f_mean_field" : None}
+        default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0, "f_mean_field" : None, "rho_0" : None}
         self.params.mean_field_params = default | kwargs
 
 
