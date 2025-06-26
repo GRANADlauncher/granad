@@ -69,4 +69,4 @@ rho_0 = jnp.ones((2*N, 2*N)).astype(complex)
 flake.set_mean_field(f_mean_field = f_mean_field, f_build = f_build, rho_0 = rho_0)
 
 # anomalous entries of the ground state density matrix
-print(flake.stationary_density_matrix_e[:N, N:])
+print(flake.stationary_density_matrix[:N, N:])
