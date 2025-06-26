@@ -203,6 +203,7 @@ def _mf_loop(hamiltonian,
              coulomb_strength,
              iterations,
              f_mean_field,
+             f_build,
              rho_0
              ):
     
@@ -218,7 +219,7 @@ def _mf_loop(hamiltonian,
         vals, vecs = jnp.linalg.eigh(ham_eff)
         
         # build new density matrix (EXTREMELY INEFFICIENTLY)
-        rho = spin_degeneracy * (1 - mix) * vecs[:, :electrons] @ vecs[:, :electrons].T + mix * rho_old
+        rho = spin_degeneracy * (1 - mix) * f_build(vecs, vals) + mix * rho_old
 
         # update breaks
         error = jnp.linalg.norm(rho - rho_old)
@@ -233,6 +234,9 @@ def _mf_loop(hamiltonian,
 
     if f_mean_field is None:
         f_mean_field = lambda r, hamiltonian : jnp.diag(coulomb_strength * coulomb @ r.diagonal()) + hamiltonian
+
+    if f_build is None:
+        f_build = lambda vecs, energies : vecs[:, :electrons] @ vecs[:, :electrons].T        
         
     # initial guess for the density matrix
     if rho_0 is None:

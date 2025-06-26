@@ -920,15 +920,18 @@ class OrbitalList:
                   Can be used, e.g., for full HF by passing a closure containing ERIs.       
                   Default is None.
         
-                - `rho_0` (Callable, optional): Initial guess for the density matrix. If None, zeros are used.
+                - `f_build` (Callable, optional): Construction of the density matrix from energies and eigenvectors. If None, single-particle energy levels are filled according to number of electrons.
                   Default is None.
+        
+                - `rho_0` (jax.Array, optional): Initial guess for the density matrix. If None, zeros are used.
+                   Default is None.
 
         Example:
             >>> model.set_mean_field(accuracy=1e-7, mix=0.5, iterations=1000)
             >>> print(model.params.mean_field_params)
             {'accuracy': 1e-7, 'mix': 0.5, 'iterations': 1000, 'coulomb_strength': 1.0, 'f_mean_field': None}
         """
-        default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0, "f_mean_field" : None, "rho_0" : None}
+        default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0, "f_mean_field" : None, "f_build" : None, "rho_0" : None}
         self.params.mean_field_params = default | kwargs
 
 
