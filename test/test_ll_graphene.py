@@ -2,59 +2,6 @@ import jax.numpy as jnp
 from granad import *
 from granad._plotting import *
 
-def show_energies(orbs, B, display = None, label = None, e_max = None, e_min = None):
-    """
-    Depicts the energy and occupation landscape of a stack, with energies plotted on the y-axis and eigenstates ordered by size on the x-axis.
-
-    Parameters:
-        `orbs`: An object containing the orbital data, including energies, electron counts, and initial density matrix.
-        `display` (jnp.Array, optional): Array to annotate the energy states.
-            - If `None`, electronic occupation is used.
-        `label` (jnp.Array, optional): Label for the colorbar.
-            - If `None`, "initial state occupation" is used.
-        `e_max` (float, optional): The upper limit of the energy range to display on the y-axis. 
-            - If `None`, the maximum energy is used by default.
-            - This parameter allows you to zoom into a specific range of energies for a more focused view.
-        `e_min` (float, optional): The lower limit of the energy range to display on the y-axis.
-            - If `None`, the minimum energy is used by default.
-            - This parameter allows you to filter out higher-energy states and focus on the lower-energy range.
-
-    Notes:
-        The scatter plot displays the eigenstate number on the x-axis and the corresponding energy (in eV) on the y-axis.
-        The color of each point represents the initial state occupation, calculated as the product of the electron count and the initial density matrix diagonal element for each state.
-        A color bar is added to indicate the magnitude of the initial state occupation for each eigenstate.
-    """
-    from matplotlib.ticker import MaxNLocator
-    e_max = (e_max or orbs.energies.max()) 
-    e_min = (e_min or orbs.energies.min())
-    widening = (e_max - e_min) * 0.01 # 1% larger in each direction
-    e_max += widening
-    e_min -= widening
-    energies_filtered_idxs = jnp.argwhere( jnp.logical_and(orbs.energies <= e_max, orbs.energies >= e_min))
-    state_numbers = energies_filtered_idxs[:, 0]
-    energies_filtered = orbs.energies[energies_filtered_idxs]
-
-    if display is None:
-        display = jnp.diag(orbs.electrons * orbs.initial_density_matrix_e)
-    label = label or "initial state occupation"
-    
-    colors =  display[energies_filtered_idxs]
-
-    fig, ax = plt.subplots(1, 1)
-    plt.colorbar(
-        ax.scatter(
-            state_numbers,
-            energies_filtered,
-            c=colors,
-        ),
-        label=label,
-    )
-    ax.set_xlabel("eigenstate number")
-    ax.set_ylabel("energy (eV)")
-    plt.gca().xaxis.set_major_locator(MaxNLocator(integer=True))
-    ax.set_ylim(e_min, e_max)    
-
-
 def peierls_coupling(B, t, r1, r2):
     plus = r1 + r2
     minus = r1 - r2
@@ -93,6 +40,10 @@ def get_graphene_b_field(B, t, shape):
     flake = graphene_peierls.cut_flake(shape)
     distances = jnp.round(jnp.linalg.norm(flake.positions - flake.positions[:, None], axis = -1), 4)
     nn = 1.5
+
+    # this is slightly awkward: our coupling only depends on the distance vector, but peierls substitution in landau
+    # gauge A = (0, Bx, 0) leads to peierls phase of \int_r1^r2 A dl = (y2 - y1) (x2 + x1) / 2
+    # we patch this manually here, but this is very, very slow
     for i, orb1 in enumerate(flake):
         for j in range(i+1):
             if 0 < distances[i, j] <= nn:
