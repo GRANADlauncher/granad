@@ -620,6 +620,20 @@ class OrbitalList:
         """index of approximate center orbital of the structure"""
         distances = jnp.round(jnp.linalg.norm(self.positions - self.positions[:, None], axis = -1), 4)
         return jnp.argmin(distances.sum(axis=0))
+    
+    def localization(self, neighbor_number = 6):
+    """Compute eigenstates edge localization based on number of neighbors """
+    # edges => neighboring unit cells are incomplete => all points that are not inside a "big hexagon" made up of nearest neighbors
+    positions, states, energies = self.positions, self.eigenvectors, self.energies 
+
+    distances = jnp.round(jnp.linalg.norm(positions - positions[:, None], axis = -1), 4)
+    nnn = jnp.unique(distances)[2]
+    mask = (distances == nnn).sum(axis=0) < neighbor_number
+    
+    # localization => how much eingenstate 
+    l = (jnp.abs(states[mask, :])**2).sum(axis = 0) # vectors are normed
+    
+    return l
 
     def _ensure_complex(self, func_or_val):
         if callable(func_or_val):
