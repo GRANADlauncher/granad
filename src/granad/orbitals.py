@@ -638,19 +638,18 @@ class OrbitalList:
         Returns:
             jax.Array: localization, where i-th entry corresponds to i-th energy eigenstate
         """
+    
+        # edges => neighboring unit cells are incomplete => all points that are not inside a "big hexagon" made up of nearest neighbors
+        positions, states, energies = self.positions, self.eigenvectors, self.energies 
 
-    
-    # edges => neighboring unit cells are incomplete => all points that are not inside a "big hexagon" made up of nearest neighbors
-    positions, states, energies = self.positions, self.eigenvectors, self.energies 
+        distances = jnp.round(jnp.linalg.norm(positions - positions[:, None], axis = -1), 4)
+        nnn = jnp.unique(distances)[2]
+        mask = (distances == nnn).sum(axis=0) < neighbor_number
 
-    distances = jnp.round(jnp.linalg.norm(positions - positions[:, None], axis = -1), 4)
-    nnn = jnp.unique(distances)[2]
-    mask = (distances == nnn).sum(axis=0) < neighbor_number
-    
-    # localization => how much eingenstate 
-    l = (jnp.abs(states[mask, :])**2).sum(axis = 0) # vectors are normed
-    
-    return l
+        # localization => how much eingenstate 
+        l = (jnp.abs(states[mask, :])**2).sum(axis = 0) # vectors are normed
+
+        return l
 
     def _ensure_complex(self, func_or_val):
         if callable(func_or_val):
