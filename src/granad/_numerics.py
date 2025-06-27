@@ -76,7 +76,10 @@ def _density_matrix(
             eps,
             excitation
         )
-    return _density_thermo(energies, electrons, spin_degeneracy, eps, beta)
+
+    density = fermi(energies, beta, 0)
+    return jnp.diag(density / density.sum())
+    # return _density_thermo(energies, electrons, spin_degeneracy, eps, beta)
 
 
 def _density_thermo(
