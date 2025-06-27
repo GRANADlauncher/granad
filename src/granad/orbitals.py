@@ -986,6 +986,10 @@ class OrbitalList:
             raise TypeError
 
         self.params.excitation = [maybe_int_to_arr(from_state), maybe_int_to_arr(to_state), maybe_int_to_arr(excited_electrons)]
+
+    @mutates
+    def set_beta(self, beta):
+        self.params.beta = beta
         
     @property
     def positions(self):
