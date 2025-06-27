@@ -622,13 +622,13 @@ class OrbitalList:
         return jnp.argmin(distances.sum(axis=0))
     
     def localization(self, neighbor_number : int = 6):
-    """Compute edge localization of eigenstates according to
+        """Compute edge localization of eigenstates according to
+        
+        $$
+        \frac{\sum_{j \, edge} |\phi_{j}|^2}{\sum_i |\phi_i|^2 }
+        $$
 
-    $$
-    \frac{\sum_{j \, edge} |\phi_{j}|^2}{\sum_i |\phi_i|^2 }
-    $$
-
-    Edges are identified based on the number of next-to-next-to nearest neighbors (nnn).
+        Edges are identified based on the number of next-to-next-to nearest neighbors (nnn).
         
         Args:
             neighbor_number (int): nnn used to identify edges. Depends on lattice and orbital number.
@@ -637,7 +637,7 @@ class OrbitalList:
 
         Returns:
             jax.Array: localization, where i-th entry corresponds to i-th energy eigenstate
-    """
+        """
 
     
     # edges => neighboring unit cells are incomplete => all points that are not inside a "big hexagon" made up of nearest neighbors
