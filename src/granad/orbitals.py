@@ -625,7 +625,7 @@ class OrbitalList:
         """Compute edge localization of eigenstates according to
         
         $$
-        \frac{\sum_{j \, edge} |\phi_{j}|^2}{\sum_i |\phi_i|^2 }
+        \\frac{\sum_{j \, edge} |\phi_{j}|^2}{\sum_i |\phi_i|^2 }
         $$
 
         Edges are identified based on the number of next-to-next-to nearest neighbors (nnn).
