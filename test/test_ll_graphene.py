@@ -57,12 +57,13 @@ def make_plots():
     flake.show_energies()
     flake.show_2d()
 
-    # show quantization
-    flake = get_graphene_b_field(1, -2.7, shape)
+    # magnetic field of 1T / scaled by e * (1e-4 eV)**2
+    flake = get_graphene_b_field(10 * 200 * 0.3 * 1e-8, -2.7, shape)
     flake.show_2d()
     flake.show_energies()
     omegas = jnp.linspace(0, 10)
-
+    
+    # show quantization
     dos = jax.vmap(lambda w : flake.get_dos(w, broadening = 0.05))(omegas)
     plt.plot(omegas, dos)
     plt.show()
