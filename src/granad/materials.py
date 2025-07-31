@@ -130,12 +130,13 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
                 positions[mask], minimum_neighbor_number, remaining
             )
 
-    if material.name == 'graphene' and polygon.polygon_id in ["hexagon", "triangle"]:
+    if material.name in ['graphene', 'graphene_spinful_hubbard'] and polygon.polygon_id in ["hexagon", "triangle"]:
         n, m, vertices, final_atom_positions, initial_atom_positions, sublattice = _cut_flake_graphene(polygon.polygon_id, polygon.edge_type, polygon.side_length, material.lattice_constant)
                 
         raw_list, layer_index = [], 0
         for i, position in enumerate(final_atom_positions):
-            orb = Orbital(
+            if material.name == "graphene":
+                orb = Orbital(
                 position = position,
                 layer_index = layer_index,
                 tag="sublattice_1" if sublattice[i] == "A" else "sublattice_2",
@@ -143,8 +144,30 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
                 spin=material.species["pz"][0],
                 atom_name=material.species["pz"][1]
                     )
-            layer_index += 1
-            raw_list.append(orb)
+            
+                raw_list.append(orb)
+            else:
+                orb = Orbital(
+                position = position,
+                layer_index = layer_index,
+                tag="sublattice_1" if sublattice[i] == "A" else "sublattice_2",
+                group_id = material._species_to_groups["pz+"],                        
+                spin=material.species["pz+"][0],
+                atom_name=material.species["pz+"][1]
+                )
+                layer_index += 1
+                raw_list.append(orb)
+                
+                orb = Orbital(
+                position = position,
+                layer_index = layer_index,
+                tag="sublattice_1" if sublattice[i] == "A" else "sublattice_2",
+                group_id = material._species_to_groups["pz-"],                        
+                spin=material.species["pz-"][0],
+                atom_name=material.species["pz-"][1]
+                )
+                layer_index += 1
+                raw_list.append(orb)
 
         orbital_list = OrbitalList(raw_list)
         material._set_couplings(orbital_list.set_hamiltonian_groups, "hamiltonian")
