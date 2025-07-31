@@ -293,7 +293,7 @@ def _get_self_consistent(
         return ev @ mat @ ev.conj().T
 
     def _phi(rho):
-        return coulomb_strength * (coulomb @ jnp.diag(rho - rho_uniform))
+        return jnp.diag(coulomb_strength * (coulomb @ jnp.diag(rho - rho_uniform)))
 
     def _stop(args):
         return jnp.logical_and(
@@ -348,10 +348,18 @@ def _get_self_consistent(
         excitation
     )
 
+    rho_stat =  _density_aufbau(
+        energies,
+        electrons,
+        spin_degeneracy,
+        eps,
+        [jnp.array([0]), jnp.array([0]), jnp.array([0])]
+    )
+
     return (
         ham_new,
         rho_0,
-        eigenvectors.conj().T @ rho @ eigenvectors,
+        rho_stat,
         energies,
         eigenvectors,
     )
