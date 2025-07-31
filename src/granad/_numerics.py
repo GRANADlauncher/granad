@@ -2,6 +2,7 @@ import jax
 import jax.numpy as jnp
 import itertools
 import functools
+import gc
 
 jax.config.update("jax_enable_x64", True)
 import diffrax
@@ -640,6 +641,8 @@ def iterate(func):
             for combination in itertools.product(*dict_params.values()):
                 new_kwargs = kwargs | dict(zip(dict_params.keys(), combination))
                 result.append(func(*args, **new_kwargs))  # Call the original function
+                jax.clear_caches()
+                gc.collect()
             
             # If function returns a tuple, separate results for each return value
             if isinstance(result[0], tuple):
