@@ -28,7 +28,8 @@ def DipolePulse( dipole_moment, source_location, omega = None, sigma = None, t0 
     dip = jnp.array( dipole_moment )
     
     f_unscaled = lambda t : jnp.cos(omega * t) * jnp.exp( -(t-t0)**2 / sigma**2 )
-    area, _ = quad(f_unscaled, 0, jnp.inf)
+    #area, _ = quad(f_unscaled, -jnp.inf, jnp.inf)
+    area=1
     f = lambda t : jnp.cos(omega * t) * jnp.exp( -(t-t0)**2 / sigma**2 )/area
     
     if kick == True:
