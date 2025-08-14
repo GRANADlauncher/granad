@@ -133,8 +133,9 @@ def cut_flake_2d( material, polygon, plot=False, minimum_neighbor_number: int = 
     if material.name in ['graphene', 'graphene_spinful_hubbard'] and polygon.polygon_id in ["hexagon", "triangle"]:
         n, m, vertices, final_atom_positions, initial_atom_positions, sublattice = _cut_flake_graphene(polygon.polygon_id, polygon.edge_type, polygon.side_length, material.lattice_constant)
                 
-        raw_list, layer_index = [], 0
+        raw_list, layer_index = [], -1
         for i, position in enumerate(final_atom_positions):
+            layer_index += 1
             if material.name == "graphene":
                 orb = Orbital(
                 position = position,
