@@ -10,12 +10,13 @@ from granad._numerics import get_coulomb_field_to_from
 def _plot_wrapper(plot_func):
     @wraps(plot_func)
     def wrapper(*args, **kwargs):
-        plot_func(*args, **{key: val for key, val in kwargs.items() if key != "name"})
+        ret = plot_func(*args, **{key: val for key, val in kwargs.items() if key != "name"})
         try:
             plt.savefig(kwargs["name"])
             plt.close()
         except KeyError:
             plt.show()
+        return ret
 
     return wrapper
 
@@ -374,3 +375,52 @@ def _display_lattice_cut(positions, selected_positions, polygon = None):
     plt.scatter(x=selected_positions[:, 0], y=selected_positions[:, 1])
     plt.axis("equal")
     plt.show()
+
+@_plot_wrapper
+def show_identified_peaks(orbs, omegas, spectrum, eps = 1e-1, return_peaks_transitions = True):
+    """
+    Identifies transitions that contribute to peaks in absorption spectrum.
+
+    Parameters:
+        `orbs`: An object containing the orbital data and field information.
+        `omega`: Frequency grid.
+        `spectrum`: Absorption or emission spectrum in frequency domain.
+        `eps`: Tolerance.
+        `return_peaks_transitions` : optional, defaults to True, return a list with elements [ frequency, transition_ij ] mapping frequencies to transition index pairs
+
+    """
+    delta_e = orbs.energies - orbs.energies[:, None]
+    #energies = jnp.unique(jnp.abs(delta_e))
+
+    plt.plot(omegas, spectrum / jnp.max(spectrum), '-', linewidth=2) 
+
+    plt.xlabel(r'$\hbar\omega$', fontsize=20)
+    plt.ylabel(r'$\sigma(\omega)$', fontsize=25)
+    plt.grid(True)
+
+    def find_peaks(arr):
+        return jnp.where((arr[1:-1] > arr[:-2]) & (arr[1:-1] > arr[2:]))[0] + 1
+    
+    peaks = omegas[find_peaks(spectrum)] 
+    occupied = jnp.argwhere(jnp.round(orbs.initial_density_matrix_e.diagonal() * orbs.electrons, 8) > eps)
+    fully_occupied = jnp.argwhere( jnp.abs(jnp.round(orbs.initial_density_matrix_e.diagonal() * orbs.electrons, 8) - 2) < eps)
+
+    ret = []
+    delta_e =  jnp.abs(orbs.energies - orbs.energies[:, None])
+    for p_idx, p in enumerate(peaks):
+        differences = jnp.abs(delta_e - p)
+        flat_index = differences.argsort(axis = None)
+        res = []
+        for i in flat_index:
+            row, col = jnp.unravel_index(i, delta_e.shape)
+            diffs = jnp.abs(delta_e[row, col] - peaks)
+            closest = differences[row, col] == diffs.min()
+            if col in occupied and row not in fully_occupied and differences[row, col] < eps and col < row and closest:
+                res.append( [col.item(), row.item()] )
+        plt.text(p, 0.5, f'{p:.4f}', rotation=90, fontsize=10)
+        ret.append( [p.item(), res] )
+        plt.axvline(x=p, color='b', linestyle='--', alpha=0.7)
+
+    if return_peaks_transitions:
+        return ret
+    
