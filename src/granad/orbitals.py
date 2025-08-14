@@ -916,56 +916,6 @@ class OrbitalList:
         self.params.self_consistency_params = default | kwargs
 
     @mutates
-    def set_mean_field(self, **kwargs):
-        """
-        Configures the parameters for mean field calculations.
-        If no other parameters are passed, a standard direct channel Hartree-Fock calculation is performed.
-        Note that this procedure differs slightly from the self-consistent field procedure.
-
-        This function sets up the mean field parameters used in iterative calculations 
-        to update the system's density matrix until convergence is achieved.
-
-        Args:
-            **kwargs: Keyword arguments to override the default self-consistency parameters. 
-                The available parameters are:
-
-                - `accuracy` (float, optional): The convergence criterion for self-consistency. 
-                  Specifies the maximum allowed difference between successive density matrices.
-                  Default is 1e-6.
-
-                - `mix` (float, optional): The mixing factor for the density matrix during updates.
-                  This controls the contribution of the new density matrix to the updated one.
-                  Values closer to 1 favor the new density matrix, while smaller values favor 
-                  smoother convergence. Default is 0.3.
-
-                - `iterations` (int, optional): The maximum number of iterations allowed in the 
-                  self-consistency cycle. Default is 500.
-
-                - `coulomb_strength` (float, optional): A scaling factor for the Coulomb matrix.
-                  This allows tuning of the strength of Coulomb interactions in the system. 
-                  Default is 1.0.
-        
-                - `f_mean_field` (Callable, optional): A function for computing the mean field term.
-                  First argument is density matrix, second argument is single particle hamiltonian.
-                  Can be used, e.g., for full HF by passing a closure containing ERIs.       
-                  Default is None.
-        
-                - `f_build` (Callable, optional): Construction of the density matrix from energies and eigenvectors. If None, single-particle energy levels are filled according to number of electrons.
-                  Default is None.
-        
-                - `rho_0` (jax.Array, optional): Initial guess for the density matrix. If None, zeros are used.
-                   Default is None.
-
-        Example:
-            >>> model.set_mean_field(accuracy=1e-7, mix=0.5, iterations=1000)
-            >>> print(model.params.mean_field_params)
-            {'accuracy': 1e-7, 'mix': 0.5, 'iterations': 1000, 'coulomb_strength': 1.0, 'f_mean_field': None}
-        """
-        default = {"accuracy" : 1e-6, "mix" : 0.3, "iterations" : 500, "coulomb_strength" : 1.0, "f_mean_field" : None, "f_build" : None, "rho_0" : None}
-        self.params.mean_field_params = default | kwargs
-
-
-    @mutates
     def set_excitation(self, from_state, to_state, excited_electrons):
         """
         Sets up an excitation process from one state to another with specified electrons.
