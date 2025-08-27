@@ -1,5 +1,6 @@
 import os
 import traceback
+import inspect
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field, replace, asdict
 from functools import wraps
@@ -507,9 +508,20 @@ class OrbitalList:
                 if valid_indices.sum() == 0:
                     valid_indices = jnp.logical_and(triangle_mask.T, combination_indices)
                     
+            arity = len(inspect.signature(function).parameters)
+            if arity == 1:
                 function = jax.vmap(function)
                 matrix = matrix.at[valid_indices].set(
                     function(distances[valid_indices])
+                )
+            else:
+                function = jax.vmap(
+                    jax.vmap(
+                        function,
+                        in_axes = (0, None), out_axes = 0),
+                    in_axes = (None, 0), out_axes = 1)
+                matrix = matrix.at[valid_indices].set(
+                    function(positions, positions)[valid_indices]
                 )
 
             matrix += matrix.conj().T - jnp.diag(jnp.diag(matrix))
@@ -528,7 +540,7 @@ class OrbitalList:
             return matrix
 
         positions = self.positions
-        distances = jnp.round(positions - positions[:, None], 6)
+        distances = jnp.round(positions - positions[:, None], 6)        
         group_ids = jnp.array( [orb.group_id.id for orb in self._list] )
 
         hamiltonian = fill_matrix(
@@ -653,7 +665,11 @@ class OrbitalList:
 
     def _ensure_complex(self, func_or_val):
         if callable(func_or_val):
-            return lambda x: func_or_val(x) + 0.0j
+            arity = len(inspect.signature(func_or_val).parameters)
+            assert arity == 1 or arity == 2, "Invalid number of arguments in coupling function"
+            if arity == 1:            
+                return lambda x: func_or_val(x) + 0.0j
+            return lambda x, y: func_or_val(x, y) + 0.0j
         if isinstance(func_or_val, (int, float, complex)):
             return func_or_val + 0.0j
         raise TypeError
