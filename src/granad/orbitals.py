@@ -507,22 +507,22 @@ class OrbitalList:
                 # hotfix
                 if valid_indices.sum() == 0:
                     valid_indices = jnp.logical_and(triangle_mask.T, combination_indices)
-                    
-            arity = len(inspect.signature(function).parameters)
-            if arity == 1:
-                function = jax.vmap(function)
-                matrix = matrix.at[valid_indices].set(
-                    function(distances[valid_indices])
-                )
-            else:
-                function = jax.vmap(
-                    jax.vmap(
-                        function,
-                        in_axes = (0, None), out_axes = 0),
-                    in_axes = (None, 0), out_axes = 1)
-                matrix = matrix.at[valid_indices].set(
-                    function(positions, positions)[valid_indices]
-                )
+
+                arity = len(inspect.signature(function).parameters)
+                if arity == 1:
+                    function = jax.vmap(function)
+                    matrix = matrix.at[valid_indices].set(
+                        function(distances[valid_indices])
+                    )
+                else:
+                    function = jax.vmap(
+                        jax.vmap(
+                            function,
+                            in_axes = (0, None), out_axes = 0),
+                        in_axes = (None, 0), out_axes = 1)
+                    matrix = matrix.at[valid_indices].set(
+                        function(positions, positions)[valid_indices]
+                    )
 
             matrix += matrix.conj().T - jnp.diag(jnp.diag(matrix))
 
