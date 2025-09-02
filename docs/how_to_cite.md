@@ -5,7 +5,7 @@ If you use **GRANAD** in your research or publications, please cite the followin
 ## General Citation
 When referring to **GRANAD** in your work, please use the following general citation:
 
-> tbd
+**David Dams, Miriam Kosik, Marvin Müller, Abhishek Ghosh, Antton Babaze, Julia Szczuczko, Garnett W. Bryant, Andrés Ayuela, Carsten Rockstuhl, Marta Pelc & Karolina Słowik** (2025). *GRANAD - Simulating GRAphene nanoflakes with ADatoms*. *Computer Physics Communications*, **317**, 109818. [https://doi.org/10.1016/j.cpc.2025.109818](https://doi.org/10.1016/j.cpc.2025.109818)
 
 ## Recommended References
 For specific methodologies and theoretical background, please cite the relevant publications:
