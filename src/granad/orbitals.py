@@ -27,6 +27,7 @@ class Orbital:
         spin (Optional[int]): The spin quantum number of the orbital, indicating its intrinsic angular momentum,
                               optional and may be None. *Note* This is experimental.
         atom_name (Optional[str]): The name of the atom this orbital belongs to, can be None if not applicable.
+        kind  (Optional[str]): Orbital kind. Currently only "s", "x", "y", "z" are supported.
         group_id (int): A group identifier for the orbital, automatically assigned by a Watchdog class
                         default factory method. For example, all pz orbitals in a single graphene flake get the same 
                         group_id.
@@ -36,6 +37,7 @@ class Orbital:
     tag: Optional[str] = None
     spin: Optional[int] = None
     atom_name: Optional[str] = None
+    kind: Optional[str] = None
     group_id: _watchdog.GroupId = field(default_factory=_watchdog._Watchdog.next_value)
 
     def __post_init__(self):
@@ -562,6 +564,63 @@ class OrbitalList:
             arr (jax.Array): The 3-element array containing dipole transition elements.
         """
         self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), jnp.array(arr).astype(complex), self.couplings.dipole_transitions)
+
+    def set_hamiltonian_slater_koster(self, orb1, orb2, params, cutoff = None):
+        """
+        Sets the Hamiltonian matrix element between two orbitals using the
+        Slater–Koster parameterization.
+
+        Parameters:
+            orb1: First orbital object. Must have a `kind` attribute in {"s", "x", "y", "z"}.
+            orb2: Second orbital object. Must have a `kind` attribute in {"s", "x", "y", "z"}.
+            params (dict): Dictionary mapping integral labels to values.
+                Example: {"sss": 1.0, "sps": 2.0, "ppp": 0.5}
+                where "sss" corresponds to (s–s σ), "sps" to (s–p σ), "ppp" to (p–p π).
+            cutoff (callable, optional): Distance-dependent damping function applied to the
+                interaction. Defaults to exponential decay: exp(-|R|), where |R| is the
+                inter-atomic distance vector norm.
+
+        Note:
+            - Only orbitals with kinds {"s", "x", "y", "z"} are supported.
+            - The resulting Hamiltonian element is a function of the directional cosines
+              (l, m, n) = R / |R| of the bond vector.
+        """
+
+        def make_func(comb, params, cutoff):
+            if cutoff is None:
+                cutoff = lambda vec : jnp.exp(-jnp.linalg.norm(vec))
+
+            def inner(vec):
+                normed = vec / jnp.linalg.norm(vec)
+                l, m, n = jnp.nan_to_num(normed)
+                return func_map[comb](l, m, n) * cutoff(vec)
+            
+            return inner
+
+        # validity checks
+        valid =  ["s", "x", "y", "z"]
+        assert orb1.kind in valid and orb2.kind in valid, "Both Orbitals need `kind` property to be set"        
+        comb = tuple(sorted((orb1.kind, orb2.kind)))
+
+        # fill in not passed
+        required = {"sss", "sps", "pps", "ppp"}
+        missing = required - set(params)
+        params = {x : 0  for x in missing}  | params
+            
+        func_map = {
+            ("s", "s") : lambda l, m, n : params["sss"],
+            ("s", "x") : lambda l, m, n : l * params["sps"],
+            ("s", "y") : lambda l, m, n : m * params["sps"],
+            ("s", "z") : lambda l, m, n : n * params["sps"],
+            ("x", "x") : lambda l, m, n : l**2 * params["pps"] + (1 - l**2) * params["ppp"],
+            ("y", "y") : lambda l, m, n : m**2 * params["pps"] + (1 - m**2) * params["ppp"],
+            ("z", "z") : lambda l, m, n : n**2 * params["pps"] + (1 - n**2) * params["ppp"],
+            ("x", "y") : lambda l, m, n : l*m * params["pps"] + (1 - l*m) * params["ppp"],
+            ("x", "z") : lambda l, m, n : l*n * params["pps"] + (1 - l*n) * params["ppp"],
+            ("y", "z") : lambda l, m, n : m*n * params["pps"] + (1 - m*n) * params["ppp"]
+        }
+        
+        self.set_hamiltonian_groups(orb1, orb2, make_func(comb, params, cutoff))
         
     def set_hamiltonian_groups(self, orb1, orb2, func):
         """
