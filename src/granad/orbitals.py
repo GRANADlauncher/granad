@@ -1137,12 +1137,12 @@ class OrbitalList:
     @property
     @recomputes    
     def ortho_trafo(self):
-        self._ortho_trafo
+        return self._ortho_trafo
         
     @property
     @recomputes    
     def ortho_trafo_inv(self):
-        self._ortho_trafo_inv
+        return self._ortho_trafo_inv
         
     @property
     @recomputes
@@ -1438,8 +1438,8 @@ class OrbitalList:
         )
 
     def get_args( self, relaxation_rate = 0.0, coulomb_strength = 1.0, propagator = None):
-        maybe_trafo = lambda x : x if not self.is_ortho else self._transform_basis(x, self.ortho_trafo.conj()),
-        maybe_trafo_inv = lambda x : x if not self.is_ortho else self._transform_basis(x, self.ortho_trafo_inv),
+        maybe_trafo = lambda x : x if self.is_ortho else self._transform_basis(x, self.ortho_trafo.conj()),
+        maybe_trafo_inv = lambda x : x if self.is_ortho else self._transform_basis(x, self.ortho_trafo_inv),
         return TDArgs(
             maybe_trafo(self.hamiltonian),
             self.energies,
