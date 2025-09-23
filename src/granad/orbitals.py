@@ -27,7 +27,7 @@ class Orbital:
         spin (Optional[int]): The spin quantum number of the orbital, indicating its intrinsic angular momentum,
                               optional and may be None. *Note* This is experimental.
         atom_name (Optional[str]): The name of the atom this orbital belongs to, can be None if not applicable.
-        kind  (Optional[str]): Orbital kind. Currently only "s", "x", "y", "z" are supported.
+        kind  (Optional[str]): Orbital kind. Currently only "s", "px", "py", "pz" are supported.
         group_id (int): A group identifier for the orbital, automatically assigned by a Watchdog class
                         default factory method. For example, all pz orbitals in a single graphene flake get the same 
                         group_id.
@@ -155,6 +155,7 @@ class Couplings:
 
     hamiltonian : _SortedTupleDict = field(default_factory=_SortedTupleDict)
     coulomb : _SortedTupleDict = field(default_factory=_SortedTupleDict)
+    overlap : _SortedTupleDict = field(default_factory=_SortedTupleDict)
     dipole_transitions : _SortedTupleDict = field(default_factory=_SortedTupleDict)
 
     def __str__( self ):
@@ -165,6 +166,7 @@ class Couplings:
             return Couplings(
                 _SortedTupleDict(self.hamiltonian | other.hamiltonian),
                 _SortedTupleDict(self.coulomb | other.coulomb),
+                _SortedTupleDict(self.overlap | other.overlap),
                 _SortedTupleDict(self.dipole_transitions | other.dipole_transitions)
             )
         raise ValueError        
@@ -489,7 +491,7 @@ class OrbitalList:
             for o2 in orb2:
                 coupling[(o1, o2)] = val_or_func
 
-    def _hamiltonian_coulomb(self):
+    def _matrices(self):
 
         def fill_matrix(matrix, coupling_dict):
 
@@ -551,7 +553,28 @@ class OrbitalList:
         coulomb = fill_matrix(
             jnp.zeros((len(self), len(self))).astype(complex), self.couplings.coulomb
         )
-        return hamiltonian, coulomb
+
+        # set overlap and orthogonalization trafo to identity if not defined
+        overlap = jnp.eye(len(self)).astype(complex)
+        ortho_trafo = jnp.eye(len(self)).astype(complex)
+        ortho_trafo_inv = jnp.eye(len(self)).astype(complex)
+        
+        # overlapping orbs => play the game
+        if not self.is_ortho:
+            overlap = fill_matrix(
+                jnp.zeros((len(self), len(self))).astype(complex), self.couplings.overlap
+            )
+
+            # symmetric orthogonalization
+            overlap_vals, overlap_vecs = jnp.linalg.eigh(overlap)  
+            sqrt_overlap = jnp.diag(overlap_vals**(-0.5))
+            ortho_trafo = overlap_vecs @ sqrt_overlap @ overlap_vecs.T
+            ortho_trafo_inv = jnp.linalg.inv(ortho_trafo)
+
+            if jnp.any(jnp.isnan(sqrt_overlap)):
+                raise Exception("Problem with overlap matrix. Try taking more neighbors")
+
+        return hamiltonian, coulomb, overlap, ortho_trafo, ortho_trafo_inv
 
     @mutates
     def set_dipole_element(self, orb1, orb2, arr):
@@ -564,6 +587,7 @@ class OrbitalList:
             arr (jax.Array): The 3-element array containing dipole transition elements.
         """
         self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), jnp.array(arr).astype(complex), self.couplings.dipole_transitions)
+
         
     def set_hamiltonian_groups(self, orb1, orb2, func):
         """
@@ -595,6 +619,22 @@ class OrbitalList:
         """
         self._set_coupling(
             self.filter_orbs(orb1, _watchdog.GroupId), self.filter_orbs(orb2, _watchdog.GroupId), self._ensure_complex(func), self.couplings.coulomb
+        )
+        
+    def set_overlap_groups(self, orb1, orb2, func):
+        """
+        Sets the overlap coupling between two groups of orbitals.
+
+        Parameters:
+            orb1: Identifier for orbital(s) for the first group.
+            orb2: Identifier for orbital(s) for the second group.
+            func (callable): Function that defines the overlap.
+
+        Note:
+            The function `func` should be complex-valued.
+        """
+        self._set_coupling(
+            self.filter_orbs(orb1, _watchdog.GroupId), self.filter_orbs(orb2, _watchdog.GroupId), self._ensure_complex(func), self.couplings.overlap
         )
 
     def set_onsite_hopping(self, orb, val):
@@ -628,6 +668,17 @@ class OrbitalList:
             val (complex): The complex value to set for the Coulomb interaction element.
         """
         self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), self._ensure_complex(val), self.couplings.coulomb)
+
+    def set_overlap_element(self, orb1, orb2, val):
+        """
+        Sets a overlap matrix element between two orbitals or indices.
+
+        Parameters:
+            orb1: Identifier for orbital(s) for the first element.
+            orb2: Identifier for orbital(s) for the second element.
+            val (complex): The complex value to set for the overlap element.
+        """
+        self._set_coupling(self.filter_orbs(orb1, Orbital), self.filter_orbs(orb2, Orbital), self._ensure_complex(val), self.couplings.overlap)
 
     @property
     def center_index(self):
@@ -680,11 +731,14 @@ class OrbitalList:
 
         assert len(self) > 0
 
-        self._hamiltonian, self._coulomb = self._hamiltonian_coulomb()
+        self._hamiltonian, self._coulomb, self._overlap, self._ortho_trafo, self._ortho_trafo_inv = self._matrices()
 
-        self._eigenvectors, self._energies = jax.lax.linalg.eigh(self._hamiltonian)
+        # solve eigenproblem and construct matrices in orthonormal basis            
+        hamiltonian_ortho = self._ortho_trafo.conj().T @ self._hamiltonian @ self._ortho_trafo
+        coulomb_ortho = self._ortho_trafo.conj().T @ self._coulomb @ self._ortho_trafo            
+        eigenvectors_ortho, self._energies = jax.lax.linalg.eigh( hamiltonian_ortho )
 
-        self._initial_density_matrix = _numerics._density_matrix(
+        initial_density_matrix = _numerics._density_matrix(
             self._energies,
             self.params.electrons,
             self.params.spin_degeneracy,
@@ -692,7 +746,7 @@ class OrbitalList:
             self.params.excitation,
             self.params.beta,
         )
-        self._stationary_density_matrix = _numerics._density_matrix(
+        stationary_density_matrix = _numerics._density_matrix(
             self._energies,
             self.params.electrons,
             self.params.spin_degeneracy,
@@ -703,34 +757,37 @@ class OrbitalList:
 
         if len(self.params.self_consistency_params) != 0:
             (
-                self._hamiltonian,
-                self._initial_density_matrix,
-                self._stationary_density_matrix,
+                hamiltonian_ortho,
+                initial_density_matrix,
+                stationary_density_matrix,
                 self._energies,
-                self._eigenvectors,
+                eigenvectors_ortho,
             ) = _numerics._get_self_consistent(
-                self._hamiltonian,
-                self._coulomb,
+                hamiltonian_ortho,
+                coulomb_ortho,
                 self.positions,
                 self.params.excitation,
                 self.params.spin_degeneracy,
                 self.params.electrons,
                 self.params.eps,
-                self._eigenvectors,
-                self._stationary_density_matrix,
+                eigenvectors_ortho,
+                stationary_density_matrix,
                 **self.params.self_consistency_params,
             )
 
+        # here we need to be careful: normal hartree fock flip-flops between ortho and non-ortho basis in sc loop
+        # this is smart, because otherwise one has to transform ERIs, which is a lot of work
+        # here, we NEED to inform the user they need to transform ERIs, because otherwise I have to actually think about what I'm doing
         if len(self.params.mean_field_params) != 0:
             (
-                self._hamiltonian,
-                self._initial_density_matrix,
-                self._stationary_density_matrix,
+                hamiltonian_ortho,
+                initial_density_matrix,
+                stationary_density_matrix,
                 self._energies,
-                self._eigenvectors,
+                eigenvectors_ortho,
             ) = _numerics._mf_loop(
-                self._hamiltonian,
-                self._coulomb,
+                hamiltonian_ortho,
+                coulomb_ortho,
                 self.params.excitation,
                 self.params.spin_degeneracy,
                 self.params.electrons,
@@ -740,17 +797,18 @@ class OrbitalList:
 
         eps = 1e-1
         lower = -eps
-        upper = 2 + eps
-        if jnp.any(self._initial_density_matrix.diagonal() < lower) or jnp.any(self._initial_density_matrix.diagonal() > upper):
+        upper = self.params.spin_degeneracy + eps
+        if jnp.any(initial_density_matrix.diagonal() < lower) or jnp.any(initial_density_matrix.diagonal() > upper):
             raise Exception("Occupation numbers in initial density matrix are invalid.")
 
-        if jnp.any(self._stationary_density_matrix.diagonal() < lower) or jnp.any(self._stationary_density_matrix.diagonal() > upper ) :
+        if jnp.any(stationary_density_matrix.diagonal() < lower) or jnp.any(stationary_density_matrix.diagonal() > upper ) :
             raise Exception("Occupation numbers in stationary density matrix are invalid.")
-            
-        self._initial_density_matrix = self.transform_to_site_basis( self._initial_density_matrix )
 
-        self._stationary_density_matrix = self.transform_to_site_basis( self._stationary_density_matrix )
-            
+        # transform back to potentially non-orthogonal basis
+        self._eigenvectors = self._ortho_trafo @ eigenvectors_ortho
+        self._initial_density_matrix = self.transform_to_site_basis(initial_density_matrix)            
+        self._stationary_density_matrix = self.transform_to_site_basis(stationary_density_matrix)
+        
     def set_open_shell( self ):
         if any( orb.spin is None for orb in self._list ):
             raise ValueError
@@ -974,6 +1032,9 @@ class OrbitalList:
                 - `rho_0` (jax.Array, optional): Initial guess for the density matrix. If None, zeros are used.
                    Default is None.
 
+        Note:
+             GRANAD orthonormalizes the Hamiltonian prior to entering the SC loop using the canonical symmetric procedure. If you use orthogonal orbitals, everything is fine. If your basis set allows for overlap, you need to provide any custom mean-field interaction terms in the *orthornormalized basis*.
+
         Example:
             >>> model.set_mean_field(accuracy=1e-7, mix=0.5, iterations=1000)
             >>> print(model.params.mean_field_params)
@@ -1004,6 +1065,10 @@ class OrbitalList:
             raise TypeError
 
         self.params.excitation = [maybe_int_to_arr(from_state), maybe_int_to_arr(to_state), maybe_int_to_arr(excited_electrons)]
+        
+    @property
+    def is_ortho(self):
+        return len(self.couplings.overlap) == 0
 
     @mutates
     def set_beta(self, beta):
@@ -1063,7 +1128,22 @@ class OrbitalList:
     @recomputes
     def coulomb(self):
         return self._coulomb
+
+    @property
+    @recomputes
+    def overlap(self):
+        return self._overlap
     
+    @property
+    @recomputes    
+    def ortho_trafo(self):
+        self._ortho_trafo
+        
+    @property
+    @recomputes    
+    def ortho_trafo_inv(self):
+        self._ortho_trafo_inv
+        
     @property
     @recomputes
     def initial_density_matrix(self):
@@ -1358,14 +1438,16 @@ class OrbitalList:
         )
 
     def get_args( self, relaxation_rate = 0.0, coulomb_strength = 1.0, propagator = None):
+        maybe_trafo = lambda x : x if not self.is_ortho else self._transform_basis(x, self.ortho_trafo.conj()),
+        maybe_trafo_inv = lambda x : x if not self.is_ortho else self._transform_basis(x, self.ortho_trafo_inv),
         return TDArgs(
-            self.hamiltonian,
+            maybe_trafo(self.hamiltonian),
             self.energies,
-            self.coulomb * coulomb_strength,
-            self.initial_density_matrix,
-            self.stationary_density_matrix,
-            self.eigenvectors,
-            self.dipole_operator,
+            maybe_trafo(self.coulomb * coulomb_strength),
+            maybe_trafo_inv(self.initial_density_matrix),
+            maybe_trafo_inv(self.stationary_density_matrix),
+            self.ortho_trafo_inv @ self.eigenvectors,
+            self.dipole_operator, # this is a bit tricky
             self.electrons,
             relaxation_rate,
             propagator,
