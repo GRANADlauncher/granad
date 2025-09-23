@@ -405,7 +405,28 @@ class Material:
     # TODO: big uff
     # TODO: check if parity harmful in sk equations, include d, f orbs, spin
     def add_slater_koster_interaction(self, atom1, atom2, sk_file, num_neighbors = 1):
-        """couples orbitals on atom1, atom2 according to slater koster parameters given in dftb file sk_file up to num_neighbors
+        """
+        Adds Slater–Koster interactions between orbitals on two atoms.
+
+        Parameters:
+            atom1 (str): Name of the first atom.
+            atom2 (str): Name of the second atom.
+            sk_file (str): Path to the Slater–Koster parameter file 
+                (DFTB format, in atomic units).
+            num_neighbors (int, optional): Number of neighbor shells to include 
+                when computing orbital couplings. Defaults to 1.
+
+        Returns:
+            Material: Returns self to enable method chaining.
+
+        Notes:
+            - The interaction matrices (Hamiltonian, overlap, and Coulomb) 
+              are constructed from Slater–Koster parameter tables.
+            - Only orbitals supported by both atoms are considered.
+            - Onsite terms are treated separately: diagonal Hamiltonian, 
+              unit overlap, and Hubbard-like Coulomb interactions.
+            - Currently supports s and p orbitals; d, f, and spinful 
+              orbitals are not yet implemented.
         """
         
         # slater koster matrix element functions, sorted by combinations, as in https://link.aps.org/doi/10.1103/PhysRev.94.1498 table I
@@ -482,7 +503,23 @@ class Material:
         return self
 
     def add_atom(self, atom, position, orbitals = None, spinful = False):
-        """adds atom and all indicated orbitals
+        """
+        Adds an atom to the material along with its associated orbitals.
+
+        Parameters:
+            atom (str): Name of the atom to add.
+            position (array-like): Position of the atom in real space.
+            orbitals (list[str], optional): List of orbital types to add. 
+                Defaults to all supported orbitals if None.
+            spinful (bool): If True, attempts to add spinful orbitals.
+                Currently not implemented.
+
+        Returns:
+            Material: Returns self to enable method chaining.
+
+        Raises:
+            AttributeError: If any requested orbital is not supported.
+            NotImplementedError: If spinful orbitals are requested.
         """
         orbitals = orbitals or self.supported_orbitals        
         if len(self.supported_orbitals - set(orbitals)) < 0:
@@ -500,7 +537,20 @@ class Material:
         return self
 
     def add_orbital(self, position, species, tag = '', atom = '', s = 0, kind = None):
-        """adds orbital
+        """
+        Adds a single orbital to the material.
+
+        Parameters:
+            position (array-like): Position of the orbital in real space.
+            species (str): Name of the orbital species. If not yet defined,
+                a new orbital species will be created.
+            tag (str, optional): An optional label for the orbital.
+            atom (str, optional): Name of the atom the orbital belongs to.
+            s (int, optional): Spin quantum number. Defaults to 0.
+            kind (str, optional): Type of orbital (e.g., 'pz', 's').
+
+        Returns:
+            Material: Returns self to enable method chaining.
         """
         if species not in self.species:
             self.add_orbital_species(species, s, atom)
