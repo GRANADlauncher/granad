@@ -13,6 +13,8 @@ from granad.orbitals import Orbital, OrbitalList
 from granad._plotting import _display_lattice_cut
 from granad._graphene_special import _cut_flake_graphene
 
+from granad.parsing import parse_sk_file
+
 def zero_coupling(d):
     """
     Returns a zero coupling constant as a complex number.
@@ -311,6 +313,7 @@ class Material:
         self.interactions = defaultdict(dict)
         self._species_to_groups=  {}
         self.dim = None
+        self.supported_orbitals =  {"s", "px", "py", "pz"}        
         
     def __str__(self):
         description = f"Material: {self.name}\n"
@@ -398,20 +401,113 @@ class Material:
         simulation by implementing necessary final structural adjustments.
         """
         pass
-
-    def add_orbital(self, position, species, tag = ''):
+    
+    # TODO: big uff
+    # TODO: check if parity harmful in sk equations, include d, f orbs, spin
+    def add_slater_koster_interaction(self, atom1, atom2, sk_file, num_neighbors = 1):
+        """couples orbitals on atom1, atom2 according to slater koster parameters given in dftb file sk_file up to num_neighbors
         """
-        Sets the lattice constant for the material.
+        
+        # slater koster matrix element functions, sorted by combinations, as in https://link.aps.org/doi/10.1103/PhysRev.94.1498 table I
+        matrix_element_map = {
+            ("s", "s") : lambda l, m, n, params: params["sss"],
+            ("px", "s") : lambda l, m, n, params: l * params["sps"],
+            ("py", "s") : lambda l, m, n, params : m * params["sps"],
+            ("pz", "s") : lambda l, m, n, params : n * params["sps"],
+            ("px", "px") : lambda l, m, n, params : l**2 * params["pps"] + (1 - l**2) * params["ppp"],
+            ("py", "py") : lambda l, m, n, params : m**2 * params["pps"] + (1 - m**2) * params["ppp"],
+            ("pz", "pz") : lambda l, m, n, params : n**2 * params["pps"] + (1 - n**2) * params["ppp"],
+            ("px", "py") : lambda l, m, n, params : l*m * params["pps"] + (1 - l*m) * params["ppp"],
+            ("px", "pz") : lambda l, m, n, params : l*n * params["pps"] + (1 - l*n) * params["ppp"],
+            ("py", "pz") : lambda l, m, n, params : m*n * params["pps"] + (1 - m*n) * params["ppp"]
+        }
 
-        Parameters:
-            value (float): The lattice constant value.
+        def unpack(params, idx):
+            return {k : vals[idx] for k, vals in params.items() }
 
-        Returns:
-            Material: Returns self to enable method chaining.
-        """
-        self.orbitals[species].append({'position': position, 'tag': tag})
+        # computes either ham or overlap
+        def coupling_entry(params, comb, vec):
+            length = jnp.linalg.norm(vec)
+
+            # index in params is lowered
+            idx = jnp.argwhere(jnp.abs(length - distances) < 1e-5)[0][0] - 1
+
+            # direction cosines
+            l, m, n = vec / length
+
+            # return everything as a list
+            return vec.tolist() + [matrix_element_map[comb](l, m, n, unpack(params, idx))]
+            
+        # distance range
+        cutoff = num_neighbors + 1
+        
+        # orbitals hosted on each atom
+        atom1_species = [orb for orb in self.supported_orbitals if f"{orb}_{atom1}" in self.species]
+        atom2_species = [orb for orb in self.supported_orbitals if f"{orb}_{atom2}" in self.species]
+
+        # scalar distances and vectors pointing from atom1 to atom2 in a lattice cut covering at least num_neighbors (we just pick two random representatives)
+        distances, distance_vecs = self._get_distances_and_vecs(f"{atom1_species[0]}_{atom1}",
+                                                                f"{atom2_species[0]}_{atom2}",
+                                                                cutoff)
+
+        # unique offsite distance vecs (we don't need onsite, because we handle it ungracefully)
+        idxs = jnp.logical_and(jnp.linalg.norm(distance_vecs, axis = 2) < distances.max() + 1e-5, jnp.linalg.norm(distance_vecs, axis = 2) - 1e-5 > 0)
+        offsite_vecs = jnp.unique(distance_vecs[idxs], axis = 0)
+
+        # dftb files use atomic units
+        sk_params = parse_sk_file(sk_file, distances * 0.5)
+
+        # unique combinations of orbitals
+        combinations = set(tuple(sorted((i, j))) for i in atom1_species for j in atom2_species)
+
+        # for each orbital combination: loop over distances => at each distance, store couplings in the form [vec, coupling]
+        for comb in combinations:
+            hamiltonian = [coupling_entry(sk_params["integrals"], comb, vec) for vec in offsite_vecs]
+            overlap = [coupling_entry(sk_params["overlap"], comb, vec) for vec in offsite_vecs]
+            # dummy
+            coulomb = []
+            
+            # onsite is special case idrc
+            if atom1 == atom2 and comb[0] == comb[1]:
+                hamiltonian += [[0, 0, 0., sk_params["onsite"][comb[0][:1]][0] ]]
+                overlap     += [[0, 0, 0, 1.]]
+                coulomb     += [[0, 0, 0., sk_params["hubbard"][comb[0][:1]][0]]]
+
+            # add interactions as regular vector couplings
+            full_name = (f"{comb[0]}_{atom1}", f"{comb[1]}_{atom2}")
+            self.add_interaction("hamiltonian", full_name, hamiltonian)
+            self.add_interaction("overlap", full_name, overlap)
+            self.add_interaction("coulomb", full_name, coulomb)
+
         return self
 
+    def add_atom(self, atom, position, orbitals = None, spinful = False):
+        """adds atom and all indicated orbitals
+        """
+        orbitals = orbitals or self.supported_orbitals        
+        if len(self.supported_orbitals - set(orbitals)) < 0:
+            raise AttributeError(f"Unsupported orbitals in {orbitals}. Currently, only {self.supported_orbitals} are valid.")
+        
+        for orb in orbitals:
+            species = f"{orb}_{atom}"
+            if spinful == True:
+                raise NotImplementedError("No spinful orbs in atom")
+                # self.add_orbital(position, f"{species}_up", atom = atom, kind = orb, s = 1)
+                # self.add_orbital(position, f"{species}_down", atom = atom, kind = orb, s = -1)
+            else:
+                self.add_orbital(position, species, atom = atom, kind = orb)
+                
+        return self
+
+    def add_orbital(self, position, species, tag = '', atom = '', s = 0, kind = None):
+        """adds orbital
+        """
+        if species not in self.species:
+            self.add_orbital_species(species, s, atom)
+        self.orbitals[species].append({'position': position, 'tag': tag, 'kind' : kind})
+        return self
+
+    # we only need this function to assign an id to a "batch" of orbitals (eg all pz orbs in graphene)
     def add_orbital_species( self, name, s = 0, atom  = ''):
         """
         Adds a species definition for orbitals in the material.
@@ -480,8 +576,7 @@ class Material:
 
         # distance couplings
         return self._distance_couplings_to_function(couplings, outside_fun, species)
-        
-    
+
     def _vector_couplings_to_function(self, couplings, outside_fun, species):
 
         vecs, couplings_vals = jnp.array(couplings).astype(float)[:, :3], jnp.array(couplings).astype(complex)[:, 3]
@@ -496,19 +591,25 @@ class Material:
             )
         return inner
 
+    # produces distances and distance vectors between sites of orbitals s1, s2 on a lattice cut of radius given by cutoff
+    def _get_distances_and_vecs(self, s1, s2, cutoff):
+        grid = self._get_grid( [ (0, cutoff) for i in range(self.dim) ] )
+        pos_uc_1 = self._get_positions_in_uc( (s1,) )
+        pos_uc_2 = self._get_positions_in_uc( (s2,) )
+        positions_1 = self._get_positions_in_lattice(pos_uc_1, grid )
+        positions_2 = self._get_positions_in_lattice(pos_uc_2, grid )
+
+        distance_vecs = positions_1 - positions_2[:, None, :]
+        distances = jnp.round(jnp.linalg.norm(distance_vecs, axis=2), 5)
+        dist_unique = jnp.unique(distances)[:cutoff]
+
+        return dist_unique, distance_vecs
+        
     def _distance_couplings_to_function(self, couplings, outside_fun, species):
         
         couplings = jnp.array(couplings).astype(complex)
-        grid = self._get_grid( [ (0, len(couplings)) for i in range(self.dim) ] )
-        pos_uc_1 = self._get_positions_in_uc( (species[0],) )
-        pos_uc_2 = self._get_positions_in_uc( (species[1],) )
-        positions_1 = self._get_positions_in_lattice(pos_uc_1, grid )
-        positions_2 = self._get_positions_in_lattice(pos_uc_2, grid )
+        distances, _ = self._get_distances_and_vecs(species[0], species[1], len(couplings))
         
-        distances = jnp.unique(
-            jnp.round(jnp.linalg.norm(positions_1 - positions_2[:, None, :], axis=2), 5)
-        )[: len(couplings)]
-
         def inner(d):
             d = jnp.linalg.norm(d)
             return jax.lax.cond(
@@ -547,6 +648,7 @@ class Material:
                         position = position,
                         layer_index = layer_index,
                         tag=orb_uc['tag'],
+                        kind=orb_uc['kind'],
                         group_id = self._species_to_groups[species],                        
                         spin=self.species[species][0],
                         atom_name=self.species[species][1]
@@ -557,6 +659,7 @@ class Material:
         orbital_list = OrbitalList(raw_list)
         self._set_couplings(orbital_list.set_hamiltonian_groups, "hamiltonian")
         self._set_couplings(orbital_list.set_coulomb_groups, "coulomb")
+        self._set_couplings(orbital_list.set_overlap_groups, "overlap")
         return orbital_list
 
 def get_hbn(lattice_constant = 2.50, bb_hoppings = None, nn_hoppings = None, bn_hoppings = None):
@@ -992,3 +1095,17 @@ class MaterialCatalog:
         """
         available_materials = "\n".join(MaterialCatalog._materials.keys())
         print(f"Available materials:\n{available_materials}")
+
+
+
+sk_file = "Au-Au.skf"
+
+goldene = (Material("goldene")
+           .lattice_constant(2.62)  # use 2.62 Å (exp) or 2.735 Å (DFT relaxed)
+           .lattice_basis([
+               [1, 0, 0],
+               [-0.5, jnp.sqrt(3)/2, 0]
+           ])
+           .add_atom(atom = "Au", position=(0, 0))  # one Au atom per primitive cell (P6/mmm)
+           .add_slater_koster_interaction("Au", "Au", sk_file, num_neighbors = 1)
+           )
