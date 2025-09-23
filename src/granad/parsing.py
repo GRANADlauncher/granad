@@ -3,17 +3,44 @@ import jax.numpy as jnp
 
 # TODO: doc string, references
 def parse_sk_file(name : str, distances : list):
-    """parses sk file into dict of parameter lists containing hams, overlaps
-
-    {(orb1, orb2) : [neighbor1, neighbor2, ...]}
-
-    where neighbors are identified by distance_increment
-
-
-    dftb+: https://pubs.acs.org/doi/10.1021/acs.jpca.5c01146
-    file format: https://dftb.org/    
     """
-    
+    Parses a Slater–Koster (SK) parameter file into dictionaries of orbital
+    integrals and overlaps at specified distances.
+
+    Parameters:
+        name (str): Path to the Slater–Koster parameter file (DFTB format).
+        distances (list[float]): List of interatomic distances (in atomic units)
+            at which parameters should be extracted.
+
+    Returns:
+        dict: A dictionary with the following structure:
+            {
+                "onsite": dict
+                    Onsite energies keyed by orbital type (e.g. {"s": [...], "p": [...]}).
+                "hubbard": dict
+                    Hubbard U parameters keyed by orbital type.
+                "integrals": dict
+                    Slater–Koster hopping integrals keyed by interaction type
+                    (e.g. "sss", "sps", "ppσ", "ppπ"), with values given as
+                    lists over requested distances.
+                "overlap": dict
+                    Overlap integrals keyed by interaction type, structured
+                    the same as `integrals`.
+            }
+
+    Notes:
+        - Supports both the simple (`s`, `p`, `d`) and extended (`s`, `p`, `d`, `f`)
+          Slater–Koster file formats.
+        - For homonuclear SK files, onsite energies and Hubbard U values are
+          extracted; for heteronuclear files, these are empty.
+        - Distances are mapped to tabulated grid points based on the grid
+          spacing given in the SK file.
+        - If more distances are requested than are tabulated, a warning is raised.
+
+    References:
+        - DFTB+: https://pubs.acs.org/doi/10.1021/acs.jpca.5c01146
+        - File format specification: https://dftb.org/
+    """    
     def clean(line):
         """cleans up unnecessary symbols
         """

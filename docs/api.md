@@ -7,3 +7,4 @@
 ::: granad.dissipators
 ::: granad._numerics
 ::: granad._plotting
+::: granad.parsing
