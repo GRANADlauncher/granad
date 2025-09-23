@@ -801,11 +801,12 @@ class OrbitalList:
         if jnp.any(initial_density_matrix.diagonal() < lower) or jnp.any(initial_density_matrix.diagonal() > upper):
             raise Exception("Occupation numbers in initial density matrix are invalid.")
 
-        if jnp.any(stationary_density_matrix.diagonal() < lower) or jnp.any(stationary_density_matrix.diagonal() > upper ) :
+        if jnp.any(stationary_density_matrix.diagonal() < lower) or jnp.any(stationary_density_matrix.diagonal() > upper):
             raise Exception("Occupation numbers in stationary density matrix are invalid.")
 
         # transform back to potentially non-orthogonal basis
         self._eigenvectors = self._ortho_trafo @ eigenvectors_ortho
+        self._eigenvectors_inv = jnp.linalg.inv(self._eigenvectors)
         self._initial_density_matrix = self.transform_to_site_basis(initial_density_matrix)            
         self._stationary_density_matrix = self.transform_to_site_basis(stationary_density_matrix)
         
@@ -1272,10 +1273,10 @@ class OrbitalList:
         ).real
 
     @staticmethod
-    def _transform_basis(observable, vectors):
-        dims_einsum_strings = {2: "ij,jk,lk->il", 3: "ij,mjk,lk->mil"}
+    def _transform_basis(observable, vectors, vectors_inv):
+        dims_einsum_strings = {2: "ij,jk,kl->il", 3: "ij,mjk,kl->mil"}
         einsum_string = dims_einsum_strings[(observable.ndim)]
-        return jnp.einsum(einsum_string, vectors, observable, vectors.conj())
+        return jnp.einsum(einsum_string, vectors, observable, vectors_inv)
 
     def transform_to_site_basis(self, observable):
         """
@@ -1287,7 +1288,8 @@ class OrbitalList:
         Returns:
            jax.Array: The transformed observable in the site basis.
         """
-        return self._transform_basis(observable, self._eigenvectors)
+        vectors_inv = self._eigenvectors.conj().T if self.is_ortho else self._eigenvectors_inv
+        return self._transform_basis(observable, self._eigenvectors, vectors_inv)
 
     def transform_to_energy_basis(self, observable):
         """
@@ -1299,8 +1301,8 @@ class OrbitalList:
         Returns:
            jax.Array: The transformed observable in the energy basis.
         """
-
-        return self._transform_basis(observable, self._eigenvectors.conj().T)
+        vectors_inv = self._eigenvectors.conj().T if self.is_ortho else self._eigenvectors_inv
+        return self._transform_basis(observable, vectors_inv, self._eigenvectors)
 
     @recomputes
     def get_charge(self, density_matrix = None):
@@ -1447,7 +1449,7 @@ class OrbitalList:
             maybe_trafo_inv(self.initial_density_matrix),
             maybe_trafo_inv(self.stationary_density_matrix),
             self.ortho_trafo_inv @ self.eigenvectors,
-            self.dipole_operator, # this is a bit tricky
+            self.dipole_operator, # this is a bit tricky for the non-orthogonal case
             self.electrons,
             relaxation_rate,
             propagator,
