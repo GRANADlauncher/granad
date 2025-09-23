@@ -1095,17 +1095,3 @@ class MaterialCatalog:
         """
         available_materials = "\n".join(MaterialCatalog._materials.keys())
         print(f"Available materials:\n{available_materials}")
-
-
-
-sk_file = "Au-Au.skf"
-
-goldene = (Material("goldene")
-           .lattice_constant(2.62)  # use 2.62 Å (exp) or 2.735 Å (DFT relaxed)
-           .lattice_basis([
-               [1, 0, 0],
-               [-0.5, jnp.sqrt(3)/2, 0]
-           ])
-           .add_atom(atom = "Au", position=(0, 0))  # one Au atom per primitive cell (P6/mmm)
-           .add_slater_koster_interaction("Au", "Au", sk_file, num_neighbors = 1)
-           )
