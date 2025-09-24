@@ -566,7 +566,15 @@ class Material:
     # we only need this function to assign an id to a "batch" of orbitals (eg all pz orbs in graphene)
     def add_orbital_species( self, name, s = 0, atom  = ''):
         """
-        Adds a species definition for orbitals in the material.
+        .. warning::
+            This method is **deprecated** and should not be used directly in new code.
+
+        Orbital species are now created automatically when calling
+        :meth:`add_orbital`. Direct use of this method is unnecessary and may
+        complicate your workflow.
+
+        It remains available only for backwards compatibility and special
+        low-level use cases (e.g., assigning a shared ID to a batch of orbitals).
 
         Parameters:
             name (str): The name of the orbital species.
