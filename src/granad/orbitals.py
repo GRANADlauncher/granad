@@ -561,6 +561,8 @@ class OrbitalList:
         
         # overlapping orbs => play the game
         if not self.is_ortho:
+            Warning("You have selected non-orthonormal orbitals. These are considered experimental. Some quantities in site basis (e.g. localization) are more difficult to interpret. Energy basis is fine.")
+            
             overlap = fill_matrix(
                 jnp.zeros((len(self), len(self))).astype(complex), self.couplings.overlap
             )
