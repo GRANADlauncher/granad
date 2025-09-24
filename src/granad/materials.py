@@ -404,7 +404,7 @@ class Material:
     
     # TODO: big uff
     # TODO: check if parity harmful in sk equations, include d, f orbs, spin
-    def add_slater_koster_interaction(self, atom1, atom2, sk_file, num_neighbors = 1):
+    def add_slater_koster_interaction(self, atom1, atom2, sk_file, num_neighbors = 1, neglect_overlap = False):
         """
         Adds Slater–Koster interactions between orbitals on two atoms.
 
@@ -415,6 +415,7 @@ class Material:
                 (DFTB format, in atomic units).
             num_neighbors (int, optional): Number of neighbor shells to include 
                 when computing orbital couplings. Defaults to 1.
+            neglect_overlap (bool, optional): Assume orthonormalized orbitals. Defaults to False.
 
         Returns:
             Material: Returns self to enable method chaining.
@@ -497,8 +498,13 @@ class Material:
             # add interactions as regular vector couplings
             full_name = (f"{comb[0]}_{atom1}", f"{comb[1]}_{atom2}")
             self.add_interaction("hamiltonian", full_name, hamiltonian)
-            self.add_interaction("overlap", full_name, overlap)
+
+            # coulomb => onsite hubbard
             self.add_interaction("coulomb", full_name, coulomb)
+
+            # this should usually be the case
+            if neglect_overlap == False:
+                self.add_interaction("overlap", full_name, overlap)
 
         return self
 
