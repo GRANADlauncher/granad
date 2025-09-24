@@ -402,9 +402,9 @@ class Material:
         """
         pass
     
-    # TODO: big uff, terrible code, for performance, it would be smarter to wrap + jit the sk functions into one big thing
-    # TODO: check if parity harmful in sk equations, include d, f orbs, spin
-    def add_slater_koster_interaction(self, atom1, atom2, sk_file, num_neighbors = 1, neglect_overlap = False):
+    # TODO: big uff, among the worst i have ever written
+    # TODO: neglecting parity harmful? include d, f orbs
+    def add_slater_koster_interaction(self, atom1, atom2, sk_file, num_neighbors = 1, neglect_overlap = False, hamiltonian_fun = None, overlap_fun = None, coulomb_fun = None):
         """
         Adds Slater–Koster interactions between orbitals on two atoms.
 
@@ -415,7 +415,18 @@ class Material:
                 (DFTB format, in atomic units).
             num_neighbors (int, optional): Number of neighbor shells to include 
                 when computing orbital couplings. Defaults to 1.
-            neglect_overlap (bool, optional): Assume orthonormalized orbitals. Defaults to False.
+            neglect_overlap (bool, optional): Assume orthonormalized orbitals. 
+                If True, overlap integrals are ignored. Defaults to False.
+            hamiltonian_fun (callable, optional): Custom function to evaluate 
+                Hamiltonian couplings when the interatomic distance is not 
+                covered by the Slater–Koster tables. Defaults to a zero-coupling 
+                function if None.
+            overlap_fun (callable, optional): Custom function to evaluate 
+                overlap integrals outside the Slater–Koster table range. 
+                Defaults to a zero-coupling function if None.
+            coulomb_fun (callable, optional): Custom function to evaluate 
+                interatomic Coulomb-like interactions (e.g., Hubbard-like terms) 
+                when not tabulated. Defaults to a zero-coupling function if None.
 
         Returns:
             Material: Returns self to enable method chaining.
@@ -426,66 +437,80 @@ class Material:
             - Only orbitals supported by both atoms are considered.
             - Onsite terms are treated separately: diagonal Hamiltonian, 
               unit overlap, and Hubbard-like Coulomb interactions.
-            - Currently supports s and p orbitals; d, f, and spinful 
-              orbitals are not yet implemented.
+            - Currently supports s and p orbitals; d, f orbitals are
+              not yet implemented.        
         """
-        
+
         # slater koster matrix element functions, sorted by combinations, as in https://link.aps.org/doi/10.1103/PhysRev.94.1498 table I
         matrix_element_map = {
-            ("s", "s") : lambda l, m, n, params: params["sss"],
-            ("px", "s") : lambda l, m, n, params: l * params["sps"],
-            ("py", "s") : lambda l, m, n, params : m * params["sps"],
-            ("pz", "s") : lambda l, m, n, params : n * params["sps"],
-            ("px", "px") : lambda l, m, n, params : l**2 * params["pps"] + (1 - l**2) * params["ppp"],
-            ("py", "py") : lambda l, m, n, params : m**2 * params["pps"] + (1 - m**2) * params["ppp"],
-            ("pz", "pz") : lambda l, m, n, params : n**2 * params["pps"] + (1 - n**2) * params["ppp"],
-            ("px", "py") : lambda l, m, n, params : l*m * params["pps"] + (1 - l*m) * params["ppp"],
-            ("px", "pz") : lambda l, m, n, params : l*n * params["pps"] + (1 - l*n) * params["ppp"],
-            ("py", "pz") : lambda l, m, n, params : m*n * params["pps"] + (1 - m*n) * params["ppp"]
+            ("s", "s") :   lambda v, p, idx: p["sss"][idx],
+            ("px", "s") :  lambda v, p, idx:  v[0] * p["sps"][idx],
+            ("py", "s") :  lambda v, p, idx : v[1] * p["sps"][idx],
+            ("pz", "s") :  lambda v, p, idx : v[2] * p["sps"][idx],
+            ("px", "px") : lambda v, p, idx : v[0]**2 * p["pps"][idx] + (1 - v[0]**2) * p["ppp"][idx],
+            ("py", "py") : lambda v, p, idx : v[1]**2 * p["pps"][idx] + (1 - v[1]**2) * p["ppp"][idx],
+            ("pz", "pz") : lambda v, p, idx : v[2]**2 * p["pps"][idx] + (1 - v[2]**2) * p["ppp"][idx],
+            ("px", "py") : lambda v, p, idx : v[0]*v[1] * p["pps"][idx] + (1 - v[0]*v[1]) * p["ppp"][idx],
+            ("px", "pz") : lambda v, p, idx : v[0]*v[2] * p["pps"][idx] + (1 - v[0]*v[2]) * p["ppp"][idx],
+            ("py", "pz") : lambda v, p, idx : v[1]*v[2] * p["pps"][idx] + (1 - v[1]*v[2]) * p["ppp"][idx]
         }
 
-        def unpack(params, idx):
-            return {k : vals[idx] for k, vals in params.items()}
+        def unpack(params):
+            return {k : jnp.array(vals).astype(complex) for k, vals in params.items()}
+        
+        # wraps the function table above
+        def wrap(sk_fun, distances, onsite, unpacked_params_offsite, outside_fun):
+            
+            # distance == 0 => onsite, just return the parameter
+            def inner(d):
+                return jax.lax.cond(jnp.linalg.norm(d) < 1e-5,
+                                    lambda x: onsite,
+                                    offsite_fun,
+                                    d)
 
-        # computes either ham or overlap
-        def coupling_entry(params, comb, vec):
-            length = jnp.linalg.norm(vec)
+            # offsite distance in distances covered by sk => apply sk_function, otherwise apply custom fun
+            def offsite_fun_default(d):
+                length = jnp.linalg.norm(d)
+            
+                return jax.lax.cond(
+                    jnp.min(jnp.abs(length - distances)) < 1e-5,
+                    lambda x: sk_fun(d / length, unpacked_params_offsite, jnp.argmin(jnp.abs(length - distances))),
+                    outside_fun,
+                    d,
+                )
 
-            # index in params is lowered
-            idx = jnp.argwhere(jnp.abs(length - distances) < 1e-5)[0][0] - 1
+            offsite_fun = offsite_fun_default if unpacked_params_offsite is not None else outside_fun
+            
+            return inner
 
-            # direction cosines
-            l, m, n = vec / length
+        def couple_combinations(combs, spinful, params_offsite, params_onsite, coupling_name, outside_fun):
 
-            # return everything as a list
-            return vec.tolist() + [matrix_element_map[comb](l, m, n, unpack(params, idx))]
-
-        def couple_combinations(combs, spinful, params_offsite, params_onsite, coupling_name):
-            # for each orbital combination: loop over distances => at each distance, store couplings in the form [vec, coupling]
-            for comb in combinations:
-                coupling = []
-                if params_offsite is not None:
-                    coupling = [coupling_entry(params_offsite, comb, vec) for vec in offsite_vecs]
-                coupling += couple_combinations_onsite(comb, params_onsite, coupling_name)
+            unpacked_params_offsite = unpack(params_offsite) if params_offsite is not None else None
+            
+            for comb in combs:
                 
+                if coupling_name == "overlap":
+                    onsite_value = 1.
+                else:
+                    onsite_value = params_onsite[comb[0][:1]][0]
+                onsite_value = complex(onsite_value * (comb[0] == comb[1]))
+
+                    
+                # get coupling function
+                wrapped_fun = wrap(matrix_element_map[comb], distances, onsite_value, unpacked_params_offsite, outside_fun)
+
+                # spinless : no up/down id
                 orbital_id_combinations = [(f"{comb[0]}_{atom1}", f"{comb[1]}_{atom2}")]
                 
+                # spinful: hopping preserves spin, (onsite) coulomb only between opposite spins
                 if spinful == True:
-                    orbital_id_combinations = [(f"{comb[0]}_{atom1}_up", f"{comb[1]}_{atom2}_up"), (f"{comb[0]}_{atom1}_down", f"{comb[1]}_{atom2}_down")]
-                    if coupling_name == "coulomb":
-                        orbital_id_combinations = [(f"{comb[0]}_{atom1}_up", f"{comb[1]}_{atom2}_down")]
-
+                    orbital_id_combinations = [(f"{comb[0]}_{atom1}_up", f"{comb[1]}_{atom2}_up"),
+                                               (f"{comb[0]}_{atom1}_down", f"{comb[1]}_{atom2}_down")]
+                if spinful == True and coupling_name == "coulomb":
+                    orbital_id_combinations = [(f"{comb[0]}_{atom1}_up", f"{comb[1]}_{atom2}_down")]
+                
                 for id_comb in orbital_id_combinations:                    
-                    self.add_interaction(coupling_name, tuple(sorted(id_comb)), coupling)
-
-        def couple_combinations_onsite(comb, params, coupling_name):
-            # not onsite => skip
-            if not (atom1 == atom2 and comb[0] == comb[1]):
-                return []
-            # overlap on same site assumed 1
-            if coupling_name == "overlap":                
-                return [[0, 0, 0., 1.]]
-            return [[0, 0, 0., params[comb[0][:1]][0]]]
+                    self.add_interaction(coupling_name, tuple(sorted(id_comb)), expression = wrapped_fun)
 
         def get_species():
             # orbitals hosted on each atom
@@ -501,21 +526,24 @@ class Material:
             assert len(atom1_species) and len(atom2_species), "Atom is missing."
             
             return atom1_species, atom2_species, spinful
+
+        # unpack custom functions
+        hamiltonian_fun = hamiltonian_fun or zero_coupling
+        overlap_fun = overlap_fun or zero_coupling
+        coulomb_fun = coulomb_fun or zero_coupling
            
         # distance range
         cutoff = num_neighbors + 1
 
+        # all species on atom (i.e. s, px etc)
         atom1_species, atom2_species, spinful = get_species()
         append_str = "_up" if spinful else ""
 
-        # scalar distances and vectors pointing from atom1 to atom2 in a lattice cut covering at least num_neighbors (we just pick two random representatives)
-        distances, distance_vecs = self._get_distances_and_vecs(f"{atom1_species[0]}_{atom1}{append_str}",
+        # scalar distances and vectors pointing from atom1 to atom2 in a lattice cut covering at least num_neighbors
+        # we pick two random representatives (in spinful case, all up orbitals, bc up and down are at same site)
+        distances, _ = self._get_distances_and_vecs(f"{atom1_species[0]}_{atom1}{append_str}",
                                                                 f"{atom2_species[0]}_{atom2}{append_str}",
                                                                 cutoff)
-
-        # unique offsite distance vecs (we don't need onsite, because we handle it ungracefully)
-        idxs = jnp.logical_and(jnp.linalg.norm(distance_vecs, axis = 2) < distances.max() + 1e-5, jnp.linalg.norm(distance_vecs, axis = 2) - 1e-5 > 0)
-        offsite_vecs = jnp.unique(distance_vecs[idxs], axis = 0)
 
         # dftb files use atomic units
         sk_params = parse_sk_file(sk_file, distances * 0.5)
@@ -524,11 +552,11 @@ class Material:
         combinations = set(tuple(sorted((i, j))) for i in atom1_species for j in atom2_species)
 
         # set elements
-        couple_combinations(combinations, spinful, sk_params["integrals"], sk_params["onsite"], "hamiltonian")
-        couple_combinations(combinations, spinful, None, sk_params["hubbard"], "coulomb")
+        couple_combinations(combinations, spinful, sk_params["integrals"], sk_params["onsite"], "hamiltonian", hamiltonian_fun)
+        couple_combinations(combinations, spinful, None, sk_params["hubbard"], "coulomb", coulomb_fun)
 
         if neglect_overlap == False:
-            couple_combinations(combinations, spinful, sk_params["overlap"], None, "overlap")
+            couple_combinations(combinations, spinful, sk_params["overlap"], None, "overlap", overlap_fun)
         
         return self
 
@@ -687,9 +715,13 @@ class Material:
         positions_1 = self._get_positions_in_lattice(pos_uc_1, grid )
         positions_2 = self._get_positions_in_lattice(pos_uc_2, grid )
 
-        distance_vecs = positions_1 - positions_2[:, None, :]
+        distance_vecs = positions_1 - positions_2[:, None, :]        
         distances = jnp.round(jnp.linalg.norm(distance_vecs, axis=2), 5)
-        dist_unique = jnp.unique(distances)[:cutoff]
+
+        # TODO: hotfix, bc otherwise we get very slow for larger cutoffs
+        # compare https://github.com/jax-ml/jax/issues/17370
+        import numpy as np
+        dist_unique = jnp.array(np.unique(distances)[:cutoff])
 
         return dist_unique, distance_vecs
         
@@ -1182,4 +1214,4 @@ class MaterialCatalog:
             ```
         """
         available_materials = "\n".join(MaterialCatalog._materials.keys())
-        print(f"Available materials:\n{available_materials}")
+        print(f"Available materials:\n{available_materials}")        
