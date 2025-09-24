@@ -811,8 +811,6 @@ class OrbitalList:
         self._stationary_density_matrix = self.transform_to_site_basis(stationary_density_matrix)
         
     def set_open_shell( self ):
-        if any( orb.spin is None for orb in self._list ):
-            raise ValueError
         self.params.spin_degeneracy = 1.0
 
     def set_closed_shell( self ):
