@@ -402,7 +402,7 @@ class Material:
         """
         pass
     
-    # TODO: big uff
+    # TODO: big uff, terrible code, for performance, it would be smarter to wrap + jit the sk functions into one big thing
     # TODO: check if parity harmful in sk equations, include d, f orbs, spin
     def add_slater_koster_interaction(self, atom1, atom2, sk_file, num_neighbors = 1, neglect_overlap = False):
         """
@@ -445,7 +445,7 @@ class Material:
         }
 
         def unpack(params, idx):
-            return {k : vals[idx] for k, vals in params.items() }
+            return {k : vals[idx] for k, vals in params.items()}
 
         # computes either ham or overlap
         def coupling_entry(params, comb, vec):
@@ -459,17 +459,58 @@ class Material:
 
             # return everything as a list
             return vec.tolist() + [matrix_element_map[comb](l, m, n, unpack(params, idx))]
+
+        def couple_combinations(combs, spinful, params_offsite, params_onsite, coupling_name):
+            # for each orbital combination: loop over distances => at each distance, store couplings in the form [vec, coupling]
+            for comb in combinations:
+                coupling = []
+                if params_offsite is not None:
+                    coupling = [coupling_entry(params_offsite, comb, vec) for vec in offsite_vecs]
+                coupling += couple_combinations_onsite(comb, params_onsite, coupling_name)
+                
+                orbital_id_combinations = [(f"{comb[0]}_{atom1}", f"{comb[1]}_{atom2}")]
+                
+                if spinful == True:
+                    orbital_id_combinations = [(f"{comb[0]}_{atom1}_up", f"{comb[1]}_{atom2}_up"), (f"{comb[0]}_{atom1}_down", f"{comb[1]}_{atom2}_down")]
+                    if coupling_name == "coulomb":
+                        orbital_id_combinations = [(f"{comb[0]}_{atom1}_up", f"{comb[1]}_{atom2}_down")]
+
+                for id_comb in orbital_id_combinations:                    
+                    self.add_interaction(coupling_name, tuple(sorted(id_comb)), coupling)
+
+        def couple_combinations_onsite(comb, params, coupling_name):
+            # not onsite => skip
+            if not (atom1 == atom2 and comb[0] == comb[1]):
+                return []
+            # overlap on same site assumed 1
+            if coupling_name == "overlap":                
+                return [[0, 0, 0., 1.]]
+            return [[0, 0, 0., params[comb[0][:1]][0]]]
+
+        def get_species():
+            # orbitals hosted on each atom
+            atom1_species = [orb for orb in self.supported_orbitals if f"{orb}_{atom1}" in self.species]
+            atom2_species = [orb for orb in self.supported_orbitals if f"{orb}_{atom2}" in self.species]
+            spinful = False
             
+            if len(atom1_species) == 0 or len(atom2_species) == 0:
+                atom1_species = [orb for orb in self.supported_orbitals if f"{orb}_{atom1}_up" in self.species]
+                atom2_species = [orb for orb in self.supported_orbitals if f"{orb}_{atom2}_up" in self.species]
+                spinful = True
+
+            assert len(atom1_species) and len(atom2_species), "Atom is missing."
+            
+            return atom1_species, atom2_species, spinful
+           
         # distance range
         cutoff = num_neighbors + 1
-        
-        # orbitals hosted on each atom
-        atom1_species = [orb for orb in self.supported_orbitals if f"{orb}_{atom1}" in self.species]
-        atom2_species = [orb for orb in self.supported_orbitals if f"{orb}_{atom2}" in self.species]
+
+        atom1_species, atom2_species, spinful = get_species()
+        append_str = "_up" if spinful else ""
 
         # scalar distances and vectors pointing from atom1 to atom2 in a lattice cut covering at least num_neighbors (we just pick two random representatives)
-        distances, distance_vecs = self._get_distances_and_vecs(f"{atom1_species[0]}_{atom1}",
-                                                                f"{atom2_species[0]}_{atom2}",
+        distances, distance_vecs = self._get_distances_and_vecs(f"{atom1_species[0]}_{atom1}{append_str}",
+                                                                f"{atom2_species[0]}_{atom2}{append_str}",
                                                                 cutoff)
 
         # unique offsite distance vecs (we don't need onsite, because we handle it ungracefully)
@@ -479,35 +520,19 @@ class Material:
         # dftb files use atomic units
         sk_params = parse_sk_file(sk_file, distances * 0.5)
 
-        # unique combinations of orbitals
+        # unique combinations of orbital kinds
         combinations = set(tuple(sorted((i, j))) for i in atom1_species for j in atom2_species)
 
-        # for each orbital combination: loop over distances => at each distance, store couplings in the form [vec, coupling]
-        for comb in combinations:
-            hamiltonian = [coupling_entry(sk_params["integrals"], comb, vec) for vec in offsite_vecs]
-            overlap = [coupling_entry(sk_params["overlap"], comb, vec) for vec in offsite_vecs]
-            # dummy
-            coulomb = []
-            
-            # onsite is special case idrc
-            if atom1 == atom2 and comb[0] == comb[1]:
-                hamiltonian += [[0, 0, 0., sk_params["onsite"][comb[0][:1]][0] ]]
-                overlap     += [[0, 0, 0, 1.]]
-                coulomb     += [[0, 0, 0., sk_params["hubbard"][comb[0][:1]][0]]]
+        # set elements
+        couple_combinations(combinations, spinful, sk_params["integrals"], sk_params["onsite"], "hamiltonian")
+        couple_combinations(combinations, spinful, None, sk_params["hubbard"], "coulomb")
 
-            # add interactions as regular vector couplings
-            full_name = (f"{comb[0]}_{atom1}", f"{comb[1]}_{atom2}")
-            self.add_interaction("hamiltonian", full_name, hamiltonian)
-
-            # coulomb => onsite hubbard
-            self.add_interaction("coulomb", full_name, coulomb)
-
-            # this should usually be the case
-            if neglect_overlap == False:
-                self.add_interaction("overlap", full_name, overlap)
-
+        if neglect_overlap == False:
+            couple_combinations(combinations, spinful, sk_params["overlap"], None, "overlap")
+        
         return self
 
+    # TODO: uff, too many magic strings
     def add_atom(self, atom, position, orbitals = None, spinful = False):
         """
         Adds an atom to the material along with its associated orbitals.
@@ -534,9 +559,8 @@ class Material:
         for orb in orbitals:
             species = f"{orb}_{atom}"
             if spinful == True:
-                raise NotImplementedError("No spinful orbs in atom")
-                # self.add_orbital(position, f"{species}_up", atom = atom, kind = orb, s = 1)
-                # self.add_orbital(position, f"{species}_down", atom = atom, kind = orb, s = -1)
+                self.add_orbital(position, f"{species}_up", atom = atom, kind = orb, s = 1)
+                self.add_orbital(position, f"{species}_down", atom = atom, kind = orb, s = -1)
             else:
                 self.add_orbital(position, species, atom = atom, kind = orb)
                 
@@ -552,7 +576,7 @@ class Material:
                 a new orbital species will be created.
             tag (str, optional): An optional label for the orbital.
             atom (str, optional): Name of the atom the orbital belongs to.
-            s (int, optional): Spin quantum number. Defaults to 0.
+            s (int, optional): Spin quantum number. Defaults to 0. 
             kind (str, optional): Type of orbital (e.g., 'pz', 's').
 
         Returns:
