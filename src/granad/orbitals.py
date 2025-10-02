@@ -554,7 +554,7 @@ class OrbitalList:
         self.params = params if params is not None else Params( len(orbs) )
         self._recompute = recompute
         
-        self._protected = {}
+        self._protected = set()
         self._hamiltonian = None
         self._coulomb = None
         self._overlap = None
@@ -925,7 +925,7 @@ class OrbitalList:
             solved_eigensystem = True
         except AttributeError:
             solved_eigensystem = False            
-        if solved_eigensystem and self.is_protected("hamiltonian"):
+        if solved_eigensystem and self.is_protected("hamiltonian"):            
             eigenvectors_ortho, energies = self._ortho_trafo_inv @ self._eigenvectors, self._energies
         if not solved_eigensystem or not self.is_protected("hamiltonian"):
             eigenvectors_ortho, energies = jax.lax.linalg.eigh(hamiltonian_ortho)
