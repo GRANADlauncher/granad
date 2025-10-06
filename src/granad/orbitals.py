@@ -431,84 +431,6 @@ def _fill_matrix(pos1, pos2, group_ids, coupling_dict, matrix = None):
 
     return matrix
 
-
-# TODO: attribute access
-# TODO: makes material class kinda superfluous 
-class Periodic:
-    """Turns an OrbitalList into a unit cell of a periodic structure"""
-    
-    def __init__(self, lst, lattice_vectors, fourier_cutoff):
-        self.lst = lst
-        self.lattice_vectors = lattice_vectors
-        self.fourier_cutoff = fourier_cutoff
-        self.grid = jnp.array( list( product( *(x for x in grid) ) ) )
-
-    def get_intracell_phases(self, ks):
-        """returns relative phases between orbitals in unit cell e^(ik(r-r')) as K x N x N array"""
-        diff = self.lst.positions - self.lst.positions[:, None]
-        return jnp.exp(-1j * ks @ diff)
-
-    def get_intercell_phases(self, ks):
-        """returns relative phases between unit cells e^(ik(DR')) as K x N_f array"""        
-        return jnp.exp(-1j * ks @ self.get_grid_vectors())
-
-    def matrix_to_kspace(self, mat, ks):
-        """turns matrix slice as N_f x N x N array to k-space as K x N x N array"""
-        
-        # phases between orbs in cell, K x N x N
-        intracell_phases = get_intracell_phases(ks)
-
-        # phases between cells, K x N_f
-        intercell_phases = get_intercell_phases(ks)
-        
-        return intracell_phases * (intercell_phases @ mat)
-
-    def get_grid_vectors(self):
-        """returns grid vectors for fourier trafo as N_f x 3"""
-        return jnp.arange(-self.fourier_cutoff, self.fourier_cutoff)[:, None] * self.lattice_vectors
-
-    def _matrix(coupling):
-        grid_vectors = self.get_grid_vectors()
-        return jnp.array([_fill_matrix(self.lst.positions, self.lst.positions + vec, self.lst.coupling.hamiltonian) for vec in grid_vectors])
-
-    def get_hamiltonian(self, ks):        
-        return matrix_to_kspace(_matrix(self.lst.coupling.hamiltonian), ks)
-
-    def get_overlap(self, ks):
-        return matrix_to_kspace(_matrix(self.lst.coupling.overlap, ks))
-
-    def get_density_matrix(self, ks):
-        return
-
-    def get_energies(self, ks):
-        return
-
-    def to_energy_basis(self, ks):
-        return
-
-    def to_site_basis(self, ks):
-        return
-
-    def get_phases(self, ks):
-        return
-
-    def get_phases_derivative(self, ks):
-        return
-    
-    def get_velocity_operator(self, ks):
-        return
-
-    def get_ip_green_function(op1, op2):
-        return
-
-# bulk = Periodic(flake, lattice_basis, fourier_cutoff)
-# ks = xxx
-# energies = bulk.get_energies(ks)
-# plt.plot(jnp.arange(ks.size), energies)
-
-# v = bulk.get_velocity_operator(ks)
-# cond = bulk.get_ip_green_function(op1, op2, omegas, ks)
-
 # TODO: we now have three bases
 # 1. energy basis
 # 2. orbital basis, which might be orthogonal (this is the site basis now)
@@ -825,10 +747,8 @@ class OrbitalList:
         if not self.is_ortho:
             Warning("You have selected non-orthonormal orbitals. These are considered experimental. Some quantities in site basis (e.g. localization) are more difficult to interpret. Energy basis is fine.")
             
-            overlap = _fill_matrix(self.positions, self.positions, group_ids, self.couplings.overlap)
-
             # symmetric orthogonalization
-            overlap_vals, overlap_vecs = jnp.linalg.eigh(overlap)  
+            overlap_vals, overlap_vecs = jnp.linalg.eigh(self._overlap)  
             sqrt_overlap = jnp.diag(overlap_vals**(-0.5))
             ortho_trafo = overlap_vecs @ sqrt_overlap @ overlap_vecs.T
             ortho_trafo_inv = jnp.linalg.inv(ortho_trafo)
