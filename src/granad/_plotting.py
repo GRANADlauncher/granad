@@ -376,6 +376,29 @@ def _display_lattice_cut(positions, selected_positions, polygon = None):
     plt.axis("equal")
     plt.show()
 
+def _display_lattice_cut(positions, selected_positions, polygon=None):
+    fig, ax = plt.subplots(1, 1)
+
+    if polygon is not None:
+        patch = plt.Polygon(
+            polygon[:-1],
+            edgecolor="orange",
+            facecolor="none",
+            linewidth=3  # thicker line
+        )
+        ax.add_patch(patch)
+
+    ax.set_aspect("equal", adjustable="datalim")
+
+    # remove grid and axes
+    ax.grid(False)
+    ax.axis("off")
+
+    # plot points with larger markers
+    ax.scatter(positions[:, 0], positions[:, 1], s=60, c="blue", label="positions")
+    ax.scatter(selected_positions[:, 0], selected_positions[:, 1], s=80, c="red", label="selected")
+    fig.savefig("geometry.png", dpi=200, bbox_inches="tight", transparent=True)
+    
 @_plot_wrapper
 def show_identified_peaks(orbs, omegas, spectrum, eps = 1e-1, return_peaks_transitions = True):
     """
