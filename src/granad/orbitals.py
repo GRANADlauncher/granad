@@ -829,11 +829,11 @@ class OrbitalList:
         assert len(self) > 0
 
         # hamiltonian may change due to self consistency
-        hamiltonian = self._build_matrix(self.couplings.hamiltonian, "hamiltonian", jnp.zeros((len(self),len(self))))
+        hamiltonian = self._build_matrix(self.couplings.hamiltonian, "hamiltonian", jnp.zeros((len(self),len(self))).astype(complex))
 
         # recompute coupling matrices as needed
-        self._coulomb = self._build_matrix(self.couplings.coulomb, "coulomb", jnp.zeros((len(self),len(self))))            
-        self._overlap = self._build_matrix(self.couplings.overlap, "overlap", jnp.zeros((len(self),len(self))))            
+        self._coulomb = self._build_matrix(self.couplings.coulomb, "coulomb", jnp.zeros((len(self),len(self))).astype(complex))            
+        self._overlap = self._build_matrix(self.couplings.overlap, "overlap", jnp.zeros((len(self),len(self))).astype(complex))            
         self._ortho_trafo, self._ortho_trafo_inv = self._build_ortho()
 
         hamiltonian_ortho = self.transform_to_ortho(hamiltonian)
