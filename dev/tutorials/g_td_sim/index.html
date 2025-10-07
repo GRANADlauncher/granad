@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Time-Domain simulations - GRANAD</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Time-Domain simulations";
+        var mkdocs_page_input_path = "tutorials/g_td_sim.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> GRANAD
+        </a>
+        <div class="version">
+          development
+        </div><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../api/">API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contact/">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../how_to_cite/">How to cite</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../units/">Units</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../0_tldr/">GRANAD at a glance</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">Basis Handling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Time-Domain simulations</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#observables">Observables</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">Rabi Oscillations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../k_potentials/">Potentials</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../la_lindblad/">Dissipation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../m_mean_field/">Mean Field Calculations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../n_periodic/">Periodic structures</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">GRANAD</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Tutorials</li>
+      <li class="breadcrumb-item active">Time-Domain simulations</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="time-domain-simulations">Time-Domain simulations</h1>
+<p>We introduce time-domain simulations, which are based on GRANAD's default master equation</p>
+<div class="arithmatex">\[\dot{\rho}(t) = -i [H[t,\rho(t)], \rho] + \mathcal{D}[t, \rho]\]</div>
+<p>The Hamiltonian is non-linear in the sense that the Coulomb term depends on the charge electronic distribution given by the time-dependent density matrix:</p>
+<div class="arithmatex">\[H[t,\rho(t)] = h^{0} + \vec{E} \vec{P} + C(\rho(t) - \rho^{0})\]</div>
+<p>where </p>
+<ol>
+<li><span class="arithmatex">\(h^{0}\)</span> is the single-particle tight-binding Hamiltonian constructed from localized orbitals.</li>
+<li><span class="arithmatex">\(\vec{P}\)</span> is the dipole moment operator depending on lattice site positions <span class="arithmatex">\(\vec{r}\)</span>. Additonal dipole moment elements <span class="arithmatex">\(\vec{d}_{ij}\)</span> between orbitals <span class="arithmatex">\(i\)</span>, <span class="arithmatex">\(j\)</span> of the same site can be taken into account. This leads to an interatomic potential with unit charge <span class="arithmatex">\(e\)</span>, given by <span class="arithmatex">\(e \vec{E} \vec{r}\)</span>, and an intra-atomic potential <span class="arithmatex">\(\vec{E} \vec{d}\)</span>.</li>
+<li><span class="arithmatex">\(\rho^{0}\)</span> is the stationary density matrix representing the system's ground state, and <span class="arithmatex">\(C\)</span> is the Coulomb matrix.</li>
+</ol>
+<p>This expression is the dipole-gauge expression for the Hamiltonian including an external electric field <span class="arithmatex">\(\vec{E}\)</span>.</p>
+<h2 id="observables">Observables</h2>
+<p>You can compute multiple observables in one simulation run</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaterialCatalog</span><span class="p">,</span> <span class="n">Hexagon</span><span class="p">,</span> <span class="n">Pulse</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">flake</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span> <span class="n">Hexagon</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span> <span class="p">)</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">pulse</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">2.3</span><span class="p">,</span> <span class="n">peak</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mi">2</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">operators</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">velocity_operator</span><span class="p">]</span>
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">expectation_values</span> <span class="o">=</span> <span class="n">operators</span><span class="p">,</span>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>     <span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+49.99262428086739 %
+
+
+100.0 %
+</code></pre></div>
+<p>The result object stores this information. Operators are concatenated in the order you passed them in.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">))</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>1
+(6780, 6)
+</code></pre></div>
+<p>The induced dipole moment at timestep 10 is given by</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,:</span><span class="mi">3</span><span class="p">])</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>[5.33244283e-13+0.j 2.88818969e-14+0.j 0.00000000e+00+0.j]
+</code></pre></div>
+<p>Induced current at timestep 10</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,</span><span class="mi">3</span><span class="p">:])</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>[ 1.44993249e-11+4.56137326e-15j -8.45204584e-15+7.90053023e-15j
+  0.00000000e+00+0.00000000e+00j]
+</code></pre></div>
+<p>We can access the Fourier transform as</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">5</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">omegas</span><span class="p">,</span> <span class="n">pulse_omega</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ft_illumination</span><span class="p">(</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="n">omega_max</span> <span class="p">)</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">output_omega</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">ft_output</span><span class="p">(</span> <span class="n">omega_min</span> <span class="o">=</span> <span class="n">omega_min</span><span class="p">,</span> <span class="n">omega_max</span> <span class="o">=</span> <span class="n">omega_max</span> <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span></code></pre></div>
+<p>The incident field is accessible via result.td_illumination, e.g.,</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">td_illumination</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>(6780, 3)
+</code></pre></div>
+<h1 id="continuity-equation-example">Continuity equation example</h1>
+<p>From the classical continuity equation for the charge and current density <span class="arithmatex">\(\rho(\vec{r},t), \vec{j}(\vec{r},t)\)</span> and dipole moment density <span class="arithmatex">\(\vec{p}(\vec{r},t)\)</span>, we have</p>
+<div class="arithmatex">\[\dot{\rho}(\vec{r}, t) = -\nabla \vec{j}(\vec{r}, t) = \nabla \dot{\vec{p}}(\vec{r}, t) \implies \dot{\vec{p}}(\vec{r},t) = \vec{j}(\vec{r},t)\]</div>
+<p>After Fourier transformation, we obtain</p>
+<div class="arithmatex">\[-i\omega \vec{p}(\vec{r}, \omega) = \vec{j}(\vec{r}, \omega)\]</div>
+<p>Its integrated form is given by</p>
+<div class="arithmatex">\[\sum_i \dot{\vec{p}}(\vec{r}_i,t) = \dot{\vec{p}}(t) = \sum_i d\vec{r} \vec{j}(\vec{r}_i,t) =  \vec{j}(t)\]</div>
+<p><span class="arithmatex">\(\vec{j}(t)\)</span> and <span class="arithmatex">\(\vec{p}(t)\)</span> are the total current and dipole moment respectively and we have taken the spatially discrete basis into account. We can obtain operator expectation values directly from the time-domain simulations. The continuity equation above can be verified as follows</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">p</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="n">omegas</span> <span class="o">*</span> <span class="n">output_omega</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">imag</span>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">j</span> <span class="o">=</span> <span class="n">output_omega</span><span class="p">[:,</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">real</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">omegas</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;$- \text</span><span class="si">{Im}</span><span class="s1">[\omega p_x]$&#39;</span><span class="p">)</span>
+</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">omegas</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;$\text</span><span class="si">{Re}</span><span class="s1">[j_x]$&#39;</span><span class="p">)</span>
+</span><span id="__span-6-6"><a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\omega$ (eV)&#39;</span><span class="p">)</span>
+</span><span id="__span-6-7"><a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$j$&#39;</span><span class="p">)</span>
+</span><span id="__span-6-8"><a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</span><span id="__span-6-9"><a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_29_0.png" /></p>
+<h2 id="density-matrices">Density matrices</h2>
+<p>If we want to find the time-dependent density matrices, we can omit the operator list. The result object then contains a one-element list.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-7-4"><a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-7-5"><a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;full&quot;</span><span class="p">],</span>
+</span><span id="__span-7-6"><a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>     <span class="p">)</span>
+</span><span id="__span-7-7"><a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="n">density_matrix</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-7-8"><a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">density_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+49.99262428086739 %
+
+
+100.0 %
+(6780, 96, 96)
+</code></pre></div>
+<p>We can convert them to energy basis</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">density_matrix_e</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">transform_to_energy_basis</span><span class="p">(</span> <span class="n">density_matrix</span> <span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">density_matrix_e</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>(6780, 96, 96)
+</code></pre></div>
+<h2 id="occupations">Occupations</h2>
+<p>To reduce memory consumption, we can extract only the site occupations to avoid storing the entire stack of density matices in memory.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;occ_x&quot;</span><span class="p">],</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-9-6"><a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>     <span class="p">)</span>
+</span><span id="__span-9-7"><a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">occ_x</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-9-8"><a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">occ_x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+49.99262428086739 %
+
+
+100.0 %
+(6780, 96)
+</code></pre></div>
+<p>Further reduction of the memory consumption can be controlled by the grid argument, which describes the density of the time domain sampling grid, explained in the API section on the <code>master_equation</code> method.</p>
+<h2 id="energy-occupations">Energy occupations</h2>
+<p>Similarly to site occupations, energy occupations can also be obtained from the time-domain simulations.</p>
+<p><em>Warning</em>: this introduces additional cubic complexity </p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
+</span><span id="__span-10-2"><a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-10-3"><a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-10-4"><a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;occ_e&quot;</span><span class="p">],</span>
+</span><span id="__span-10-5"><a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-10-6"><a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>     <span class="p">)</span>
+</span><span id="__span-10-7"><a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">occ_e</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-10-8"><a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">occ_e</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+49.99262428086739 %
+
+
+100.0 %
+(6780, 96)
+</code></pre></div>
+<h2 id="initially-excited-states">Initially excited states</h2>
+<p>GRANAD allows to set initially excited states by specifying the single-particle transition in the density matrix as follows</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">flake</span><span class="o">.</span><span class="n">set_excitation</span><span class="p">(</span> <span class="n">flake</span><span class="o">.</span><span class="n">homo</span><span class="p">,</span> <span class="n">flake</span><span class="o">.</span><span class="n">lumo</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="png" src="../g_td_sim_files/g_td_sim_45_0.png" /></p>
+<p>In case of degeneracies, GRANAD distributes electrons equally among all degenerate energy levels, as demonstrated in the figure above.</p>
+<h2 id="combinations">Combinations</h2>
+<p>We can also extract multiple quantities at the same time</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
+</span><span id="__span-12-2"><a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-12-3"><a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>    <span class="n">density_matrix</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;full&quot;</span><span class="p">,</span> <span class="s2">&quot;occ_x&quot;</span><span class="p">],</span>
+</span><span id="__span-12-4"><a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="n">expectation_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">],</span>
+</span><span id="__span-12-5"><a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">,</span>
+</span><span id="__span-12-6"><a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">pulse</span><span class="p">,</span>
+</span><span id="__span-12-7"><a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+49.99262428086739 %
+
+
+100.0 %
+</code></pre></div>
+<p>The output will now contain three arrays: induced dipole moments, site occupations and full density matrices</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">))</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># by default, operators come first</span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># we specified [&quot;full&quot;, &quot;occ_x&quot;] =&gt; full density matrices</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1"># we specified [&quot;full&quot;, &quot;occ_x&quot;] =&gt; site occupations</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>3
+(6780, 3)
+(6780, 96, 96)
+(6780, 96)
+</code></pre></div>
+<h2 id="epi">EPI</h2>
+<p>The energy-based plasmonicity index introduced by <a href="https://pubs.acs.org/doi/10.1021/acs.jpcc.0c07964">Müller et al.</a> is a quantity to characterize the steady-state plasmonicity. We use plane wave illumination to drive the system into a steady state and then compute the EPI.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+</span><span id="__span-14-2"><a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Wave</span>
+</span><span id="__span-14-3"><a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>
+</span><span id="__span-14-4"><a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="n">omega</span> <span class="o">=</span> <span class="mf">2.5</span> <span class="c1"># we pick the approximate resonance at 2.5 </span>
+</span><span id="__span-14-5"><a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="n">res</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
+</span><span id="__span-14-6"><a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="n">relaxation_rate</span> <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-14-7"><a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="n">illumination</span> <span class="o">=</span> <span class="n">Wave</span><span class="p">(</span><span class="n">frequency</span> <span class="o">=</span> <span class="n">omega</span><span class="p">,</span> <span class="n">amplitudes</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span>
+</span><span id="__span-14-8"><a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>    <span class="n">end_time</span> <span class="o">=</span> <span class="mi">40</span><span class="p">)</span>
+</span><span id="__span-14-9"><a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
+</span><span id="__span-14-10"><a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="c1"># numerical broadening parameter of 0.05 eV</span>
+</span><span id="__span-14-11"><a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a><span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.05</span>
+</span><span id="__span-14-12"><a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>
+</span><span id="__span-14-13"><a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a><span class="c1"># print and compute the EPI</span>
+</span><span id="__span-14-14"><a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">flake</span><span class="o">.</span><span class="n">get_epi</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">final_density_matrix</span><span class="p">,</span> <span class="n">omega</span> <span class="o">=</span> <span class="n">omega</span><span class="p">,</span> <span class="n">epsilon</span> <span class="o">=</span> <span class="n">epsilon</span><span class="p">))</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+49.99262428086739 %
+
+
+100.0 %
+
+
+0.8900325958531635
+</code></pre></div>
+<div style="
+    padding: 10px;
+    background-color: #fff3cd;
+    color: #856404;
+    border-left: 5px solid #ffcc00;
+    border-radius: 5px;
+    padding: 10px;
+">
+<b>Important Note:</b> The <code>diffrax</code> solver adjusts the simulation parameters automatically 
+depending on the initial values of physical parameters. Running stable calculations might require 
+some fine-tuning. Example scripts providing working setups are provided <a href="https://github.com/GRANADlauncher/granad/tree/main/docs_src/Time_Domain_Simulations">here</a>.
+</div>
+              
+            </div>
+          </div><div style="text-align: center; font-size: 14px; padding: 10px;">
+    <strong>Documentation Version:</strong> development |
+    <strong>Commit:</strong> 872fcbbd6ce4c8088346044b108626299030eab1
+</div>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../e_electric_fields/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../h_rabi_oscillations/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../javascripts/mathjax.js"></script>
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
