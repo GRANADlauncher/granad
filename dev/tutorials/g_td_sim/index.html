@@ -69,6 +69,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ab_cutting/">Cutting</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
@@ -175,12 +177,12 @@ RHS compiled
 <p>The induced dipole moment at timestep 10 is given by</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,:</span><span class="mi">3</span><span class="p">])</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>[5.33244283e-13+0.j 2.88818969e-14+0.j 0.00000000e+00+0.j]
+<div class="language-text highlight"><pre><span></span><code>[9.10027669e-13+0.j 2.28392305e-13+0.j 0.00000000e+00+0.j]
 </code></pre></div>
 <p>Induced current at timestep 10</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">10</span><span class="p">,</span><span class="mi">3</span><span class="p">:])</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>[ 1.44993249e-11+4.56137326e-15j -8.45204584e-15+7.90053023e-15j
+<div class="language-text highlight"><pre><span></span><code>[ 1.45211163e-11+2.04475353e-15j -1.12189091e-15-3.54161700e-15j
   0.00000000e+00+0.00000000e+00j]
 </code></pre></div>
 <p>We can access the Fourier transform as</p>
@@ -347,7 +349,7 @@ RHS compiled
 100.0 %
 
 
-0.8900325958531635
+0.8492060922782927
 </code></pre></div>
 <div style="
     padding: 10px;
@@ -365,7 +367,7 @@ some fine-tuning. Example scripts providing working setups are provided <a href=
             </div>
           </div><div style="text-align: center; font-size: 14px; padding: 10px;">
     <strong>Documentation Version:</strong> development |
-    <strong>Commit:</strong> 872fcbbd6ce4c8088346044b108626299030eab1
+    <strong>Commit:</strong> 8e31b6fc614257bba1885db5fa46df78aec16b78
 </div>
           
         </div>

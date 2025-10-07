@@ -69,6 +69,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../a_getting_started/">Getting started</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ab_cutting/">Cutting</a>
+                  </li>
                   <li class="toctree-l1 current"><a class="reference internal current" href="#">List-based Simulations</a>
     <ul class="current">
     <li class="toctree-l2"><a class="reference internal" href="#orbitals-a-recap">Orbitals: A Recap</a>
@@ -197,8 +199,8 @@ Included tags with number of orbitals: {&#39;atom&#39;: 2}
 <div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">atom</span><span class="o">.</span><span class="n">set_hamiltonian_element</span><span class="p">(</span> <span class="n">upper_level</span><span class="p">,</span> <span class="n">lower_level</span><span class="p">,</span> <span class="mf">0.1</span><span class="n">j</span><span class="p">)</span> <span class="c1"># changes the same element </span>
 </span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">hamiltonian</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>[[-0.5-0.j   0. +0.1j]
- [ 0. -0.1j  0.5-0.j ]]
+<div class="language-text highlight"><pre><span></span><code>[[-0.5  0. ]
+ [ 0.   0.5]]
 </code></pre></div>
 <p>Setting Coulomb matrix elements proceeds analogously by calling <code>atom.set_coulomb_element</code>.</p>
 <p>We see that the matrix entry corresponding to the inter-level coupling is now modified accordingly, with hermiticity of the Hamiltonian taken into account properly.</p>
@@ -361,7 +363,7 @@ Included tags with number of orbitals: {&#39;atom&#39;: 2}
             </div>
           </div><div style="text-align: center; font-size: 14px; padding: 10px;">
     <strong>Documentation Version:</strong> development |
-    <strong>Commit:</strong> 872fcbbd6ce4c8088346044b108626299030eab1
+    <strong>Commit:</strong> 8e31b6fc614257bba1885db5fa46df78aec16b78
 </div>
           
         </div>
@@ -375,7 +377,7 @@ Included tags with number of orbitals: {&#39;atom&#39;: 2}
   <span class="rst-current-version" data-toggle="rst-current-version">
     
     
-      <span><a href="../a_getting_started/" style="color: #fcfcfc">&laquo; Previous</a></span>
+      <span><a href="../ab_cutting/" style="color: #fcfcfc">&laquo; Previous</a></span>
     
     
       <span><a href="../c_plotting/" style="color: #fcfcfc">Next &raquo;</a></span>
