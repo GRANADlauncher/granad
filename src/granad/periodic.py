@@ -1,8 +1,11 @@
 import jax
 import jax.numpy as jnp
 
+import matplotlib.pyplot as plt
+
 from granad.orbitals import _fill_matrix
 from granad import _numerics
+
 
 # TODO: performance meh because nothing is cached and everything is recomputed
 # TODO: attribute access

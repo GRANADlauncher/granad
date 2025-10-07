@@ -1513,8 +1513,8 @@ class OrbitalList:
             self.transform_to_ortho(self.hamiltonian),
             self.energies,
             self.transform_to_ortho(self.coulomb * coulomb_strength),
-            self.transform_basis(self.initial_density_matrix, self.ortho_trafo_inv, self.ortho_trafo_inv.conj().T),
-            self.transform_basis(self.stationary_density_matrix, self.ortho_trafo_inv, self.ortho_trafo_inv.conj().T),
+            self._transform_basis(self.initial_density_matrix, self.ortho_trafo_inv, self.ortho_trafo_inv.conj().T),
+            self._transform_basis(self.stationary_density_matrix, self.ortho_trafo_inv, self.ortho_trafo_inv.conj().T),
             self.ortho_trafo_inv @ self.eigenvectors,
             self.dipole_operator, # this is a bit tricky for the non-orthogonal case
             self.electrons,

@@ -22,6 +22,10 @@
 # We will construct a unit cell for graphene
 
 # +
+import matplotlib.pyplot as plt
+
+from granad import *
+
 graphene = get_graphene()
 flake = graphene.cut_flake(grid_range = [(0,2), (0,1)])
 del flake[-1]
@@ -37,7 +41,7 @@ lattice_vectors = 2.46 * jnp.array([
     [-0.5, jnp.sqrt(3)/2, 0]
 ])
 fourier_cutoff = 1
-bulk = Periodic(flake, lattice_vectors, fourier_cuttoff)
+bulk = Periodic(flake, lattice_vectors, fourier_cutoff)
 # -
 
 # We can now plot n repetitions of the unit cell in each periodic dimension
