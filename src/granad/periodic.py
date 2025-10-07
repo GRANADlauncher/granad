@@ -86,7 +86,7 @@ class Periodic:
     def _matrix(self, coupling):
         grid_vectors = self.get_grid_vectors()
         group_ids = jnp.array( [orb.group_id.id for orb in self.lst._list] )            
-        return jnp.array([_fill_matrix(self.lst.positions, self.lst.positions + vec, group_ids, coupling) for vec in grid_vectors])
+        return jnp.array([_fill_matrix(self.lst.positions, self.lst.positions + vec, group_ids, coupling, self.lst._list) for vec in grid_vectors])
 
     def get_hamiltonian(self, ks):        
         return self.matrix_to_kspace(self._matrix(self.lst.couplings.hamiltonian), ks)

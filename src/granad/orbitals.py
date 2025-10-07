@@ -377,7 +377,7 @@ def plotting_methods(cls):
 
 # TODO: JIT this? => need same arity, coupling dict static
 # TODO: wrote this for N x M matrices, but no clue whether it works
-def _fill_matrix(pos1, pos2, group_ids, coupling_dict, matrix = None):
+def _fill_matrix(pos1, pos2, group_ids, coupling_dict, lst, matrix = None):
     """fills matrix with entries from coupling dict"""
 
     distances = jnp.round(pos1 - pos2[:, None], 6)
@@ -421,8 +421,8 @@ def _fill_matrix(pos1, pos2, group_ids, coupling_dict, matrix = None):
     # we now set single elements
     rows, cols, vals = [], [], []
     for key, val in coupling_dict.orbital_items():
-        rows.append(self._list.index(key[0]))
-        cols.append(self._list.index(key[1]))
+        rows.append(lst.index(key[0]))
+        cols.append(lst.index(key[1]))
         vals.append(val)
 
     vals = jnp.array(vals)
@@ -765,7 +765,7 @@ class OrbitalList:
             return default
         
         group_ids = jnp.array( [orb.group_id.id for orb in self._list] )            
-        return _fill_matrix(self.positions, self.positions, group_ids, coupling, default)
+        return _fill_matrix(self.positions, self.positions, group_ids, coupling, self._list, default)
 
     def _check_occupation(self, occ, flag):
         eps = 1e-1
