@@ -377,7 +377,7 @@ def plotting_methods(cls):
 
 # TODO: JIT this? => need same arity, coupling dict static
 # TODO: wrote this for N x M matrices, but no clue whether it works
-def _fill_matrix(pos1, pos2, group_ids, coupling_dict, matrix = None):
+def _fill_matrix(pos1, pos2, group_ids, coupling_dict, lst, matrix = None):
     """fills matrix with entries from coupling dict"""
 
     distances = jnp.round(pos1 - pos2[:, None], 6)
@@ -421,8 +421,8 @@ def _fill_matrix(pos1, pos2, group_ids, coupling_dict, matrix = None):
     # we now set single elements
     rows, cols, vals = [], [], []
     for key, val in coupling_dict.orbital_items():
-        rows.append(self._list.index(key[0]))
-        cols.append(self._list.index(key[1]))
+        rows.append(lst.index(key[0]))
+        cols.append(lst.index(key[1]))
         vals.append(val)
 
     vals = jnp.array(vals)
@@ -765,7 +765,7 @@ class OrbitalList:
             return default
         
         group_ids = jnp.array( [orb.group_id.id for orb in self._list] )            
-        return _fill_matrix(self.positions, self.positions, group_ids, coupling, default)
+        return _fill_matrix(self.positions, self.positions, group_ids, coupling, self._list, default)
 
     def _check_occupation(self, occ, flag):
         eps = 1e-1
@@ -829,11 +829,11 @@ class OrbitalList:
         assert len(self) > 0
 
         # hamiltonian may change due to self consistency
-        hamiltonian = self._build_matrix(self.couplings.hamiltonian, "hamiltonian", self._hamiltonian)
+        hamiltonian = self._build_matrix(self.couplings.hamiltonian, "hamiltonian", jnp.zeros((len(self),len(self))).astype(complex))
 
         # recompute coupling matrices as needed
-        self._coulomb = self._build_matrix(self.couplings.coulomb, "coulomb", self._coulomb)            
-        self._overlap = self._build_matrix(self.couplings.overlap, "overlap", self._overlap)            
+        self._coulomb = self._build_matrix(self.couplings.coulomb, "coulomb", jnp.zeros((len(self),len(self))).astype(complex))            
+        self._overlap = self._build_matrix(self.couplings.overlap, "overlap", jnp.zeros((len(self),len(self))).astype(complex))            
         self._ortho_trafo, self._ortho_trafo_inv = self._build_ortho()
 
         hamiltonian_ortho = self.transform_to_ortho(hamiltonian)
@@ -1513,8 +1513,8 @@ class OrbitalList:
             self.transform_to_ortho(self.hamiltonian),
             self.energies,
             self.transform_to_ortho(self.coulomb * coulomb_strength),
-            self.transform_basis(self.initial_density_matrix, self.ortho_trafo_inv, self.ortho_trafo_inv.conj().T),
-            self.transform_basis(self.stationary_density_matrix, self.ortho_trafo_inv, self.ortho_trafo_inv.conj().T),
+            self._transform_basis(self.initial_density_matrix, self.ortho_trafo_inv, self.ortho_trafo_inv.conj().T),
+            self._transform_basis(self.stationary_density_matrix, self.ortho_trafo_inv, self.ortho_trafo_inv.conj().T),
             self.ortho_trafo_inv @ self.eigenvectors,
             self.dipole_operator, # this is a bit tricky for the non-orthogonal case
             self.electrons,

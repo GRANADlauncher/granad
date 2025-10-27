@@ -8,3 +8,4 @@
 ::: granad._numerics
 ::: granad._plotting
 ::: granad.parsing
+::: granad.periodic
