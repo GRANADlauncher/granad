@@ -1779,7 +1779,7 @@ class OrbitalList:
         """
         if args is None:
             args = self.get_args(relaxation_rate = relaxation_rate, coulomb_strength = coulomb_strength, propagator = None)
-        sus = _numerics.rpa_polarizability_function( args, hungry )
+        sus = _numerics.rpa_susceptibility_function( args, hungry )
         return jax.lax.map(sus, omegas)    
     
     @property
