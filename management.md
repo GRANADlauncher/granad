@@ -8,14 +8,11 @@ git clone https://github.com/GRANADlauncher/granad/
 ```
 
 It has two branches:
-- *main*: published version, includes
-  - time domain simulations for (pulsed) dipole illuminations and plane waves. these can be included in the dipole gauge (x * E) or the velocity gauge (j * A).
-  - frequency domain simulations (non-interacting particles and electron repulsion via RPA)
-  - plotting utilities and eigenvalue analysis
-  - default materials (graphene, chains)
-- *dev*: this has all features of main and experimental ones:
-  - a self-consistent mean field loop
-  - some more materials (ssh, hbn, tmdc)
+
+| name | description | functionality |
+| --- | --- | --- |
+| main | published version | Time domain simulations. (pulsed) dipole illuminations and plane waves. dipole (x * E) or velocity gauge (j * A). Frequency domain simulations (non-interacting particles and electron repulsion via RPA). Plotting utilities and eigenvalue analysis. Default materials (graphene, chains). |
+| dev | development version | Self-consistent mean field loop. More materials (tmdcs).|
 
 There is also the branch *gh-pages*, which is exclusively for documentation and doesn't need to be changed directly.
 
@@ -48,43 +45,41 @@ I recommend the following workflow:
 
 ## Documentation
    Both branches have a documentation.
-
-   The main one is:
-
-   https://granadlauncher.github.io/granad/
-
-   The dev one is:
-
-   https://granadlauncher.github.io/granad/dev
    
+   | branch | doc |
+   |---|---|
+   | main |    https://granadlauncher.github.io/granad/|
+   | dev |    https://granadlauncher.github.io/granad/dev |
+
    The documentation is a collection of html pages. These pages are built from two sources
    
-   1. There are markdown files, named like xyz.md, in the folder "granad/docs". Every name corresponds to a page.
+   1. Markdown files, named like *xyz.md*, in the folder "granad/docs". These make up the "general documentation".
+   2. Python files located in the subfolder "granad/tutorials". These are the tutorials.
 
-       E.g. there is a file "how_to_cite.md". This file becomes the web page https://granadlauncher.github.io/granad/how_to_cite/.
-
-       The file api.md is special. It contains the documentation of all the functions in the code. It contains lines like
+### Markdown Files
+   Every name corresponds to a page. E.g. there is a file "how_to_cite.md". This file becomes the web page https://granadlauncher.github.io/granad/how_to_cite/. The file *api.md* is special. It contains the documentation of all the functions in the code. It contains lines like
      
    ```
    ::: granad.orbitals
    ::: granad.fields
    ```
    
-   these lines mean: document all functions in
+   These lines mean: Document all functions in
 
    ```
    granad/src/granad/orbitals
    granad/src/granad/fields
    ```
+
+### Tutorials
    
-   2. There is a collection of python files located in the subfolder granad/tutorials. These python files get converted to *jupyter notebooks*. The jupyter notebooks then get converted to markdown files. These get converted to website pages.
+   These python files get converted to *jupyter notebooks*. The jupyter notebooks then get converted to markdown files. These get converted to website pages. This means: *Every tutorial is an executable jupyter notebook*. For example, you can download the tutorial on linear response as a notebook
+   
+   For the *main* version: https://github.com/GRANADlauncher/granad/blob/gh-pages/tutorials/i_linear_response.ipynb
+   
+   For the *dev* version: https://github.com/GRANADlauncher/granad/blob/gh-pages/dev/tutorials/i_linear_response.ipynb
 
-      This means: *Every tutorial is an executable jupyter notebook*. For example, you can download the tutorial on linear response as a notebook
-
-      For the *main* version: https://github.com/GRANADlauncher/granad/blob/gh-pages/tutorials/i_linear_response.ipynb
-
-      For the *dev* version: https://github.com/GRANADlauncher/granad/blob/gh-pages/dev/tutorials/i_linear_response.ipynb
-
+### Building the Documentation
 
    To build the documentation, append the flag "[build-docs]" like this
 	   
