@@ -9,7 +9,7 @@
 
 # ## Skyrmion fields
 #
-# ### Background
+### Background
 #
 # In a transverse plane of a paraxial beam, polarization is encoded by the (normalized) Stokes vector
 #
@@ -34,7 +34,7 @@
 # Here \(u_p^\ell\) is a scalar LG mode in the paraxial approximation, and \(\mathbf{e}_{1,2}\) are orthogonal
 # polarization vectors (by default right/left circular polarization in GRANAD's convention).
 
-# ### Initialize a Skyrmion field
+### Initialize a Skyrmion field
 #
 # We initialize a Skyrmionic field like this:
 # +
@@ -60,7 +60,7 @@ ys = jnp.linspace(-a, a, 600)
 print(e_field(xs, ys, 0).shape)  # evaluate at z = 0 plane
 # -
 
-# ## Stokes vector
+## Stokes vector
 #
 # The topological invariant is carried by the Stokes vector. We compute Stokes parameters by projecting
 # the electric field onto circular polarization basis vectors \( \mathbf{e}_r, \mathbf{e}_l \).
@@ -73,7 +73,7 @@ sv = f_sv(xs, ys, 0)
 print(sv.shape)
 # -
 
-# ### Visualizing the normalized Stokes vector
+### Visualizing the Stokes vector
 #
 # We visualize the normalized Stokes vector \( \mathbf{s} = (S_1,S_2,S_3)/S_0 \).
 # +
@@ -117,9 +117,9 @@ plt.show()
 print(get_skyrmion_number(sv))
 # -
 
-# ## More examples
+## More examples
 #
-# ### Trivial case (no topology)
+### Trivial case (no topology)
 #
 # If the two components have the same OAM, the texture is topologically trivial.
 # +
@@ -145,7 +145,7 @@ sv = f_sv(xs, ys, 0)
 print(get_skyrmion_number(sv))  # should be ~ 3 because Δℓ = 3
 # -
 
-# ## Skyrmion fields in time propagation
+## Skyrmion fields in time propagation
 #
 # If you want to use a Skyrmionic beam as an external illumination in time-domain simulations,
 # pass a `flake` to `Skyrmion(...)`. GRANAD then evaluates the (complex) spatial field once at the
