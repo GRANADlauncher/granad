@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>Getting started - GRANAD</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+        <link href="../../assets/_mkdocstrings.css" rel="stylesheet" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Getting started";
+        var mkdocs_page_input_path = "tutorials/a_getting_started.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../..">
+          <img src="../../img/logo.png" class="logo" alt="Logo"/>
+        </a>
+        <div class="version">
+          development
+        </div><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../api/">API</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../contact/">About</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../how_to_cite/">How to cite</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../units/">Units</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Tutorials</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" href="../0_tldr/">GRANAD at a glance</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Getting started</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#orbitals">Orbitals</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#materials">Materials</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#orbitallists">OrbitalLists</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#a-first-simulation">A first simulation</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../ab_cutting/">Cutting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../b_list_based_simulations/">List-based Simulations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../c_plotting/">Plotting</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../d_basis_handling/">Basis Handling</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../e_electric_fields/">Electric Fields</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../g_td_sim/">Time-Domain simulations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../h_rabi_oscillations/">Rabi Oscillations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../i_linear_response/">Linear response</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../j_defining_materials/">Defining Materials</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../k_potentials/">Potentials</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../l_master/">Custom Time Evolution</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../la_lindblad/">Dissipation</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../m_mean_field/">Mean Field Calculations</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../n_periodic/">Periodic structures</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../o_topology/">Topology</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
+                  </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">GRANAD</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Tutorials</li>
+      <li class="breadcrumb-item active">Getting started</li>
+    <li class="wy-breadcrumbs-aside">
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="getting-started">Getting started</h1>
+<p>Below we introduce the basics of GRANAD and perform an example simulation.</p>
+<h2 id="introduction">Introduction</h2>
+<p>GRANAD lets you simulate structures from a few orbitals up to extended nanostructures. The process of specifying a structure is designed to be easy and interactive: You can add, shift, combine and manipulate parts of your structure at varying levels of detail involving large groups of orbitals or single orbitals. To this end, GRANAD offers three fundamental datatypes:</p>
+<ol>
+<li><em>Orbitals</em> are the fundamental building block of a structure.</li>
+<li><em>Materials</em> are a stand-in for infinite bulks. You can cut finite pieces from these bulks, which correspond to lists of orbitals with specified positions and properties.</li>
+<li><em>OrbitalLists</em> represent a concrete structure. In essence, you can handle these as normal Python lists with additional information regarding Orbital coupling.</li>
+</ol>
+<p>We will use each of them below to set up a small graphene nanoflake coupling to an external electric field.</p>
+<p>Once this is done, we will use GRANAD's main feature and simulate the induced dynamics in the nanoflake directly in time domain.</p>
+<h2 id="orbitals">Orbitals</h2>
+<p>Here, we create an orbital and print its properties to understand its structure. By default, each orbital is considered to be occupied by 1 electron.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Orbital</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">my_first_orbital</span> <span class="o">=</span> <span class="n">Orbital</span><span class="p">(</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;a tag contains arbitrary information&quot;</span><span class="p">,</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span>
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_orbital</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>{&#39;position&#39;: Array([0., 0., 0.], dtype=float64),
+ &#39;layer_index&#39;: None,
+ &#39;tag&#39;: &#39;a tag contains arbitrary information&#39;,
+ &#39;spin&#39;: None,
+ &#39;atom_name&#39;: None,
+ &#39;kind&#39;: None,
+ &#39;group_id&#39;: GroupId(id=1)}
+</code></pre></div>
+<p>From the output above, we see that orbitals are characterized by their position and a user-defined tag. They are placed at the origin by default. We can change this by passing an explicit position.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">my_second_orbital</span> <span class="o">=</span> <span class="n">Orbital</span><span class="p">(</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">position</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;a new, shifted orbital&quot;</span><span class="p">,</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">)</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_second_orbital</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>{&#39;position&#39;: Array([1., 1., 1.], dtype=float64),
+ &#39;layer_index&#39;: None,
+ &#39;tag&#39;: &#39;a new, shifted orbital&#39;,
+ &#39;spin&#39;: None,
+ &#39;atom_name&#39;: None,
+ &#39;kind&#39;: None,
+ &#39;group_id&#39;: GroupId(id=2)}
+</code></pre></div>
+<h2 id="materials">Materials</h2>
+<p>Materials can be used to create orbital lists. Users can define custom materials or choose among the prebuilt options. Prebuilt materials correspond to fixed models common in the literature. In modelling electronic interactions, GRANAD supports hoppings and Coulomb interactions. The built-in graphene model contains only a single pz orbital per atom. Materials are obtained through the MaterialCatalog</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">MaterialCatalog</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">available</span><span class="p">()</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>Available materials:
+graphene
+ssh
+chain
+hBN
+</code></pre></div>
+<p>Let's inspect a material.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>Material: graphene
+  Lattice Constant: 2.46 Å
+  Lattice Basis: 
+[[ 1.         0.         0.       ]
+ [-0.5        0.8660254  0.       ]]
+  Orbital Species:
+    pz characterized by (n,l,m,s, atom name) = (0, &#39;C&#39;)
+  Orbitals:
+    Position: (0, 0), Tag: sublattice_1, Species: pz
+    Position: (-0.3333333333333333, -0.6666666666666666), Tag: sublattice_2, Species: pz
+  Interactions:
+   Type: hamiltonian, Participants: (&#39;pz&#39;, &#39;pz&#39;):
+                    NN Couplings: 0, -2.66
+                    Other neighbors: 
+    Returns a zero coupling constant as a complex number.
+
+    Args:
+        d (float): A parameter (typically representing distance or some other factor) that is ignored by the function, as the output is always zero.
+
+    Returns:
+        complex: Returns 0.0 as a complex number (0.0j).
+
+   Type: coulomb, Participants: (&#39;pz&#39;, &#39;pz&#39;):
+                    NN Couplings: 16.522, 8.64, 5.333
+                    Other neighbors: Coupling with a (regularized) Coulomb-like potential
+</code></pre></div>
+<p>This function prints a description of the material, i.e., its parameters, geometry, the type of the involved orbitals, the position of orbitals in the unit cell and the interactions. Let's pick a concrete material.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">graphene</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;graphene&quot;</span><span class="p">)</span>
+</span></code></pre></div>
+<p>NOTE: The MaterialCatalog provides pre-defined materials with default values for quick access. These materials can be customized at the time of retrieval by passing parameters directly to the <code>get</code> method. For example, to create and customize an SSH model with specific hopping parameters and atomic displacement:</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">my_ssh_model</span> <span class="o">=</span> <span class="n">MaterialCatalog</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ssh&quot;</span><span class="p">,</span> <span class="n">delta</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">displacement</span> <span class="o">=</span> <span class="mf">0.6</span><span class="p">)</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">my_ssh_chain</span> <span class="o">=</span> <span class="n">my_ssh_model</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>  
+</span></code></pre></div>
+<h2 id="orbitallists">OrbitalLists</h2>
+<p>An OrbitalList is a list of orbitals. They can be created directly by combining user-defined orbitals</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">OrbitalList</span>
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">my_first_orbital_list</span> <span class="o">=</span> <span class="n">OrbitalList</span><span class="p">([</span><span class="n">my_first_orbital</span><span class="p">,</span> <span class="n">my_second_orbital</span><span class="p">])</span>
+</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_orbital_list</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>List with 2 orbitals, 2 electrons.
+Excitation: [0] electrons excited from energy levels [0] to [0].
+Included tags with number of orbitals: {&#39;a tag contains arbitrary information&#39;: 1, &#39;a new, shifted orbital&#39;: 1}
+</code></pre></div>
+<p>This displays information about the number of orbitals, electrons and single-particle excitations involved in constructing the initial density matrix.</p>
+<p>Alternatively, orbital lists can represent flakes cut from a material. You do this by specifying the shape of the flake.
+You can specify an arbitrary shape, but this is covered in a separate tutorial.
+For now, we will use a built-in shape: an triangle with a base length of 18 Angström.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Triangle</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+</span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">triangle</span> <span class="o">=</span> <span class="n">Triangle</span><span class="p">(</span><span class="mi">18</span><span class="p">)</span>
+</span></code></pre></div>
+<p>Now, our shape is ready and we can start cutting. To make sure that we are satisfied with what we get, we plot the flake. By default, GRANAD cuts any "dangling" atoms.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">my_first_flake</span> <span class="o">=</span> <span class="n">graphene</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span><span class="n">triangle</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-8-2"><a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_flake</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>List with 61 orbitals, 61 electrons.
+Excitation: [0] electrons excited from energy levels [0] to [0].
+Included tags with number of orbitals: {&#39;sublattice_1&#39;: 28, &#39;sublattice_2&#39;: 33}
+</code></pre></div>
+<p><img alt="png" src="../a_getting_started_files/a_getting_started_23_1.png" /></p>
+<p>Note that the <code>plot=True</code> option displays an "infinite" graphene sheet (blue points), from which only the flake (orange points) will be kept in the final structure. If you want to visualize the flake in isolation, use <code>show_2d</code>, as explained in more detail in the plotting tutorial.</p>
+<p>There is an extra option for dealing with graphene-like lattices we can pass to the built-in shape, which is the armchair boolean. It rotates the shape to get the correct edge type. The optional "shift" argument lets you shift the shape in the plane.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">triangle_ac</span> <span class="o">=</span> <span class="n">Triangle</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="n">armchair</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">my_first_flake</span> <span class="o">=</span> <span class="n">graphene</span><span class="o">.</span><span class="n">cut_flake</span><span class="p">(</span><span class="n">triangle_ac</span><span class="p">,</span> <span class="n">plot</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+</span></code></pre></div>
+<p><img alt="png" src="../a_getting_started_files/a_getting_started_26_0.png" /></p>
+<p>For more information on cutting, including different edge types and how to keep dangling atoms, have a look at the corresponding tutorial.</p>
+<h2 id="a-first-simulation">A first simulation</h2>
+<p>GRANAD offers access to the time-resolved density matrix <span class="arithmatex">\(\rho(t)\)</span> of a system by integrating a nonlinear master equation. The exact mathematical details are covered in the tutorial on time-domain simulations. Once the time dependent density matrix is known, dynamical expectation values can be computed. For a Hermitian operator <span class="arithmatex">\(A\)</span>, the expectation value is then  <span class="arithmatex">\(a(t) = \text{Tr}[\rho(t) A]\)</span>. We will illustrate this with the example of the dipole moment in the small graphene flake we created above.</p>
+<p>The density matrix is normalized to allow two electrons per single-particle energy eigenstate and populated according to the Aufbau principle. The energy landscape together with the initial state occupation can be visualized as follows</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-10-1"><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">my_first_flake</span><span class="o">.</span><span class="n">show_energies</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="png" src="../a_getting_started_files/a_getting_started_31_0.png" /></p>
+<p>GRANAD offers similar built-in functions to visualize static and dynamic properties of a flake. For more information, please consult the corresponding tutorial.</p>
+<p>Now that we are ready, we can study the induced dipole moment. In particular, we will:</p>
+<ol>
+<li>Excite the flake with an electric field.</li>
+<li>Compute its dipole moment <span class="arithmatex">\(\vec{p}(t) = \text{Tr}[\rho(t) \vec{P}]\)</span>, where <span class="arithmatex">\(\vec{P}\)</span> is the dipole operator.</li>
+</ol>
+<p>The electric field is given as a function mapping the time (a single float) to a vector representing the field components like this <code>field : t -&gt; vec</code>.</p>
+<p>In addition to GRANAD's built-in functions, custom functions for illumination can be specified. We will use the built-in Pulse.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-11-1"><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">granad</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pulse</span>
+</span><span id="__span-11-2"><a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
+</span><span id="__span-11-3"><a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="n">my_first_illumination</span> <span class="o">=</span> <span class="n">Pulse</span><span class="p">(</span>
+</span><span id="__span-11-4"><a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">amplitudes</span><span class="o">=</span><span class="p">[</span><span class="mf">1e-5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">frequency</span><span class="o">=</span><span class="mf">2.3</span><span class="p">,</span> <span class="n">peak</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">fwhm</span><span class="o">=</span><span class="mi">2</span>
+</span><span id="__span-11-5"><a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">)</span>
+</span><span id="__span-11-6"><a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nb">print</span><span class="p">(</span> <span class="n">my_first_illumination</span><span class="p">(</span> <span class="mf">0.0</span><span class="p">)</span> <span class="p">)</span> <span class="c1"># initial field</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>[2.60905079e-13 0.00000000e+00 0.00000000e+00]
+</code></pre></div>
+<p>The pulse corresponds to a plane wave with a Gaussian temporal profile. To visualize it, please consult the electric fields tutorial.</p>
+<p>Now we come to the actual simulation. For any time-domain simulation, we have to decide on a few additional parameters:</p>
+<ol>
+<li>Simulation duration: here, we set the duration from 0 to 40 units.</li>
+<li>Relaxation rate: here, we pick a single number characterizing the rate of energy dissipation across all channels.</li>
+<li>The operators whose expectation values we want to compute. They are given as a list.</li>
+</ol>
+<p>We want to calculate the induced polarization from the dipole operator. This operator can be represented as a 3xNxN matrix, where N is the number of orbitals and 3 corresponds to Cartesian components x,y,z and we can compute it directly</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-12-1"><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">my_first_flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>(3, 60, 60)
+</code></pre></div>
+<p>We want to compute its expectation value, so we have to wrap it in a list and pass it to the time-domain simulation, called <code>master_equation</code></p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-13-1"><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">my_first_flake</span><span class="o">.</span><span class="n">master_equation</span><span class="p">(</span>
+</span><span id="__span-13-2"><a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="n">end_time</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span> <span class="c1"># the start is set to 0 by default </span>
+</span><span id="__span-13-3"><a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">relaxation_rate</span><span class="o">=</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span>
+</span><span id="__span-13-4"><a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>    <span class="n">illumination</span><span class="o">=</span><span class="n">my_first_illumination</span><span class="p">,</span>
+</span><span id="__span-13-5"><a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="n">expectation_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">my_first_flake</span><span class="o">.</span><span class="n">dipole_operator</span><span class="p">]</span> <span class="c1"># you can also omit the brackets for a single operator, but this is bad practice</span>
+</span><span id="__span-13-6"><a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="p">)</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>RHS compiled
+RHS compiled
+
+
+100.0 %
+</code></pre></div>
+<p>If you want to compute expectaion values of more operators, you can add them to the list.</p>
+<p>The result variable is a container for </p>
+<ol>
+<li>the last density matrix in the simulation, which is important if you want to continue the time evolution.</li>
+<li>the time axis, which is an array of samples [t_1, t_2, ... t_n].</li>
+<li>an "output", which is a list of arrays, corresponding to the operators we passed in. Each array contains the time-dependent expectation value like [p_1, p_2, ..., p_n].</li>
+</ol>
+<p>We have specified one operator to compute the expectation value of, such that the list only contains one element.</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-14-1"><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">))</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>1
+</code></pre></div>
+<p>This list contains an array of shape Tx3, where T is the number of saved time steps. So,  the dipole moment at the 10-th timestep in x-direction is obtained by</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-15-1"><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">dipole_moments</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-15-2"><a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">dipole_moments</span><span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+</span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>(6.693640815032547e-13+0j)
+</code></pre></div>
+<p>Now that we understand how a time domain simulation works, we can visualize the result. GRANAD offers a dedicated function for this</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-16-1"><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">my_first_flake</span><span class="o">.</span><span class="n">show_res</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">plot_labels</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;p_x&quot;</span><span class="p">,</span> <span class="s2">&quot;p_y&quot;</span><span class="p">,</span> <span class="s2">&quot;p_z&quot;</span><span class="p">])</span> 
+</span></code></pre></div>
+<p><img alt="png" src="../a_getting_started_files/a_getting_started_52_0.png" /></p>
+<p>To visualize the field</p>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-17-1"><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+</span><span id="__span-17-2"><a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</span><span id="__span-17-3"><a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">time</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">400</span><span class="p">)</span>
+</span><span id="__span-17-4"><a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">e_field</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">my_first_illumination</span><span class="p">)(</span><span class="n">time</span><span class="p">)</span>
+</span><span id="__span-17-5"><a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time</span><span class="p">,</span> <span class="n">e_field</span><span class="p">)</span>
+</span><span id="__span-17-6"><a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;Pulse Electric Field&quot;</span><span class="p">)</span>
+</span><span id="__span-17-7"><a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;time [$\hbar$/eV]&quot;</span><span class="p">)</span>
+</span><span id="__span-17-8"><a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></div>
+<p><img alt="png" src="../a_getting_started_files/a_getting_started_54_0.png" /></p>
+              
+            </div>
+          </div><div style="text-align: center; font-size: 14px; padding: 10px;">
+    <strong>Documentation Version:</strong> development |
+    <strong>Commit:</strong> 046987ea6081e703754a71dd2e366ecb81f30706
+</div>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../0_tldr/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../ab_cutting/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../javascripts/mathjax.js"></script>
+      <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
