@@ -2,6 +2,7 @@ site_name: "GRANAD"
 
 theme:
   name: "readthedocs"
+  logo: docs/logo.png
   features:
     - content.code.copy
   custom_dir: docs/overrides  # <- This enables custom templates
