@@ -103,6 +103,8 @@
                   </li>
                   <li class="toctree-l1"><a class="reference internal" href="../n_periodic/">Periodic structures</a>
                   </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../o_topology/">Topology</a>
+                  </li>
                   <li class="toctree-l1"><a class="reference internal" href="../xyz/">Exporting and Importing</a>
                   </li>
               </ul>
@@ -161,7 +163,7 @@
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">hamiltonian_model</span> <span class="o">=</span> <span class="n">flake</span><span class="o">.</span><span class="n">get_hamiltonian</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="p">)</span>
 </span></code></pre></div>
-<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7f30d411b240&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7f30d411b9c0&gt;}
+<div class="language-text highlight"><pre><span></span><code>{&#39;bare_hamiltonian&#39;: &lt;function BareHamiltonian.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff760803740&gt;, &#39;coulomb&#39;: &lt;function Coulomb.&lt;locals&gt;.&lt;lambda&gt; at 0x7ff7acb6a160&gt;}
 </code></pre></div>
 <p>We see that it is a dictionary. The keys are strings, the values are functions. Each function is a term in the Hamiltonian, identified by the keys</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">print</span><span class="p">(</span><span class="n">hamiltonian_model</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -242,7 +244,7 @@ To do so, define a function evaluating the electric field of your dipole at the 
             </div>
           </div><div style="text-align: center; font-size: 14px; padding: 10px;">
     <strong>Documentation Version:</strong> development |
-    <strong>Commit:</strong> cdebbc7eca979243290bc5e8fcf7d3a5e4c96733
+    <strong>Commit:</strong> 42f2e797678a1477df08ee77f0b9fd2b5f7ec682
 </div>
           
         </div>
