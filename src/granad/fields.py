@@ -103,125 +103,81 @@ def _laguerre(k, n, x):
         res += factorial(n) / factorial(i) * _binom(k+n, n - i) * (-x)**i        
     return prefac * res
 
-def laguerre_gaussian(x, y, z, p, l, w0, wavelength):
-    """Paraxial Laguerre–Gaussian mode (scalar complex field envelope).
-
-    Implements a standard paraxial LG mode with radial index ``p`` and azimuthal
-    index ``l``. The field is returned as a complex scalar envelope evaluated at
-    coordinates (x, y, z).
+def laguerre_gaussian(p, l, w0, wavelength, pol_vec, flake=None):
+    """Construct a paraxial Laguerre-Gaussian mode field.
 
     Args:
-        x: x-coordinate (scalar or array-like; may be JAX array).
-        y: y-coordinate (scalar or array-like; may be JAX array).
-        z: z-coordinate (scalar or array-like; may be JAX array).
         p: Radial index (p >= 0).
-        l: Azimuthal index / OAM charge (integer; may be negative).
-        w0: Beam waist at focus (z=0).
-        wavelength: Wavelength (same units as x, y, z, w0).
-
-    Returns:
-        Complex scalar LG field value(s) at (x, y, z).
-
-    Notes:
-        - This is a scalar paraxial mode (transverse field envelope).
-        - The normalization/prefactor here follows the common convention
-          :math:`\\sqrt{2 p!/(\\pi (p+|l|)!)}\\, 1/w(z)` up to any global phase.
-        - The phase term used here follows your original implementation.
-          If you need the standard curvature term ``exp(-i k r^2 / (2 R(z)))``,
-          implement it explicitly.
-    """
-    # normalization factor
-    z_r = w0**2 * jnp.pi / wavelength
-    w_z = w0 * jnp.sqrt(1 + (z/z_r)**2)
-    nom, denom = 2 * factorial(p), jnp.pi * factorial(p + jnp.abs(l))
-    prefac = jnp.sqrt(nom/denom) / w_z
-
-    # cylindrical radius
-    rho = jnp.sqrt(x**2 + y**2)
-
-    # split expression into 4 factors
-    term1 = jnp.power(jnp.sqrt(2) * rho / w_z, jnp.abs(l))
-
-    term2 = jnp.exp(-rho**2/w_z**2) * jnp.exp(1j * l * jnp.arctan2(y, x))
-
-    term3 = _laguerre(jnp.abs(l), p, 2 * rho**2 / w_z**2)
-
-    z_tilde = z + rho**2 * z / (2*(z**2 + z_r**2) )
-    gouy_phase = jnp.arctan2(z, z_r)
-    k = 2*jnp.pi/wavelength
-    term4 = jnp.exp(1j *k*z_tilde - 1j*(2*p + jnp.abs(l) + 1)*gouy_phase)
-
-    return term1 * term2 * term3 * term4
-
-def Skyrmion(a_1, a_2, l1, l2, p1, p2, w0, wavelength, e_1 = None, e_2 = None, flake = None):
-    """Construct a (vector) optical skyrmion field from two LG modes.
-
-    Builds a paraxial complex electric field as a superposition of two LG modes
-    (with indices ``(p1,l1)`` and ``(p2,l2)``) multiplied by two orthogonal
-    polarization vectors ``e_1`` and ``e_2``.
-
-    By default, ``e_1`` and ``e_2`` are right/left circular polarization vectors
-    in the transverse xy-plane.
-
-    Args:
-        a_1: Complex (or real) amplitude for the first mode/polarization component.
-        a_2: Complex (or real) amplitude for the second mode/polarization component.
-        l1: Azimuthal index of the first LG mode.
-        l2: Azimuthal index of the second LG mode.
-        p1: Radial index of the first LG mode (p1 >= 0).
-        p2: Radial index of the second LG mode (p2 >= 0).
-        w0: Beam waist at focus (z=0).
-        wavelength: Wavelength (same units as spatial coordinates).
-        e_1: Polarization vector for component 1 (shape (3,)). Defaults to RCP.
-        e_2: Polarization vector for component 2 (shape (3,)). Defaults to LCP.
+        l: Azimuthal index / OAM charge.
+        w0: Beam waist at focus.
+        wavelength: Wavelength.
+        pol_vec: polarization vector
         flake: Optional object with attribute ``positions`` of shape (N, 3).
-            If provided, the field is evaluated on these positions and a
-            time-harmonic real-valued field function ``E(t)`` is returned for
-            time-domain simulations.
 
     Returns:
         If ``flake is None``:
-            A function ``E(x_grid, y_grid, z)`` that returns an array of shape
-            ``(Nx, Ny, 3)`` with complex vector field values.
+            A function ``E(x, y, z)`` returning the complex scalar LG field.
         If ``flake is not None``:
-            A function ``E(t)`` returning a real-valued array of shape ``(N, 3)``
-            giving the time-harmonic electric field on ``flake.positions``.
-
-    Notes:
-        - The returned vector field is paraxial/transverse (Ez component is zero
-          for the default polarization vectors).
-        - For polarization-skyrmion calculations, build Stokes parameters from the
-          transverse components (or circular basis) and normalize.
+            A function ``E(t)`` returning the real-valued time-harmonic field
+            evaluated at ``flake.positions``.
     """
 
-    if e_1 is None:
-        e_1 = 1/jnp.sqrt(2) * jnp.array([1, 1j, 0])
-    if e_2 is None:
-        e_2 = 1/jnp.sqrt(2) * jnp.array([1, -1j, 0])
-
-    lg1 = lambda x, y, z : laguerre_gaussian(x, y, z, p1, l1, w0, wavelength)
-    lg2 = lambda x, y, z : laguerre_gaussian(x, y, z, p2, l2, w0, wavelength)
-        
     def _field(x, y, z):
-        return a_1 * lg1(x, y, z) * e_1 + a_2 * lg2(x, y, z) * e_2
+        z_r = w0**2 * jnp.pi / wavelength
+        w_z = w0 * jnp.sqrt(1 + (z / z_r) ** 2)
 
-    if flake is None:        
-        return jax.vmap(
-            jax.vmap(
-                _field, in_axes = (None, 0, None)
-            ),
-            in_axes = (0, None, None)
-        )
+        nom = 2 * factorial(p)
+        denom = jnp.pi * factorial(p + jnp.abs(l))
+        prefac = jnp.sqrt(nom / denom) / w_z
 
-    # flake given => want to use for time domain sims
-    
+        rho = jnp.sqrt(x**2 + y**2)
+
+        term1 = jnp.power(jnp.sqrt(2) * rho / w_z, jnp.abs(l))
+        term2 = jnp.exp(-rho**2 / w_z**2) * jnp.exp(1j * l * jnp.arctan2(y, x))
+        term3 = _laguerre(jnp.abs(l), p, 2 * rho**2 / w_z**2)
+
+        z_tilde = z + rho**2 * z / (2 * (z**2 + z_r**2))
+        gouy_phase = jnp.arctan2(z, z_r)
+        k = 2 * jnp.pi / wavelength
+        term4 = jnp.exp(1j * k * z_tilde - 1j * (2 * p + jnp.abs(l) + 1) * gouy_phase)
+
+        return prefac * term1 * term2 * term3 * term4 * pol_vec
+
+    if flake is None:
+        return _field
+
     def _field_r(r):
         return _field(r[0], r[1], r[2])
-    
+
     static_part = jax.vmap(_field_r)(flake.positions)
 
-    return lambda t : (static_part * jnp.exp(1j * 2 * jnp.pi / wavelength * t)).real
+    return lambda t: (static_part * jnp.exp(1j * 2 * jnp.pi / wavelength * t)).real
 
+def Skyrmion(a_1, a_2, l1, l2, p1, p2, w0, wavelength, e_1=None, e_2=None, flake=None):
+    """Construct a (vector) optical skyrmion field from two LG modes."""
+    if e_1 is None:
+        e_1 = 1 / jnp.sqrt(2) * jnp.array([1, 1j, 0])
+    if e_2 is None:
+        e_2 = 1 / jnp.sqrt(2) * jnp.array([1, -1j, 0])
+
+    lg1 = laguerre_gaussian(p1, l1, w0, wavelength, e_1)
+    lg2 = laguerre_gaussian(p2, l2, w0, wavelength, e_2)
+
+    def _field(x, y, z):
+        return a_1 * lg1(x, y, z) + a_2 * lg2(x, y, z)
+
+    if flake is None:
+        return jax.vmap(
+            jax.vmap(_field, in_axes=(None, 0, None)),
+            in_axes=(0, None, None)
+        )
+
+    def _field_r(r):
+        return _field(r[0], r[1], r[2])
+
+    static_part = jax.vmap(_field_r)(flake.positions)
+
+    return lambda t: (static_part * jnp.exp(1j * 2 * jnp.pi / wavelength * t)).real
 
 def get_skyrmion_number(sv, eps = 1e-24):
     """Compute the skyrmion number from a (discretized) Stokes field via Berg's method.
