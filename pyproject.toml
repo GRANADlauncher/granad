@@ -17,8 +17,8 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  'jax==0.4.26',
-  'jaxlib==0.4.26',
+  'jax',
+  'jaxlib',
   'diffrax',
-  'matplotlib==3.8'
+  'matplotlib'
 ]
