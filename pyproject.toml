@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "granad"
 version = "0.0.1"
 authors = [
-  { name="David Dams", email="david.dams@kit.edu" },
+  { name="Karolina Słowik", email="karolina@fizyka.umk.pl" },
 ]
 description = "granad"
 readme = "README.md"
