@@ -94,7 +94,7 @@ def show_2d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     else:
         # Color by tags if no show_state is given
         unique_tags = list(set(orb.tag for orb in orbs))
-        color_map = {tag: plt.cm.get_cmap('tab10')(i / len(unique_tags)) for i, tag in enumerate(unique_tags)}
+        color_map = {tag: plt.get_cmap('tab10')(i / len(unique_tags)) for i, tag in enumerate(unique_tags)}
         for tag, positions in tags_to_pos.items():
             positions = jnp.array(positions)
             ax.scatter(positions[:, 0], positions[:, 1], label=tag, color=color_map[tag], edgecolor='white', alpha=0.7)
@@ -165,7 +165,7 @@ def show_3d(orbs, show_tags=None, show_index=False, display = None, scale = Fals
     else:
         # Color by tags if no show_state is given
         unique_tags = list(set(orb.tag for orb in orbs))
-        color_map = {tag: plt.cm.get_cmap('tab10')(i / len(unique_tags)) for i, tag in enumerate(unique_tags)}
+        color_map = {tag: plt.get_cmap('tab10')(i / len(unique_tags)) for i, tag in enumerate(unique_tags)}
         for tag, positions in tags_to_pos.items():
             positions = jnp.array(positions)
             ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2], label=tag, color=color_map[tag], edgecolor='white', alpha=0.7)
