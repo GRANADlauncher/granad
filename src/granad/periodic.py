@@ -128,6 +128,24 @@ class Periodic:
 
         return 0.5*(lo+hi)
 
+    @staticmethod
+    def get_fermi_energy(energies, sigma = 0.1, delta_e = 1e-3, n_electrons = 2):
+        """determine Fermi energy by Gaussian-broadening each energy 
+        and summing on an energy mesh until the sum reaches 1"""
+        
+        energies = energies.flatten()
+        n = energies.shape[0]
+        c = n_electrons / n
+        prefac = c / jnp.sqrt(2 * jnp.pi * sigma**2)
+
+        e_j = energies.min() - 10 * sigma
+        total = 0.0
+        while total < 1:
+            total += prefac * jnp.sum(jnp.exp(-(e_j - energies)**2 / (2 * sigma**2))) * delta_e
+            e_j += delta_e
+
+        return e_j
+
     def get_density_matrix(self, ks, mu, gs = 2):
         vals, vecs = self.get_eigenbasis(ks)
         occupations = vals <= mu        
