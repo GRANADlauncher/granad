@@ -7,10 +7,7 @@ __pycache__
 .virtual_documents/
 anaconda_projects/
 
-my_files/imgs
-my_files/outputs
-my_files/*.png
-my_files/data
+my_files/
 
 # distribution
 granad.egg-info/
