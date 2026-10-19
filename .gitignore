@@ -6,7 +6,11 @@ __pycache__
 .ipynb_checkpoints/
 .virtual_documents/
 anaconda_projects/
-my_files/
+
+my_files/imgs
+my_files/outputs
+my_files/*.png
+my_files/data
 
 # distribution
 granad.egg-info/
