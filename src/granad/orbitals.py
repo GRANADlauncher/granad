@@ -1088,7 +1088,7 @@ class OrbitalList:
                   Can be used, e.g., for full HF by passing a closure containing ERIs.       
                   Default is None.
         
-                - `f_build` (Callable, optional): Construction of the density matrix from energies and eigenvectors. If None, single-particle energy levels are filled according to number of electrons.
+                - `f_build` (Callable, optional): Construction of the density matrix from energies and eigenvectors. If None, levels are filled in energy order, accounting for electron count and spin degeneracy, including a partially filled final level. Custom builders return a per-spin density matrix, which is multiplied by `spin_degeneracy` before mixing.
                   Default is None.
         
                 - `rho_0` (jax.Array, optional): Initial guess for the density matrix. If None, zeros are used.

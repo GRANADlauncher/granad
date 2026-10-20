@@ -27,7 +27,7 @@
 
 ### Linux
 
-# The recommended way is to install with (mini-)conda.
+# Use Python 3.11 or newer in an isolated environment, using venv or Conda.
 
 # First, set up miniconda: https://docs.anaconda.com/free/miniconda/index.html
 
@@ -35,7 +35,7 @@
 
 # + {"cell_type": "markdown"}
 # ```bash
-# conda create -n granad 'python'
+# conda create -n granad 'python>=3.11'
 # ```
 
 # Activate the environment
@@ -45,14 +45,16 @@
 # conda activate granad
 # ```
 
-# Now, optionally install jupyter.
-
 # Finally, install the package with
 
 # + {"cell_type": "markdown"}
 # ```bash
-# pip install git+https://github.com/GRANADlauncher/granad.git
+# python -m pip install git+https://github.com/GRANADlauncher/granad.git
 # ```
+
+# Runtime dependencies are installed automatically. When working from a clone,
+# use `python -m pip install -e '.[test]'` for tests or
+# `python -m pip install -e '.[docs]'` to build the documentation.
 
 ### Windows
 

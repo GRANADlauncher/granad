@@ -239,13 +239,14 @@ class Periodic:
         only states within ~k_BT of the Fermi level contribute.
         """
 
-        v_diag = jnp.real(jnp.diagonal(v, axis1=-2, axis2=-1))        
+        v_diag = jnp.diagonal(v, axis1=-2, axis2=-1)
         prefac = 1j/(omegas + 1j*relaxation_rate)
         
-        # way to large intermediate array
-        deriv = jax.jacrev(_numerics.fermi)(energies, beta, mu)
+        # Fermi occupations act elementwise, so an all-ones tangent gives the diagonal derivative.
+        deriv = jax.jvp(lambda e: _numerics.fermi(e, beta, mu),
+                        (energies,), (jnp.ones_like(energies),))[1]
 
-        return prefac[:, None, None] * jnp.einsum('kiki, ckii, dkii -> cd', -deriv, v, v) / energies.shape[0]
+        return prefac[:, None, None] * jnp.einsum('ki, cki, dki -> cd', -deriv, v_diag, v_diag) / energies.shape[0]
 
     def show_2d(self, n): 
         grid = self.get_grid(self.lattice_vectors, n)

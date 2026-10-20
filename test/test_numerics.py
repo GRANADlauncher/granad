@@ -1,10 +1,11 @@
 import numpy as np
-import matplotlib.pyplot as plt
-from granad import *
+import jax.numpy as jnp
+from granad import Orbital, OrbitalList, Wave
 
 # TODO: tests for: default rhs (with all dissipators)
 
 def test_rabi():
+    """h_rabi_oscillations: analytical populations and physical density matrices."""
     d = 3
     e_field_strength = 0.5
     t = jnp.linspace(0, 10, 100)
@@ -27,7 +28,16 @@ def test_rabi():
         dt = 1e-5,
         illumination = wave,
         use_rwa = True,
-        density_matrix = ["occ_e"]
+        density_matrix = ["occ_e", "full"]
     )
-    occupations = result.output[0]    
-    np.testing.assert_allclose( occupations[:,0], analytical, rtol = 1e-5 )
+    assert result is not None
+    occupations, density = result.output
+    np.testing.assert_allclose(result.time_axis, t, rtol=0, atol=1e-12)
+    np.testing.assert_allclose(occupations[:, 0], analytical, rtol=1e-6, atol=1e-6)
+    np.testing.assert_allclose(occupations[:, 1], 1 - analytical, rtol=1e-6, atol=1e-6)
+    np.testing.assert_allclose(np.trace(density, axis1=-2, axis2=-1), 1, rtol=0, atol=1e-6)
+    np.testing.assert_allclose(density, density.conj().swapaxes(-1, -2), rtol=0, atol=1e-6)
+    eigenvalues = np.linalg.eigvalsh(density)
+    assert np.all(eigenvalues >= -1e-6)
+    assert np.all(eigenvalues <= 1 + 1e-6)
+    np.testing.assert_allclose(result.final_density_matrix, density[-1], rtol=0, atol=1e-10)
