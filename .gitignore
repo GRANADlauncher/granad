@@ -2,6 +2,7 @@ __pycache__
 .pytest_cache
 *html
 *pdf
+*dat 
 
 .ipynb_checkpoints/
 .virtual_documents/
