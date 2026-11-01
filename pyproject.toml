@@ -17,8 +17,20 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-  'jax',
-  'jaxlib',
-  'diffrax',
-  'matplotlib'
+    "jax",
+    "diffrax",
+    "matplotlib",
+    "numpy",
+    "scipy",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+docs = [
+    "mkdocs",
+    "pymdown-extensions",
+    "mkdocstrings[python]",
+    "jupytext",
+    "nbconvert",
+    "ipykernel",
 ]

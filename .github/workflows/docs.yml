@@ -31,14 +31,7 @@ jobs:
         if: env.TRIGGER_BUILD == 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs
-          pip install pymdown-extensions
-          pip install mkdocstrings
-          pip install mkdocstrings-python
-          pip install jupytext
-          pip install nbconvert
-          pip install ipykernel
-          pip install -e .
+          python -m pip install -e '.[docs]'
 
       - name: Setup Kernel
         if: env.TRIGGER_BUILD == 'true'

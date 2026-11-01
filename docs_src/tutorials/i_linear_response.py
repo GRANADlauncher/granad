@@ -78,6 +78,15 @@ result = flake.master_equation(
     relaxation_rate=1/10,
     illumination=pulse,
 )
+import diffrax
+result2 = flake.master_equation(
+    expectation_values = [ flake.dipole_operator ],
+    end_time=40,
+    relaxation_rate=1/10,
+    illumination=pulse,
+    solver= diffrax.Kvaerno5(),
+)
+
 # -
 
 # The polarizability tensor is given by $\alpha_{ij} = p_i / E_j$. Here, we investigate the xx-component.
@@ -90,14 +99,17 @@ omegas_td, pulse_omega = result.ft_illumination( omega_max, omega_min )
 absorption_td = jnp.abs( -omegas_td * jnp.imag( p_omega[:,0] / pulse_omega[:,0] ) )
 # -
 
+p_omega2 = result2.ft_output( omega_max, omega_min )[0]
+absorption_td2 = jnp.abs( -omegas_td * jnp.imag( p_omega2[:,0] / pulse_omega[:,0] ) )
+
 # We can now compare the two results.
 
 # +
 import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 plt.figure(figsize=(10, 6))
-plt.plot(omegas_rpa, absorption_rpa / jnp.max(absorption_rpa), 'o', linewidth=2, label = 'RPA')
-plt.plot(omegas_td, absorption_td / jnp.max(absorption_td), linewidth=2, ls = '--', label = 'TD' ) 
+plt.plot(omegas_td, absorption_td / jnp.max(absorption_td), linewidth=2, ls = '--', label = 'TD' )
+plt.plot(omegas_td, absorption_td2 / jnp.max(absorption_td2), linewidth=2, label = 'TD2' ) 
 plt.xlabel(r'$\hbar\omega$', fontsize=20)
 plt.ylabel(r'$\sigma(\omega)$', fontsize=25)
 plt.title('Absorption spectrum as a function of photon energy', fontsize=15)

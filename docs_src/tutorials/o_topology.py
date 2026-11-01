@@ -165,6 +165,6 @@ result = flake.master_equation(
     relaxation_rate=1/10,
     illumination=e_field,
     expectation_values=operators,
-    end_time=40,
+    end_time=40
 )
 # -

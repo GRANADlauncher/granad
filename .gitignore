@@ -16,6 +16,7 @@ dist
 build
 
 # docs
+geometry.png
 docs/_build/
 docs/generated
 my_test
