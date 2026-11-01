@@ -2,6 +2,7 @@ import jax
 import jax.numpy as jnp
 import itertools
 import functools
+import operator
 
 jax.config.update("jax_enable_x64", True)
 import diffrax
@@ -124,7 +125,7 @@ def _density_thermo(
 
 
 def _density_aufbau(
-    energies, electrons, spin_degeneracy, eps, excitation
+    energies, electrons, spin_degeneracy, eps, excitation, occupation=None
 ):
 
     def _occupation(flags, spin_degeneracy, fraction):
@@ -181,19 +182,76 @@ def _density_aufbau(
 
     from_state, to_state, excited_electrons = excitation
     
-    homo = jnp.array(jnp.ceil(electrons / spin_degeneracy), int) - 1
-
-    # determine where and how often this energy occurs
-    flags, degeneracy = _flags(homo)
-    # compute electrons at the fermi level
-    below = (energies < energies[homo] - eps).sum()
-    remaining_electrons = electrons - spin_degeneracy * below
-    # compute ground state occupations by distributing the remaining electrons across all degenerate levels
-    occupation = _occupation(flags, spin_degeneracy, remaining_electrons / degeneracy)
+    if occupation is None:
+        homo = jnp.array(jnp.ceil(electrons / spin_degeneracy), int) - 1
+        flags, degeneracy = _flags(homo)
+        below = (energies < energies[homo] - eps).sum()
+        remaining_electrons = electrons - spin_degeneracy * below
+        occupation = _occupation(flags, spin_degeneracy, remaining_electrons / degeneracy)
     # excited states
     occupation = jax.lax.fori_loop(0, to_state.size, _body_fun, occupation)
     
     return jnp.diag(occupation) / electrons
+
+def _coulomb_mean_field(density, hamiltonian, coulomb):
+    return hamiltonian + jnp.diag(coulomb @ density.diagonal())
+
+
+def _mean_field_density(vectors, energies, electrons, spin_degeneracy):
+    occupation = jnp.clip(electrons / spin_degeneracy - jnp.arange(energies.size), 0., 1.)
+    return (vectors * occupation) @ vectors.conj().T
+
+
+def _spin_eigh(hamiltonian, indices):
+    blocks = hamiltonian[indices[:, :, None], indices[:, None, :]]
+    values, vectors = jnp.linalg.eigh(blocks)
+    energies = values.ravel()
+    order = jnp.argsort(energies, stable=True)
+    columns = jnp.arange(hamiltonian.shape[0]).reshape(indices.shape)
+    eigenvectors = jnp.zeros_like(hamiltonian).at[indices[:, :, None], columns[:, None, :]].set(vectors)
+    return energies[order], eigenvectors[:, order]
+
+
+def _scf_loop(f_mean_field, f_build, rho_0, mix, accuracy, iterations, eigh=jnp.linalg.eigh):
+    """Iterate a supplied Hamiltonian and density builder without imposing a physical model.
+
+    f_mean_field(density) returns the full effective Hamiltonian; f_build(vectors,
+    energies) returns the next density. Its normalization and filling are model-defined.
+    """
+    try:
+        iterations = operator.index(iterations)
+    except TypeError as error:
+        raise ValueError("Mean-field iterations must be a positive integer.") from error
+    if iterations < 1:
+        raise ValueError("Mean-field iterations must be a positive integer.")
+    if not 0 <= mix < 1:
+        raise ValueError("Mean-field mix must satisfy 0 <= mix < 1 (fraction of old density).")
+    if not jnp.isfinite(accuracy) or accuracy <= 0:
+        raise ValueError("Mean-field accuracy must be finite and positive.")
+
+    def solve(density):
+        hamiltonian = f_mean_field(density)
+        energies, vectors = eigh(hamiltonian)
+        return f_build(vectors, energies), hamiltonian, energies, vectors
+
+    def update(arg):
+        old, step, _ = arg
+        target = solve(old)[0]
+        error = jnp.linalg.norm(target - old)
+        new = jnp.where(error <= accuracy, old, mix * old + (1 - mix) * target)
+        return new, step + 1, error
+
+    state, steps, _ = jax.lax.while_loop(
+        lambda arg: (arg[1] < iterations) & (arg[2] > accuracy),
+        update, (rho_0, 0, jnp.inf),
+    )
+    solution = solve(state)
+    error = jnp.linalg.norm(solution[0] - state)
+    if not jnp.isfinite(error) or error > accuracy:
+        raise RuntimeError(f"Mean-field calculation did not converge after {steps} iterations: residual {error}, tolerance {accuracy}.")
+    print(f"Mean field finished with accuracy {accuracy}, iterations {steps}, yielding final error {error}")
+    return solution
+
 
 def _mf_loop(hamiltonian,
              coulomb,
@@ -207,74 +265,57 @@ def _mf_loop(hamiltonian,
              iterations,
              f_mean_field,
              f_build,
-             rho_0
+             rho_0,
+             spin_indices=None,
              ):
-    
-    def update(arg):
-        """scf update"""
-        
-        rho_old, step, error = arg
+    """Configure normal-state defaults and adapt SCF results to OrbitalList."""
+    if not jnp.isfinite(coulomb_strength):
+        raise ValueError("Mean-field coulomb_strength must be finite.")
+    if not 0 < electrons <= spin_degeneracy * hamiltonian.shape[0]:
+        raise ValueError("Mean-field electron count must be positive and within the basis capacity.")
 
-        # initial effective hamiltonian
-        ham_eff = f_mean_field(rho_old, hamiltonian)
-        
-        # diagonalize
-        vals, vecs = jnp.linalg.eigh(ham_eff)
-        
-        # build new density matrix
-        rho = spin_degeneracy * (1 - mix) * f_build(vecs, vals) + mix * rho_old
+    default_model = f_mean_field is None and f_build is None
+    if spin_indices is not None:
+        up, down = spin_indices
+        if not jnp.all(hamiltonian[jnp.ix_(up, down)] == 0):
+            spin_indices = None
 
-        # update breaks
-        error = jnp.linalg.norm(rho - rho_old)
-        
-        step = jax.lax.cond(error <= accuracy, lambda x: step, lambda x: step + 1, step)
-
-        return rho, step, error
-    
-    def step(idx, res):
-        """single SCF update step"""
-        return jax.lax.cond(res[-1] <= accuracy, lambda x: res, update, res)
+    if rho_0 is not None:
+        rho_0 = jnp.asarray(rho_0, dtype=complex)
+        if rho_0.shape != hamiltonian.shape:
+            raise ValueError("Mean-field rho_0 must have the same shape as the Hamiltonian.")
+        if not jnp.all(jnp.isfinite(rho_0)) or not jnp.allclose(rho_0, rho_0.conj().T, rtol=0, atol=1e-8):
+            raise ValueError("Mean-field rho_0 must be finite and Hermitian.")
+        if not jnp.isclose(jnp.trace(rho_0), electrons, rtol=0, atol=1e-8):
+            raise ValueError("Mean-field rho_0 must be unnormalized, with trace equal to the electron count.")
+        eigenvalues = jnp.linalg.eigvalsh(rho_0)
+        if jnp.any(eigenvalues < -1e-8) or jnp.any(eigenvalues > spin_degeneracy + 1e-8):
+            raise ValueError("Mean-field rho_0 occupations must lie between zero and spin_degeneracy.")
+        if default_model and spin_indices is not None and not jnp.allclose(rho_0[jnp.ix_(up, down)], 0, rtol=0, atol=1e-8):
+            raise ValueError("Collinear mean-field rho_0 must not contain spin coherence.")
 
     if f_mean_field is None:
-        f_mean_field = lambda r, hamiltonian : jnp.diag(coulomb_strength * coulomb @ r.diagonal()) + hamiltonian
-
+        f_mean_field = functools.partial(_coulomb_mean_field, coulomb=coulomb_strength * coulomb)
     if f_build is None:
-        def f_build(vecs, energies):
-            # Spin degeneracy is applied by update(), so occupations here are per spin.
-            occupation = jnp.clip(electrons / spin_degeneracy - jnp.arange(energies.size), 0., 1.)
-            return (vecs * occupation) @ vecs.conj().T
-        
-    # initial guess for the density matrix
+        f_build = functools.partial(_mean_field_density, electrons=electrons, spin_degeneracy=spin_degeneracy)
+    potential = lambda density: f_mean_field(density, hamiltonian)
+    build = lambda vectors, energies: spin_degeneracy * f_build(vectors, energies)
+
+    eigh = jnp.linalg.eigh
+    if default_model and spin_indices is not None and up.size == down.size:
+        eigh = functools.partial(_spin_eigh, indices=jnp.stack(spin_indices))
     if rho_0 is None:
         rho_0 = jnp.zeros_like(hamiltonian)
-    rho_old = rho_0
+        if default_model:
+            energies, vectors = eigh(hamiltonian)
+            rho_0 = build(vectors, energies)
 
-    # scf loop
-    rho, steps, error = jax.lax.fori_loop(0, iterations, step, (rho_old, 0, jnp.inf))
-
-    # new hamiltonian
-    ham_eff = f_mean_field(rho, hamiltonian)    
-    energies, eigenvectors = jnp.linalg.eigh(ham_eff)
-
-    # initial density matrix may be excited
-    rho_0 = _density_aufbau(
-        energies,
-        electrons,
-        spin_degeneracy,
-        eps,
-        excitation
-    )
-
-    print(f"Mean field finished with accuracy {accuracy}, iterations {steps}, yielding final error {error}")
-    
-    # orbital list builder expects density matrices in energy basis
-    return (
-        ham_eff,
-        rho_0, # already in energy basis
-        (eigenvectors.conj().T @ rho @ eigenvectors) / electrons, # convert
-        energies,
-        eigenvectors,
-    )
+    density, ham_eff, energies, eigenvectors = _scf_loop(potential, build, rho_0, mix, accuracy, iterations, eigh)
+    stationary = (eigenvectors.conj().T @ density @ eigenvectors) / electrons
+    occupation = stationary.diagonal() * electrons
+    excited = _density_aufbau(energies, electrons, spin_degeneracy, eps, excitation, occupation=occupation)
+    initial = stationary - jnp.diag(stationary.diagonal()) + excited
+    return ham_eff, initial, stationary, energies, eigenvectors
 
 def _get_self_consistent(
     hamiltonian,

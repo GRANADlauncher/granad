@@ -1,6 +1,8 @@
 import jax.numpy as jnp
-from granad import *
-from granad._plotting import *
+import numpy as np
+import pytest
+
+from granad import Material
 
 def get_hubbard(U):
     t = 1. # nearest-neighbor hopping
@@ -36,22 +38,36 @@ def get_hubbard(U):
 
     return hubbard
 
-def test_hubbard():
-    for U in [8]:
-        flake = get_hubbard(U).cut_flake( Rectangle(10, 4) )
-        flake.set_open_shell()
-        flake.set_electrons(len(flake)//2)
-        print(flake.electrons)
+@pytest.mark.parametrize('U', [0., 1., 4.])
+@pytest.mark.parametrize('sign', [-1, 1])
+def test_hubbard(U, sign):
+    """The half-filled dimer has an analytical collinear UHF solution."""
+    flake = get_hubbard(U).cut_flake(grid_range=[(0, 2), (0, 1)])
+    flake.set_open_shell()
+    flake.set_electrons(2)
+    assert len(flake) == 4
+    bare = np.asarray(flake.hamiltonian)
+    coulomb = np.asarray(flake.coulomb)
+    spins = np.array([orb.spin for orb in flake])
+    stagger = np.where(np.asarray(flake.positions)[:, 0] == 0, 1., -1.)
+    seed = jnp.diag(.5 + sign * .1 * spins * stagger).astype(complex)
+    flake.set_mean_field(rho_0=seed, accuracy=1e-10)
 
-        flake.show_energies()
-        flake.set_mean_field()
-        flake.show_energies()
-
-        occs = jnp.diagonal(flake.initial_density_matrix)
-        spin_density = occs[:len(flake)//2] - occs[len(flake)//2:]    
-        show_2d(flake[:len(flake)//2], display = spin_density * flake.electrons )
-
-        # check AF order
-        assert ((flake.electrons*spin_density).round(1) > 0).sum() == ((flake.electrons*spin_density).round(1) < 0).sum()
+    density = np.asarray(flake.stationary_density_matrix) * flake.electrons
+    occupations = density.diagonal().real
+    magnetization = occupations[spins == -1] - occupations[spins == 1]
+    expected_m = np.sqrt(1 - (2 / U)**2) if U > 2 else 0.
+    np.testing.assert_allclose(magnetization, -sign * expected_m * np.array([1., -1.]), rtol=0, atol=1e-8)
+    energy = np.trace(bare @ density).real + .5 * occupations @ coulomb.real @ occupations
+    expected_energy = -2 / U if U > 2 else -2 + U / 2
+    np.testing.assert_allclose(energy, expected_energy, rtol=0, atol=1e-8)
+    if U > 2:
+        assert energy < -2 + U / 2
+    np.testing.assert_allclose(np.trace(density), 2., rtol=0, atol=1e-10)
+    np.testing.assert_allclose(density, density.conj().T, rtol=0, atol=1e-10)
+    np.testing.assert_allclose(flake.initial_density_matrix, flake.stationary_density_matrix, rtol=0, atol=1e-10)
+    np.testing.assert_allclose(flake.hamiltonian, bare + np.diag(coulomb @ occupations), rtol=0, atol=1e-8)
+    eigenvalues = np.linalg.eigvalsh(density)
+    assert np.all(eigenvalues >= -1e-10) and np.all(eigenvalues <= 1 + 1e-10)
     
 

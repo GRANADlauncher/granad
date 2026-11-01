@@ -10,8 +10,8 @@ graphene_spinful = (
         [1, 0, 0],
         [-0.5, jnp.sqrt(3)/2, 0]
     ])
-    .add_orbital_species("pz+", atom='C')
-    .add_orbital_species("pz-", atom='C')
+    .add_orbital_species("pz+", s=-1, atom='C')
+    .add_orbital_species("pz-", s=1, atom='C')
     .add_orbital(position=(0, 0), tag="sublattice_1+", species="pz+")
     .add_orbital(position=(-1/3, -2/3), tag="sublattice_2+", species="pz+")
     .add_orbital(position=(0, 0), tag="sublattice_1-", species="pz-")
@@ -40,8 +40,11 @@ flake.set_open_shell()
 flake.set_electrons(len(flake)//2)
 # flake.show_2d()
 
-rho_0 = jnp.ones(len(flake)) 
-rho_0 = jnp.diag(rho_0).astype(complex) 
+occupations = jnp.array([
+    .5 + .1 * orb.spin * (1 if 'sublattice_1' in orb.tag else -1)
+    for orb in flake
+])
+rho_0 = jnp.diag(occupations).astype(complex)
 flake.set_mean_field(mix = 0.4, iterations = 200, rho_0 = rho_0)
 
 # spin sectors decouple, so diagonalize separately and argsort 

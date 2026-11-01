@@ -4,6 +4,7 @@ import inspect
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field, replace, asdict
 from functools import wraps
+from operator import attrgetter
 from pprint import pformat
 from typing import Callable, NamedTuple, Optional, Union, Dict, Any
 
@@ -812,6 +813,11 @@ class OrbitalList:
     # this is smart, because otherwise one has to transform ERIs, which is a lot of work
     # here, we NEED to inform the user they need to transform ERIs, because otherwise I have to actually think about what I'm doing
     def _build_density_mf(self, hamiltonian_ortho, coulomb_ortho):
+        spin_indices = None
+        spins = tuple(map(attrgetter('spin'), self._list))
+        if self.spin_degeneracy == 1 and self.is_ortho and set(spins) == {-1, 1}:
+            spins = jnp.asarray(spins)
+            spin_indices = (jnp.flatnonzero(spins == -1), jnp.flatnonzero(spins == 1))
         return _numerics._mf_loop(
                 hamiltonian_ortho,
                 coulomb_ortho,
@@ -819,6 +825,7 @@ class OrbitalList:
                 self.params.spin_degeneracy,
                 self.params.electrons,
                 self.params.eps,
+                spin_indices=spin_indices,
                 **self.params.mean_field_params,
             )
 
@@ -1056,8 +1063,9 @@ class OrbitalList:
     @mutates
     def set_mean_field(self, **kwargs):
         """
-        Configures the parameters for mean field calculations.
-        If no other parameters are passed, a standard direct channel Hartree-Fock calculation is performed.
+        Configures normal-state mean field calculations. The default zero-temperature
+        density-density Hartree potential gives collinear unrestricted Hartree-Fock
+        for onsite opposite-spin Hubbard interactions with explicit spin orbitals.
         Note that this procedure differs slightly from the self-consistent field procedure.
 
         This function sets up the mean field parameters used in iterative calculations 
@@ -1067,14 +1075,14 @@ class OrbitalList:
             **kwargs: Keyword arguments to override the default self-consistency parameters. 
                 The available parameters are:
 
-                - `accuracy` (float, optional): The convergence criterion for self-consistency. 
-                  Specifies the maximum allowed difference between successive density matrices.
+                - `accuracy` (float, optional): Maximum norm of the unmixed density-matrix
+                  self-consistency residual.
                   Default is 1e-6.
 
                 - `mix` (float, optional): The mixing factor for the density matrix during updates.
                   This controls the contribution of the new density matrix to the updated one.
-                  Values closer to 1 favor the new density matrix, while smaller values favor 
-                  smoother convergence. Default is 0.3.
+                  This is the fraction of the old density retained, with 0 <= mix < 1.
+                  Default is 0.3.
 
                 - `iterations` (int, optional): The maximum number of iterations allowed in the 
                   self-consistency cycle. Default is 500.
@@ -1083,18 +1091,29 @@ class OrbitalList:
                   This allows tuning of the strength of Coulomb interactions in the system. 
                   Default is 1.0.
         
-                - `f_mean_field` (Callable, optional): A function for computing the mean field term.
-                  First argument is density matrix, second argument is single particle hamiltonian.
+                - `f_mean_field` (Callable, optional): Returns the full effective Hamiltonian.
+                  First argument is the unnormalized density matrix, second argument is the single particle Hamiltonian.
                   Can be used, e.g., for full HF by passing a closure containing ERIs.       
+                  If None, uses the single particle Hamiltonian plus the diagonal Coulomb potential.
+        
+                - `f_build` (Callable, optional): Constructs the density matrix from eigenvectors (first argument) and energies (second argument). If None, levels are filled in energy order, accounting for electron count and spin degeneracy, including a partially filled final level. Custom builders return a per-spin density matrix, which is multiplied by `spin_degeneracy` before mixing. Its filling is retained in both the stationary state and the initial state before excitations.
                   Default is None.
         
-                - `f_build` (Callable, optional): Construction of the density matrix from energies and eigenvectors. If None, levels are filled in energy order, accounting for electron count and spin degeneracy, including a partially filled final level. Custom builders return a per-spin density matrix, which is multiplied by `spin_degeneracy` before mixing.
-                  Default is None.
-        
-                - `rho_0` (jax.Array, optional): Initial guess for the density matrix. If None, zeros are used.
+                - `rho_0` (jax.Array, optional): Unnormalized Hermitian electron density matrix,
+                  with trace equal to the electron count and eigenvalues between zero and spin_degeneracy.
+                  The default model's explicit collinear spin sectors require zero spin coherence.
+                  If None, the default model starts from the noninteracting density;
+                  custom callbacks start from zeros.
                    Default is None.
 
         Note:
+             With explicit spin labels -1 and 1 and spin_degeneracy=1, the default model
+             diagonalizes equally sized spin blocks in a batch when the orthonormal Hamiltonian preserves spin.
+             Otherwise it uses a dense solve. Custom callbacks use a dense solve. Both callbacks
+             can be overridden independently and use the same density-matrix SCF loop.
+             Magnetic solutions can require an explicitly spin-polarized rho_0; a symmetric
+             initial guess can remain at a nonmagnetic stationary point. Nonconvergence raises RuntimeError.
+
              GRANAD orthonormalizes the Hamiltonian prior to entering the SC loop using the canonical symmetric procedure. If you use orthogonal orbitals, everything is fine. If your basis set allows for overlap, you need to provide any custom mean-field interaction terms in the *orthornormalized basis*.
 
         Example:
