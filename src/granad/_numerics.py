@@ -2,7 +2,6 @@ import jax
 import jax.numpy as jnp
 import itertools
 import functools
-import gc
 
 jax.config.update("jax_enable_x64", True)
 import diffrax
@@ -222,7 +221,7 @@ def _mf_loop(hamiltonian,
         # diagonalize
         vals, vecs = jnp.linalg.eigh(ham_eff)
         
-        # build new density matrix (EXTREMELY INEFFICIENTLY)
+        # build new density matrix
         rho = spin_degeneracy * (1 - mix) * f_build(vecs, vals) + mix * rho_old
 
         # update breaks
@@ -240,7 +239,10 @@ def _mf_loop(hamiltonian,
         f_mean_field = lambda r, hamiltonian : jnp.diag(coulomb_strength * coulomb @ r.diagonal()) + hamiltonian
 
     if f_build is None:
-        f_build = lambda vecs, energies : vecs[:, :electrons] @ vecs[:, :electrons].T        
+        def f_build(vecs, energies):
+            # Spin degeneracy is applied by update(), so occupations here are per spin.
+            occupation = jnp.clip(electrons / spin_degeneracy - jnp.arange(energies.size), 0., 1.)
+            return (vecs * occupation) @ vecs.conj().T
         
     # initial guess for the density matrix
     if rho_0 is None:
@@ -468,17 +470,15 @@ def get_integrator( hamiltonian, dissipator, postprocesses, solver, stepsize_con
     return integrator
 
 def td_run(d_ini, integrator, time_axis, args):
-    shapes_known = False
+    chunks = None
     for ts in time_axis:
         d_ini, res = integrator( d_ini, ts, args )
-        if shapes_known == False:
-            result = res
-            shapes_known = True
-        else:
-            for i, res_part in enumerate(res):
-                result[i] = jnp.concatenate( (result[i], res_part) )            
+        if chunks is None:
+            chunks = [[] for _ in res]
+        for parts, res_part in zip(chunks, res):
+            parts.append(res_part)
         print(f"{ts[-1] / jnp.max(time_axis) * 100} %")
-    return d_ini, result 
+    return d_ini, [jnp.concatenate(parts) for parts in chunks]
     
 
 def rpa_polarizability_function(
@@ -641,8 +641,6 @@ def iterate(func):
             for combination in itertools.product(*dict_params.values()):
                 new_kwargs = kwargs | dict(zip(dict_params.keys(), combination))
                 result.append(func(*args, **new_kwargs))  # Call the original function
-                jax.clear_caches()
-                gc.collect()
             
             # If function returns a tuple, separate results for each return value
             if isinstance(result[0], tuple):
