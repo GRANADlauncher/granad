@@ -151,11 +151,11 @@ def Rectangle(length_x, length_y):
     """
     vertices = jnp.array(
         [
-            (-1 * length_x, -0.5 * length_y),
-            (1 * length_x, -0.5 * length_y),
-            (1 * length_x, 0.5 * length_y),
-            (-1 * length_x, 0.5 * length_y),
-            (-1 * length_x, -0.5 * length_y),
+            (-0.5 * length_x, -0.5 * length_y),
+            (0.5 * length_x, -0.5 * length_y),
+            (0.5 * length_x, 0.5 * length_y),
+            (-0.5 * length_x, 0.5 * length_y),
+            (-0.5 * length_x, -0.5 * length_y),
         ]
     )
     return Polygon(vertices = vertices, polygon_id = "rectangle")
